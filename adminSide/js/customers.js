@@ -20,14 +20,14 @@ async function loadCustomers() {
   const { data: profiles } = await supabase
     .from('profiles')
     .select('*')
-    .eq('role', 'customer')
+    .or('role.eq.customer,role.is.null')
     .order('loyalty_points', { ascending: false })
 
-  // Fetch visit counts per customer
+  // Fetch visit counts per customer — include delivery/takeout (delivered) and dine-in (paid)
   const { data: orders } = await supabase
     .from('orders')
     .select('customer_id, total')
-    .eq('status', 'paid')
+    .in('status', ['paid', 'delivered'])
     .not('customer_id', 'is', null)
 
   const visitMap = {}

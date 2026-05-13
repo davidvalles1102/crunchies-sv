@@ -103,7 +103,7 @@ registerForm.addEventListener('submit', async (e) => {
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: name } }
+    options: { data: { full_name: name, phone } }
   })
 
   if (error) {
@@ -114,13 +114,7 @@ registerForm.addEventListener('submit', async (e) => {
     return
   }
 
-  // Save phone to profile
-  if (phone) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      await supabase.from('profiles').update({ phone, full_name: name }).eq('id', user.id)
-    }
-  }
+  // Profile is created automatically by the Supabase trigger on auth.users INSERT
 
   succ.textContent = '¡Cuenta creada! Revisa tu correo para verificar tu cuenta.'
   succ.classList.remove('hidden')
