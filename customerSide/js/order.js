@@ -1,27 +1,28 @@
 import { supabase, getSession, getProfile, calcTotals, fmt } from '../../shared/supabase-client.js'
 import { toast } from './utils.js'
 
-const DELIVERY_FEE = 2.50   // Costo fijo de envío
+const DELIVERY_FEE = 3000   // COP — costo fijo de domicilio
 
-let menuItems   = []
-let categories  = []
-let cart        = []          // [{ id, name, price, qty }]
-let orderType   = 'takeout'  // 'takeout' | 'delivery'
-let userProfile = null
-let activeCat   = 'all'
+let menuItems    = []
+let categories   = []
+let cart         = []
+let orderType    = 'takeout'   // 'takeout' | 'delivery'
+let paymentMethod = 'cash'     // 'cash' | 'nequi'
+let userProfile  = null
+let activeCat    = 'all'
 
 // ─── Init ─────────────────────────────────────────────────────────
 async function init() {
   const session = await getSession()
   if (session) {
     userProfile = await getProfile(session.user.id)
-    // Pre-fill name and phone if logged in
     if (userProfile.full_name) document.getElementById('custName').value  = userProfile.full_name
     if (userProfile.phone)     document.getElementById('custPhone').value = userProfile.phone
   }
 
   await loadMenu()
   setupOrderTypeTabs()
+  setupPaymentTabs()
   setupSearch()
   renderCart()
 }
@@ -45,7 +46,7 @@ function buildCatTabs() {
 
   categories.forEach(c => {
     const btn = document.createElement('button')
-    btn.className  = 'pos-cat'
+    btn.className   = 'pos-cat'
     btn.dataset.cat = c.id
     btn.textContent = `${c.icon} ${c.name}`
     btn.addEventListener('click', () => { activeCat = c.id; renderGrid(); setActiveTab(btn) })
@@ -123,9 +124,30 @@ function updateFormForType() {
   document.getElementById('pickupTimeGroup').classList.toggle('hidden', isDelivery)
   document.getElementById('deliveryFeeRow').style.display = isDelivery ? '' : 'none'
   document.getElementById('deliveryFee').textContent      = fmt.currency(DELIVERY_FEE)
-  document.getElementById('paymentNoticeText').textContent = isDelivery
-    ? 'Pago en efectivo al recibir tu pedido'
-    : 'Pago en efectivo al recoger tu orden'
+  updatePaymentNotice()
+}
+
+// ─── Payment Method ───────────────────────────────────────────────
+function setupPaymentTabs() {
+  document.querySelectorAll('.payment-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      paymentMethod = btn.dataset.method
+      document.querySelectorAll('.payment-btn').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      document.getElementById('cashInfo').classList.toggle('hidden',   paymentMethod !== 'cash')
+      document.getElementById('nequiInfo').classList.toggle('hidden',  paymentMethod !== 'nequi')
+      updatePaymentNotice()
+    })
+  })
+}
+
+function updatePaymentNotice() {
+  const isDelivery = orderType === 'delivery'
+  if (paymentMethod === 'cash') {
+    document.getElementById('paymentNoticeText').textContent = isDelivery
+      ? 'Pago en efectivo al recibir tu pedido'
+      : 'Pago en efectivo al recoger tu orden'
+  }
 }
 
 // ─── Cart ─────────────────────────────────────────────────────────
@@ -171,17 +193,16 @@ function renderCart() {
     document.getElementById('placeOrderBtn').disabled = false
   }
 
-  // Totals
-  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
+  const subtotal    = cart.reduce((s, i) => s + i.price * i.qty, 0)
   const { tax, total } = calcTotals(subtotal)
-  const grandTotal = total + (orderType === 'delivery' ? DELIVERY_FEE : 0)
+  const grandTotal  = total + (orderType === 'delivery' ? DELIVERY_FEE : 0)
 
   document.getElementById('cartSubtotal').textContent = fmt.currency(subtotal)
   document.getElementById('cartTax').textContent      = fmt.currency(tax)
   document.getElementById('cartTotal').textContent    = fmt.currency(grandTotal)
 }
 
-window.cartQty = (id, delta) => { changeQty(id, delta); }
+window.cartQty = (id, delta) => { changeQty(id, delta) }
 
 // ─── Place Order ──────────────────────────────────────────────────
 document.getElementById('placeOrderBtn').addEventListener('click', placeOrder)
@@ -215,7 +236,6 @@ async function placeOrder() {
   const { tax, total } = calcTotals(subtotal)
   const grandTotal = total + (orderType === 'delivery' ? DELIVERY_FEE : 0)
 
-  // Create order
   const { data: order, error: orderErr } = await supabase
     .from('orders')
     .insert({
@@ -227,6 +247,7 @@ async function placeOrder() {
       notes,
       status:           'open',
       delivery_status:  'pending',
+      payment_method:   paymentMethod,
       subtotal,
       tax,
       total: grandTotal
@@ -243,7 +264,6 @@ async function placeOrder() {
     return
   }
 
-  // Insert order items
   const itemsPayload = cart.map(i => ({
     order_id:     order.id,
     menu_item_id: i.id,
@@ -260,13 +280,21 @@ async function placeOrder() {
 }
 
 function showSuccessModal(order, total) {
-  const isDelivery = order.order_type === 'delivery'
-  const pickupMin  = document.getElementById('pickupTime')?.value ?? 30
+  const isDelivery  = order.order_type === 'delivery'
+  const isNequi     = order.payment_method === 'nequi'
+  const pickupMin   = document.getElementById('pickupTime')?.value ?? 30
 
   document.getElementById('successTitle').textContent = isDelivery ? '¡Pedido enviado!' : '¡Pedido registrado!'
   document.getElementById('successMsg').textContent   = isDelivery
     ? 'Tu pedido está siendo preparado. El repartidor saldrá pronto.'
     : `Tu pedido estará listo para recoger en aproximadamente ${pickupMin} minutos.`
+
+  const paymentLine = isNequi
+    ? `<div style="background:rgba(0,220,130,.08);border:1px solid var(--green-dim);border-radius:var(--r-md);padding:10px 14px;margin-top:8px">
+         <div style="font-weight:600;color:var(--green);margin-bottom:4px">📱 Pago por Nequi</div>
+         <div style="font-size:.82rem;color:var(--text-secondary)">Transfiere <strong>${fmt.currency(total)}</strong> al número <strong>312 828 2045</strong> si aún no lo has hecho.</div>
+       </div>`
+    : `<div style="color:var(--text-muted);font-size:.78rem;margin-top:4px">💵 Pago en efectivo ${isDelivery ? 'al recibir' : 'al recoger'}</div>`
 
   document.getElementById('successDetails').innerHTML = `
     <div class="flex-col gap-8 text-sm">
@@ -274,11 +302,14 @@ function showSuccessModal(order, total) {
       <div class="flex justify-between"><span class="text-muted">Teléfono</span><span>${order.delivery_phone}</span></div>
       ${isDelivery ? `<div class="flex justify-between"><span class="text-muted">Dirección</span><span style="text-align:right;max-width:200px">${order.delivery_address}</span></div>` : ''}
       <div class="flex justify-between" style="padding-top:8px;border-top:1px solid var(--border)">
-        <span class="text-muted">Total a pagar</span>
+        <span class="text-muted">Total</span>
         <span class="neon-amber" style="font-weight:700;font-size:1.1rem">${fmt.currency(total)}</span>
       </div>
-      <div style="color:var(--text-muted);font-size:.78rem;margin-top:4px">Pago en efectivo ${isDelivery ? 'al recibir' : 'al recoger'}</div>
+      ${paymentLine}
     </div>`
+
+  // Set the track link
+  document.getElementById('trackOrderLink').href = `track.html?id=${order.id}`
 
   document.getElementById('successModal').classList.remove('hidden')
 }

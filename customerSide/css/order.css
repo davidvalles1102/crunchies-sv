@@ -227,6 +227,68 @@
   flex-shrink: 0;
 }
 
+/* ─── Payment Method Selector ─────────────────────────────── */
+.cart-payment-selector {
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.payment-type-tabs {
+  display: flex;
+  gap: 0;
+}
+
+.payment-btn {
+  flex: 1;
+  padding: 10px 8px;
+  background: var(--bg-2);
+  color: var(--text-muted);
+  border: none;
+  border-bottom: 2px solid var(--border);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--t);
+}
+.payment-btn:first-child { border-right: 1px solid var(--border); }
+.payment-btn.active {
+  color: var(--green);
+  border-bottom-color: var(--green);
+  background: var(--bg-3);
+}
+
+.cart-payment-cash {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--amber-alpha);
+  font-size: .82rem;
+  color: var(--amber);
+  font-weight: 500;
+}
+
+/* Nequi panel */
+.nequi-info {
+  padding: 14px 18px;
+  background: rgba(0,220,130,.06);
+  border-bottom: 1px solid var(--green-dim);
+}
+.nequi-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.nequi-number {
+  font-family: var(--font-d);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: .04em;
+  text-shadow: var(--glow-green-s);
+}
+
 /* Actions */
 .cart-actions {
   padding: 14px 16px;

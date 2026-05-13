@@ -124,10 +124,27 @@
       </div>
     </div>
 
-    <!-- Payment info (COD notice) -->
-    <div class="cart-payment-notice" id="paymentNotice">
-      <span>💵</span>
-      <span id="paymentNoticeText">Pago en efectivo al recoger tu orden</span>
+    <!-- Payment Method Selector -->
+    <div class="cart-payment-selector">
+      <div class="payment-type-tabs">
+        <button class="payment-btn active" data-method="cash">💵 Efectivo</button>
+        <button class="payment-btn" data-method="nequi">📱 Nequi</button>
+      </div>
+      <div id="cashInfo" class="cart-payment-cash">
+        <span>💵</span>
+        <span id="paymentNoticeText">Pago en efectivo al recoger tu orden</span>
+      </div>
+      <div id="nequiInfo" class="nequi-info hidden">
+        <div class="nequi-header">
+          <span style="font-size:1.3rem">📱</span>
+          <strong class="neon-green">Transferir por Nequi</strong>
+        </div>
+        <div class="nequi-number">312 828 2045</div>
+        <p class="text-xs text-muted mt-6">
+          Transfiere el total al número de arriba antes de enviar tu pedido.
+          El restaurante verificará el pago.
+        </p>
+      </div>
     </div>
 
     <!-- Submit -->
@@ -149,7 +166,8 @@
       <h2 class="neon-green mt-16" id="successTitle">¡Pedido recibido!</h2>
       <p class="text-secondary mt-8" id="successMsg"></p>
       <div class="card mt-24" style="text-align:left;border-color:var(--green-dim)" id="successDetails"></div>
-      <a href="index.html" class="btn btn-primary btn-full btn-lg mt-24">Volver al Menú</a>
+      <a id="trackOrderLink" href="#" class="btn btn-outline btn-full mt-16">📍 Seguir mi Pedido en tiempo real</a>
+      <a href="index.html" class="btn btn-primary btn-full btn-lg mt-8">Volver al Menú</a>
     </div>
   </div>
 </div>

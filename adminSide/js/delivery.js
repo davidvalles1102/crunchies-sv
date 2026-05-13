@@ -137,6 +137,9 @@ function buildCard(order) {
         ${isDelivery && order.delivery_address
           ? `<div class="delivery-card__address text-sm" style="color:var(--amber);margin-top:4px">📍 ${order.delivery_address}</div>`
           : ''}
+        <div class="text-xs mt-4" style="color:${order.payment_method === 'nequi' ? 'var(--green)' : 'var(--text-muted)'}">
+          ${order.payment_method === 'nequi' ? '📱 Nequi — verificar pago' : '💵 Efectivo'}
+        </div>
       </div>
 
       <div class="delivery-card__items">
@@ -196,6 +199,11 @@ function openDetail(id) {
           <div class="flex justify-between"><span class="text-muted">Nombre</span><span style="font-weight:600">${o.delivery_name}</span></div>
           <div class="flex justify-between"><span class="text-muted">Teléfono</span><span>${o.delivery_phone}</span></div>
           ${isDelivery ? `<div class="flex justify-between"><span class="text-muted">Dirección</span><span style="text-align:right;max-width:220px">${o.delivery_address}</span></div>` : ''}
+          <div class="flex justify-between"><span class="text-muted">Pago</span>
+            <span style="font-weight:600;color:${o.payment_method === 'nequi' ? 'var(--green)' : 'var(--amber)'}">
+              ${o.payment_method === 'nequi' ? '📱 Nequi' : '💵 Efectivo'}
+            </span>
+          </div>
         </div>
       </div>
       <div class="card">
