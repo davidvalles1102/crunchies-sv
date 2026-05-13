@@ -170,7 +170,15 @@ async function loadOrCreateOrder(forceNew = false) {
       .limit(1)
 
     if (data?.length) {
-      currentOrder = { id: data[0].id, table_id: selectedTable.id, items: mapItems(data[0].order_items) }
+      const o = data[0]
+      currentOrder = {
+        id:       o.id,
+        table_id: selectedTable.id,
+        items:    mapItems(o.order_items),
+        subtotal: o.subtotal ?? 0,
+        tax:      o.tax      ?? 0,
+        total:    o.total    ?? 0
+      }
       await markTableOccupied(selectedTable.id)
       renderTicket()
       return
