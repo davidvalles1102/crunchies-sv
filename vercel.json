@@ -1,7 +1,5 @@
 {
-  "routes": [
-    { "src": "/", "dest": "/customerSide/index.html" },
-    { "src": "/admin", "dest": "/adminSide/dashboard.html" },
-    { "src": "/admin/(.*)", "dest": "/adminSide/$1" }
+  "redirects": [
+    { "source": "/", "destination": "/customerSide/index.html", "permanent": false }
   ]
 }
