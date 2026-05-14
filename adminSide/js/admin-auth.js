@@ -44,59 +44,78 @@ export async function initAdminShell(allowedRoles = ['admin', 'waiter', 'kitchen
   const form = document.getElementById('loginForm')
   if (!form) return  // Not on login page
 
-  const session = await getSession()
-  if (session) {
-    const p = await getProfile(session.user.id)
-    if (!['admin', 'waiter', 'kitchen'].includes(p?.role)) {
-      await supabase.auth.signOut()
-      window.location.reload()  // clean reload so form isn't disrupted by signOut
-      return
-    }
-    redirectByRole(p.role)
-    return
-  }
+  const btn = document.getElementById('loginBtn')
+  const err = document.getElementById('loginError')
 
+  // Attach submit listener IMMEDIATELY (before any async work)
+  // so the form never submits traditionally even on slow networks
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
-    const btn = document.getElementById('loginBtn')
-    const err = document.getElementById('loginError')
     btn.disabled = true
     btn.textContent = 'Verificando...'
     err.classList.add('hidden')
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email:    document.getElementById('email').value.trim(),
-      password: document.getElementById('password').value
-    })
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email:    document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      })
 
-    if (error) {
-      err.textContent = 'Credenciales incorrectas.'
+      if (error) {
+        err.textContent = 'Credenciales incorrectas.'
+        err.classList.remove('hidden')
+        btn.disabled = false
+        btn.textContent = 'Ingresar al Panel'
+        return
+      }
+
+      const profile = await getProfile(data.user.id)
+      if (!profile) {
+        await supabase.auth.signOut()
+        err.textContent = 'Perfil no encontrado. Ejecuta el SQL de configuración en Supabase.'
+        err.classList.remove('hidden')
+        btn.disabled = false
+        btn.textContent = 'Ingresar al Panel'
+        return
+      }
+      if (!['admin', 'waiter', 'kitchen'].includes(profile.role)) {
+        await supabase.auth.signOut()
+        err.textContent = 'Sin permiso para acceder al panel.'
+        err.classList.remove('hidden')
+        btn.disabled = false
+        btn.textContent = 'Ingresar al Panel'
+        return
+      }
+
+      redirectByRole(profile.role)
+    } catch (ex) {
+      err.textContent = 'Error inesperado: ' + ex.message
       err.classList.remove('hidden')
       btn.disabled = false
       btn.textContent = 'Ingresar al Panel'
-      return
     }
-
-    const profile = await getProfile(data.user.id)
-    if (!profile) {
-      await supabase.auth.signOut()
-      err.textContent = 'Perfil de usuario no encontrado. Contacta al administrador.'
-      err.classList.remove('hidden')
-      btn.disabled = false
-      btn.textContent = 'Ingresar al Panel'
-      return
-    }
-    if (!['admin', 'waiter', 'kitchen'].includes(profile.role)) {
-      await supabase.auth.signOut()
-      err.textContent = 'No tienes permiso para acceder al panel.'
-      err.classList.remove('hidden')
-      btn.disabled = false
-      btn.textContent = 'Ingresar al Panel'
-      return
-    }
-
-    redirectByRole(profile.role)
   })
+
+  // THEN check for existing session (after listener is already attached)
+  btn.disabled = true
+  btn.textContent = 'Cargando...'
+
+  try {
+    const session = await getSession()
+    if (session) {
+      const p = await getProfile(session.user.id)
+      if (!['admin', 'waiter', 'kitchen'].includes(p?.role)) {
+        await supabase.auth.signOut()
+        window.location.reload()
+        return
+      }
+      redirectByRole(p.role)
+      return
+    }
+  } catch (_) { /* ignore, just show the form */ }
+
+  btn.disabled = false
+  btn.textContent = 'Ingresar al Panel'
 })()
 
 function redirectByRole(role) {
