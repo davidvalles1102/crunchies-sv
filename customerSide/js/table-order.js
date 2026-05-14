@@ -42,6 +42,11 @@ async function init() {
   document.getElementById('tableLocation').textContent   = tbl.location
   document.getElementById('userGreet').textContent       = `Hola, ${profile.full_name || 'Cliente'}`
 
+  // Mark table occupied as soon as customer scans and loads the menu
+  if (tbl.status !== 'occupied') {
+    await supabase.from('restaurant_tables').update({ status: 'occupied' }).eq('id', tableId)
+  }
+
   await loadMenu()
   showMain()
   setupEvents()
@@ -214,7 +219,7 @@ async function submitOrder(notesId, msgId, btnId) {
       table_id:    tableId,
       customer_id: profile?.id ?? null,
       order_type:  'dine_in',
-      status:      'open',
+      status:      'in_kitchen',
       notes,
       subtotal,
       tax,
@@ -242,8 +247,6 @@ async function submitOrder(notesId, msgId, btnId) {
       quantity:     c.qty
     }))
   )
-
-  await supabase.from('restaurant_tables').update({ status: 'occupied' }).eq('id', tableId)
 
   // Show success
   closeMobileCart()
