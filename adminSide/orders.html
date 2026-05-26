@@ -73,6 +73,11 @@
 
     <!-- RIGHT: Ticket panel -->
     <div class="pos-ticket-panel">
+      <!-- Mobile: pastilla para cerrar el sheet -->
+      <div class="ticket-mob-handle" id="ticketMobHandle">
+        <div class="ticket-mob-handle__bar"></div>
+        <span class="text-xs text-muted">Cerrar ✕</span>
+      </div>
       <div class="ticket-header">
         <div class="ticket-info">
           <div class="ticket-table" id="ticketTable">Mesa —</div>
@@ -207,6 +212,13 @@
 </div>
 
 <div id="toast-container"></div>
+
+<!-- Mobile: backdrop + botón flotante de ticket -->
+<div class="mob-backdrop" id="mobBackdrop"></div>
+<button class="mob-cart-fab" id="mobCartFab">
+  🧾&nbsp;Ticket <span class="mob-cart-fab__count" id="mobCartCount">0</span>
+</button>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script type="module" src="js/orders.js"></script>
 </body>

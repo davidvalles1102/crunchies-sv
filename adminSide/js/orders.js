@@ -22,6 +22,7 @@ async function init() {
   setupOrderTypeTabs()
   setupTicket()
   setupPayModal()
+  setupMobileTicket()
 }
 
 function setupOrderTypeTabs() {
@@ -316,6 +317,8 @@ function renderTicket() {
   const hasItems = !!currentOrder?.items.length
   document.getElementById('sendKitchenBtn').disabled = !hasItems
   document.getElementById('payBtn').disabled         = !hasItems
+
+  updateMobFab()
 }
 
 async function sendToKitchen() {
@@ -339,6 +342,29 @@ function clearTicket() {
   document.getElementById('posCustAddress').value = ''
   document.getElementById('orderNotes').value     = ''
   renderTicket()
+}
+
+// ─── Mobile Ticket Sheet ─────────────────────────────────────────
+function setupMobileTicket() {
+  const fab      = document.getElementById('mobCartFab')
+  const backdrop = document.getElementById('mobBackdrop')
+  const panel    = document.querySelector('.pos-ticket-panel')
+  const handle   = document.getElementById('ticketMobHandle')
+  if (!fab || !panel) return
+
+  const openSheet  = () => { panel.classList.add('mob-open');    backdrop.classList.add('visible') }
+  const closeSheet = () => { panel.classList.remove('mob-open'); backdrop.classList.remove('visible') }
+
+  fab.addEventListener('click', openSheet)
+  backdrop.addEventListener('click', closeSheet)
+  handle?.addEventListener('click', closeSheet)
+}
+
+function updateMobFab() {
+  const countEl = document.getElementById('mobCartCount')
+  if (!countEl) return
+  const n = currentOrder?.items.reduce((s, i) => s + i.qty, 0) ?? 0
+  countEl.textContent = n
 }
 
 // ─── Pay Modal ────────────────────────────────────────────────────
