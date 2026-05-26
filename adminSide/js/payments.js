@@ -1,8 +1,9 @@
 import { supabase, fmt } from '../../shared/supabase-client.js'
 import { initAdminShell, toast } from './admin-auth.js'
 
-let allPayments = []
-let filterDate  = new Date().toISOString().split('T')[0]
+let allPayments     = []
+let filterDate      = new Date().toISOString().split('T')[0]
+let lastPaymentData = null   // snapshot para WhatsApp
 
 async function init() {
   const ctx = await initAdminShell(['admin', 'waiter'])
@@ -15,6 +16,12 @@ async function init() {
   document.getElementById('exportBtn').addEventListener('click', exportCSV)
   document.getElementById('receiptClose').addEventListener('click',  () => document.getElementById('receiptModal').classList.add('hidden'))
   document.getElementById('receiptClose2').addEventListener('click', () => document.getElementById('receiptModal').classList.add('hidden'))
+
+  // WhatsApp modal
+  document.getElementById('waModalClose').addEventListener('click', () => document.getElementById('waModal').classList.add('hidden'))
+  document.getElementById('waCancel').addEventListener('click',     () => document.getElementById('waModal').classList.add('hidden'))
+  document.getElementById('waConfirm').addEventListener('click',    confirmWhatsApp)
+  document.getElementById('waPhone').addEventListener('keydown', e => { if (e.key === 'Enter') confirmWhatsApp() })
 
   await loadPayments()
 }
@@ -73,6 +80,10 @@ function renderTable() {
 window.showReceipt = (payId) => {
   const p = allPayments.find(x => x.id === payId)
   if (!p) return
+
+  // Guardar snapshot para WhatsApp
+  lastPaymentData = p
+
   document.getElementById('receiptContent').innerHTML = `
     <div class="receipt">
       <div class="receipt__logo">Neón y Sabor Mi Rancho</div>
@@ -89,6 +100,42 @@ window.showReceipt = (payId) => {
       <div class="receipt__thanks">¡Gracias por su visita!</div>
     </div>`
   document.getElementById('receiptModal').classList.remove('hidden')
+}
+
+// ─── WhatsApp ─────────────────────────────────────────────────────
+window.openWhatsAppModal = function () {
+  if (!lastPaymentData) return
+  document.getElementById('waPhone').value = ''
+  document.getElementById('waModal').classList.remove('hidden')
+  document.getElementById('waPhone').focus()
+}
+
+function buildWhatsAppText(p) {
+  const methodLabels = { cash: 'Efectivo 💵', card: 'Tarjeta 💳', transfer: 'Transferencia 📲', points: 'Puntos ⭐' }
+  const changeLine = p.change_amount > 0 ? `\nCambio: ${fmt.currency(p.change_amount)}` : ''
+  return [
+    `🍽️ *Neón y Sabor Mi Rancho*`,
+    `Recibo: ${p.receipt_number}`,
+    `📅 ${fmt.datetime(p.created_at)}`,
+    `Mesa: ${p.orders?.restaurant_tables?.number ?? '—'}`,
+    `─────────────────────`,
+    `*TOTAL: ${fmt.currency(p.amount)}*`,
+    `Método: ${methodLabels[p.method] ?? p.method}${changeLine}`,
+    `─────────────────────`,
+    `¡Gracias por su visita! 🌟`
+  ].join('\n')
+}
+
+function confirmWhatsApp() {
+  const raw = document.getElementById('waPhone').value.trim().replace(/[\s\-\(\)+]/g, '')
+  if (!raw) {
+    toast('Ingresa un número de WhatsApp', 'warning')
+    document.getElementById('waPhone').focus()
+    return
+  }
+  const text = encodeURIComponent(buildWhatsAppText(lastPaymentData))
+  window.open(`https://wa.me/${raw}?text=${text}`, '_blank')
+  document.getElementById('waModal').classList.add('hidden')
 }
 
 function exportCSV() {

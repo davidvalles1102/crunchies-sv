@@ -96,7 +96,32 @@
     <div class="modal-body" id="receiptContent"></div>
     <div class="modal-footer">
       <button class="btn btn-outline" id="receiptClose2">Cerrar</button>
+      <button class="btn btn-whatsapp" onclick="openWhatsAppModal()">📱 WhatsApp</button>
       <button class="btn btn-primary" onclick="window.print()">🖨️ Reimprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- WhatsApp Phone Modal -->
+<div class="modal-backdrop hidden" id="waModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <h3>📱 Enviar por WhatsApp</h3>
+      <button class="modal-close" id="waModalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="text-sm text-muted" style="margin-bottom:14px">
+        WhatsApp se abrirá con el recibo listo para enviar. Solo presiona ▶ en WhatsApp.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Número del cliente</label>
+        <input type="tel" id="waPhone" class="form-control" placeholder="Ej: 573001234567">
+        <div class="text-xs text-muted" style="margin-top:4px">Sin espacios ni guiones · incluye código de país (57 Colombia, 503 El Salvador)</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="waCancel">Cancelar</button>
+      <button class="btn btn-whatsapp" id="waConfirm">Abrir WhatsApp ▶</button>
     </div>
   </div>
 </div>

@@ -152,6 +152,13 @@ h4 { font-size: .95rem;  font-weight: 600; }
 }
 .btn-ghost:hover { color: var(--text-primary); background: var(--bg-4); }
 
+.btn-whatsapp {
+  background: #25D366;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(37,211,102,.35);
+}
+.btn-whatsapp:hover { box-shadow: 0 0 18px rgba(37,211,102,.65); transform: translateY(-1px); }
+
 .btn-danger {
   background: var(--danger-dim);
   color: var(--danger);

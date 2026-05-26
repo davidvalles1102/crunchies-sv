@@ -11,6 +11,7 @@ let activeCat    = 'all'
 let selectedPayMethod = 'cash'
 let linkedCustomer    = null
 let orderType         = 'dine_in'   // 'dine_in' | 'takeout' | 'delivery'
+let lastReceiptData   = null        // snapshot para WhatsApp
 
 async function init() {
   const ctx = await initAdminShell(['admin', 'waiter'])
@@ -338,6 +339,12 @@ function setupPayModal() {
   document.getElementById('receiptClose').addEventListener('click',   () => document.getElementById('receiptModal').classList.add('hidden'))
   document.getElementById('receiptClose2').addEventListener('click',  () => document.getElementById('receiptModal').classList.add('hidden'))
 
+  // WhatsApp modal
+  document.getElementById('waModalClose').addEventListener('click', () => document.getElementById('waModal').classList.add('hidden'))
+  document.getElementById('waCancel').addEventListener('click',     () => document.getElementById('waModal').classList.add('hidden'))
+  document.getElementById('waConfirm').addEventListener('click',    confirmWhatsApp)
+  document.getElementById('waPhone').addEventListener('keydown', e => { if (e.key === 'Enter') confirmWhatsApp() })
+
   document.querySelectorAll('.pay-method').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.pay-method').forEach(b => b.classList.remove('active'))
@@ -446,6 +453,23 @@ async function processPayment() {
 
 function renderReceipt(receiptNo, change) {
   const items = currentOrder?.items ?? []
+
+  // ── Guardar snapshot para WhatsApp ───────────────────────────────
+  lastReceiptData = {
+    receiptNo,
+    change,
+    cashIn:   parseFloat(document.getElementById('cashReceived').value) || 0,
+    items:    items.map(i => ({ ...i })),
+    subtotal: currentOrder?.subtotal ?? 0,
+    tax:      currentOrder?.tax      ?? 0,
+    total:    currentOrder?.total    ?? 0,
+    method:   selectedPayMethod,
+    orderType,
+    tableNum: selectedTable?.number  ?? null,
+    custPhone: document.getElementById('posCustPhone')?.value.trim() || null,
+    date:     new Date()
+  }
+
   document.getElementById('receiptContent').innerHTML = `
     <div class="receipt">
       <div class="receipt__logo">Neón y Sabor Mi Rancho</div>
@@ -470,7 +494,60 @@ function renderReceipt(receiptNo, change) {
   document.getElementById('receiptModal').classList.remove('hidden')
 }
 
+// ─── WhatsApp ─────────────────────────────────────────────────────
+function openWhatsAppModal() {
+  if (!lastReceiptData) return
+  // Pre-llenar con el teléfono del cliente si existe (takeout / delivery)
+  document.getElementById('waPhone').value = lastReceiptData.custPhone ?? ''
+  document.getElementById('waModal').classList.remove('hidden')
+  document.getElementById('waPhone').focus()
+}
+
+function buildWhatsAppText(d) {
+  const methodLabels = { cash: 'Efectivo 💵', card: 'Tarjeta 💳', transfer: 'Transferencia 📲', points: 'Puntos ⭐' }
+  const locationLine = d.orderType === 'dine_in'
+    ? `Mesa: ${d.tableNum ?? '—'}`
+    : d.orderType === 'takeout' ? '🥡 Para Llevar' : '🛵 Domicilio'
+
+  const itemLines = d.items
+    .map(i => `${i.qty}x ${i.name}  ${fmt.currency(i.price * i.qty)}`)
+    .join('\n')
+
+  const cashLine = d.method === 'cash' && d.change > 0
+    ? `\nCambio: ${fmt.currency(d.change)}`
+    : ''
+
+  return [
+    `🍽️ *Neón y Sabor Mi Rancho*`,
+    `Recibo: ${d.receiptNo}`,
+    `📅 ${fmt.datetime(d.date)}`,
+    locationLine,
+    `─────────────────────`,
+    itemLines,
+    `─────────────────────`,
+    `Subtotal: ${fmt.currency(d.subtotal)}`,
+    `IVA 8%:   ${fmt.currency(d.tax)}`,
+    `*TOTAL: ${fmt.currency(d.total)}*`,
+    `Método: ${methodLabels[d.method] ?? d.method}${cashLine}`,
+    `─────────────────────`,
+    `¡Gracias por su visita! 🌟`
+  ].join('\n')
+}
+
+function confirmWhatsApp() {
+  const raw = document.getElementById('waPhone').value.trim().replace(/[\s\-\(\)+]/g, '')
+  if (!raw) {
+    toast('Ingresa un número de WhatsApp', 'warning')
+    document.getElementById('waPhone').focus()
+    return
+  }
+  const text = encodeURIComponent(buildWhatsAppText(lastReceiptData))
+  window.open(`https://wa.me/${raw}?text=${text}`, '_blank')
+  document.getElementById('waModal').classList.add('hidden')
+}
+
 // Expose for inline onclick
-window.changeQty = changeQty
+window.changeQty       = changeQty
+window.openWhatsAppModal = openWhatsAppModal
 
 init()
