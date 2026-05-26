@@ -162,13 +162,16 @@ function setupTicket() {
 
 async function loadOrCreateOrder(forceNew = false) {
   if (!forceNew) {
-    const { data } = await supabase
+    // Solo buscar — nunca crear automáticamente al seleccionar una mesa
+    const { data, error } = await supabase
       .from('orders')
       .select('*, order_items(*)')
       .eq('table_id', selectedTable.id)
       .in('status', ['open', 'in_kitchen', 'ready', 'delivered'])
       .order('created_at', { ascending: false })
       .limit(1)
+
+    if (error) { toast('Error al cargar la orden', 'error'); return }
 
     if (data?.length) {
       const o = data[0]
@@ -184,8 +187,15 @@ async function loadOrCreateOrder(forceNew = false) {
       renderTicket()
       return
     }
+
+    // Ninguna orden activa — mostrar ticket vacío sin crear nada
+    currentOrder = null
+    renderTicket()
+    toast(`Mesa ${selectedTable.number}: sin orden activa. Usa "+ Nueva Orden" para crear una.`, 'warning')
+    return
   }
 
+  // ── Solo se llega aquí desde el botón "+ Nueva Orden" ────────────
   const custName    = document.getElementById('posCustName')?.value.trim()    || null
   const custPhone   = document.getElementById('posCustPhone')?.value.trim()   || null
   const custAddress = document.getElementById('posCustAddress')?.value.trim() || null
