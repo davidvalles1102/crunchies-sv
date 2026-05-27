@@ -61,7 +61,7 @@ create table public.restaurant_tables (
   id        uuid default uuid_generate_v4() primary key,
   number    integer not null unique,
   capacity  integer not null,
-  location  text default 'interior' check (location in ('interior','terraza','barra','privado')),
+  location  text default 'Salón Principal' check (location in ('Zona VIP','Zona Fogata','Exterior','Salón Principal')),
   status    text default 'available'
               check (status in ('available','occupied','reserved','maintenance')),
   created_at timestamptz default now()

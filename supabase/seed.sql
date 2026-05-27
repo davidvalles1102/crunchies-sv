@@ -75,17 +75,23 @@ INSERT INTO public.menu_items (category_id, name, description, price, is_feature
   ((SELECT id FROM cats WHERE name='Bebidas Bar'), 'Cubetazo',             'Cubo de cervezas surtidas.',        25000, true,  true);
 
 -- ── Mesas ───────────────────────────────────────────────────
+-- Zonas: VIP (3) · Fogata (1) · Exterior (2) · Salón Principal (8)
 INSERT INTO public.restaurant_tables (number, capacity, location) VALUES
-  (1,  2, 'interior'),
-  (2,  2, 'interior'),
-  (3,  4, 'interior'),
-  (4,  4, 'interior'),
-  (5,  4, 'interior'),
-  (6,  6, 'interior'),
-  (7,  6, 'terraza'),
-  (8,  4, 'terraza'),
-  (9,  4, 'terraza'),
-  (10, 8, 'terraza'),
-  (11, 2, 'barra'),
-  (12, 2, 'barra'),
-  (13, 10,'privado');
+  -- Zona VIP — 3 mesas · 3 personas c/u
+  (1,  3, 'Zona VIP'),
+  (2,  3, 'Zona VIP'),
+  (3,  3, 'Zona VIP'),
+  -- Zona Fogata — 1 mesa · 6 personas
+  (4,  6, 'Zona Fogata'),
+  -- Exterior — 2 mesas · 4 personas c/u
+  (5,  4, 'Exterior'),
+  (6,  4, 'Exterior'),
+  -- Salón Principal — 2 familiares (7p) + 6 estándar (4p)
+  (7,  7, 'Salón Principal'),
+  (8,  7, 'Salón Principal'),
+  (9,  4, 'Salón Principal'),
+  (10, 4, 'Salón Principal'),
+  (11, 4, 'Salón Principal'),
+  (12, 4, 'Salón Principal'),
+  (13, 4, 'Salón Principal'),
+  (14, 4, 'Salón Principal');
