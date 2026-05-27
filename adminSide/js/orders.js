@@ -184,15 +184,16 @@ async function loadOrCreateOrder(forceNew = false) {
         tax:      o.tax      ?? 0,
         total:    o.total    ?? 0
       }
-      await markTableOccupied(selectedTable.id)
+      // No marcar ocupada aquí — ya lo está o se marca al crear/enviar
       renderTicket()
+      toast(`Mesa ${selectedTable.number}: orden activa cargada ✓`, 'success')
       return
     }
 
-    // Ninguna orden activa — mostrar ticket vacío sin crear nada
+    // Ninguna orden activa — mostrar ticket vacío sin tocar la mesa
     currentOrder = null
     renderTicket()
-    toast(`Mesa ${selectedTable.number}: sin orden activa. Usa "+ Nueva Orden" para crear una.`, 'warning')
+    toast(`Mesa ${selectedTable.number}: sin orden activa. Presiona "+ Nueva Orden" para comenzar.`, 'warning')
     return
   }
 
