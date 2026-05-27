@@ -332,16 +332,39 @@ async function sendToKitchen() {
   document.getElementById('sendKitchenBtn').disabled = true
 }
 
-function clearTicket() {
+async function clearTicket() {
   if (!confirm('¿Limpiar la orden actual?')) return
-  currentOrder = null
+
+  // Guardar referencia antes de limpiar
+  const tableToCheck = (orderType === 'dine_in' && selectedTable)
+    ? { id: selectedTable.id, number: selectedTable.number }
+    : null
+
+  currentOrder  = null
   selectedTable = null
-  document.getElementById('tablePicker').value = ''
+  document.getElementById('tablePicker').value    = ''
   document.getElementById('posCustName').value    = ''
   document.getElementById('posCustPhone').value   = ''
   document.getElementById('posCustAddress').value = ''
   document.getElementById('orderNotes').value     = ''
   renderTicket()
+
+  // Si había una mesa de salón, librarla automáticamente si no tiene orden activa
+  if (tableToCheck) {
+    const { data: active } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('table_id', tableToCheck.id)
+      .in('status', ['open', 'in_kitchen', 'ready', 'delivered'])
+      .limit(1)
+
+    if (!active?.length) {
+      await supabase.from('restaurant_tables').update({ status: 'available' }).eq('id', tableToCheck.id)
+      const t = tables.find(x => x.id === tableToCheck.id)
+      if (t) t.status = 'available'
+      toast(`Mesa ${tableToCheck.number} liberada ✓`)
+    }
+  }
 }
 
 // ─── Mobile Ticket Sheet ─────────────────────────────────────────
