@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-09T00:00:00Z",
+  "title": "Design System: Neón y Sabor Mi Rancho",
+  "extensions": {
+    "colorMeta": {
+      "void":           { "role": "neutral", "displayName": "Void",            "canonical": "#080808", "tonalRamp": ["#080808","#0f0f0f","#161616","#1e1e1e","#252525","#2e2e2e","#3a3a3a","#4a4a4a"] },
+      "neon-green":     { "role": "primary", "displayName": "Verde Neón Eléctrico", "canonical": "#39FF14", "tonalRamp": ["#0d3d05","#134d07","#1a7a09","#21a00b","#2acc0e","#39FF14","#6fff4f","#a8ff8f"] },
+      "neon-amber":     { "role": "secondary","displayName": "Ámbar Dorado",   "canonical": "#FFB300", "tonalRamp": ["#3d2b00","#5a3f00","#7a5500","#9e6e00","#cc8f00","#FFB300","#ffc933","#ffe080"] },
+      "ink":            { "role": "neutral", "displayName": "Tinta Principal", "canonical": "#F2ECD8", "tonalRamp": ["#5A5045","#6e6258","#9E9080","#b5a898","#c8bfb0","#ddd5c5","#ece7d9","#F2ECD8"] },
+      "danger":         { "role": "tertiary","displayName": "Peligro Encendido","canonical": "#FF3B3B","tonalRamp": ["#3d0000","#5c0000","#800000","#a80000","#cc1111","#FF3B3B","#ff6e6e","#ffa8a8"] },
+      "info":           { "role": "tertiary","displayName": "Info Azul",        "canonical": "#00BFFF","tonalRamp": ["#003d52","#005a75","#00759a","#0094c0","#00BFFF","#33ccff","#80dfff","#b3ecff"] }
+    },
+    "typographyMeta": {
+      "display":  { "displayName": "Display — Rajdhani",  "purpose": "Titulares de pantalla, números de impacto, marca." },
+      "headline": { "displayName": "Headline — Rajdhani", "purpose": "Headers de sección, nombres de mesa, títulos de modal." },
+      "body":     { "displayName": "Body — Inter",        "purpose": "Todo el texto operativo. Legible bajo presión de tiempo real." },
+      "label":    { "displayName": "Label — Inter caps",  "purpose": "Headers de tabla, metadata de estado. Uppercase exclusivo de este rol." }
+    },
+    "shadows": [
+      { "name": "glow-green-intense", "value": "0 0 8px #39FF14, 0 0 24px rgba(57,255,20,0.5), 0 0 48px rgba(57,255,20,0.2)", "purpose": "Hover de botón primary, alertas de éxito críticas." },
+      { "name": "glow-green-soft",    "value": "0 0 6px #39FF14, 0 0 14px rgba(57,255,20,0.4)",                                "purpose": "Estado de reposo del botón primary, texto de marca." },
+      { "name": "glow-amber-intense", "value": "0 0 8px #FFB300, 0 0 24px rgba(255,179,0,0.5), 0 0 48px rgba(255,179,0,0.2)", "purpose": "Hover de botón amber." },
+      { "name": "glow-amber-soft",    "value": "0 0 6px #FFB300, 0 0 14px rgba(255,179,0,0.4)",                                "purpose": "Texto ámbar en pantallas de éxito, IDs de orden." },
+      { "name": "focus-green",        "value": "0 0 0 3px rgba(57,255,20,0.12)",                                               "purpose": "Focus ring en inputs. Señal de accesibilidad, no decoración." },
+      { "name": "modal-backdrop",     "value": "rgba(0,0,0,0.75) + blur(6px)",                                                 "purpose": "Separación de capas para modales y sheets." }
+    ],
+    "motion": [
+      { "name": "fast",     "value": "0.18s ease",  "purpose": "Transiciones de estado inmediatas: hover, borde, color." },
+      { "name": "standard", "value": "0.35s ease",  "purpose": "Animaciones de componentes: modales, sheets, toasts." },
+      { "name": "slide-in", "value": "translateX(30px) → 0, opacity 0 → 1, 0.25s ease", "purpose": "Entrada de toasts." },
+      { "name": "slide-up", "value": "translateY(100%) → 0, 0.25s ease",               "purpose": "Entrada de mobile cart sheet y tracker." },
+      { "name": "scale-in", "value": "scale(0.96) → 1, opacity 0 → 1, 0.25s ease",    "purpose": "Entrada de modales." },
+      { "name": "spin",     "value": "rotate(360deg), 0.7s linear infinite",            "purpose": "Loading spinner." }
+    ],
+    "breakpoints": [
+      { "name": "mobile-cart", "value": "900px", "purpose": "Debajo: oculta cart panel desktop, muestra mobile cart bar fija." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal. Verde neón con glow. Lleva el peso visual de toda CTA.",
+      "html": "<button class=\"ds-btn-primary\">Enviar Pedido</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; font-family: 'Inter', sans-serif; background: #39FF14; color: #080808; border: none; cursor: pointer; box-shadow: 0 0 6px #39FF14, 0 0 14px rgba(57,255,20,0.4); transition: all 0.18s ease; white-space: nowrap; } .ds-btn-primary:hover { box-shadow: 0 0 8px #39FF14, 0 0 24px rgba(57,255,20,0.5), 0 0 48px rgba(57,255,20,0.2); transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(57,255,20,0.4); }"
+    },
+    {
+      "name": "Amber Button",
+      "kind": "button",
+      "refersTo": "button-amber",
+      "description": "Acciones de advertencia o contexto de orden en cocina.",
+      "html": "<button class=\"ds-btn-amber\">En Cocina</button>",
+      "css": ".ds-btn-amber { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; font-family: 'Inter', sans-serif; background: #FFB300; color: #080808; border: none; cursor: pointer; box-shadow: 0 0 6px #FFB300, 0 0 14px rgba(255,179,0,0.4); transition: all 0.18s ease; } .ds-btn-amber:hover { box-shadow: 0 0 8px #FFB300, 0 0 24px rgba(255,179,0,0.5); transform: translateY(-1px); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Acción secundaria. Sin background, borde translúcido. Hover revela acento verde.",
+      "html": "<button class=\"ds-btn-outline\">Cancelar</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; font-family: 'Inter', sans-serif; background: transparent; color: #F2ECD8; border: 1px solid rgba(255,255,255,0.12); cursor: pointer; transition: all 0.18s ease; } .ds-btn-outline:hover { border-color: #39FF14; color: #39FF14; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Contenedor estándar. Fondo elevado, borde translúcido, sin sombra en reposo.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Carne en Viste</h3><p class=\"ds-card-sub\">Almuerzos · $13,000</p></div>",
+      "css": ".ds-card { background: #1e1e1e; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; transition: border-color 0.18s ease; font-family: 'Inter', sans-serif; } .ds-card:hover { border-color: rgba(255,255,255,0.12); } .ds-card-title { font-size: 1.1rem; font-weight: 600; color: #F2ECD8; margin-bottom: 4px; } .ds-card-sub { font-size: 0.82rem; color: #9E9080; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de texto. Fondo surface-high, focus ring verde neón.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Buscar platillo...\">",
+      "css": ".ds-input { background: #252525; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 10px 14px; color: #F2ECD8; font-size: 0.9rem; font-family: 'Inter', sans-serif; width: 100%; transition: border-color 0.18s ease, box-shadow 0.18s ease; } .ds-input:focus { outline: none; border-color: #39FF14; box-shadow: 0 0 0 3px rgba(57,255,20,0.12); } .ds-input::placeholder { color: #5A5045; }"
+    },
+    {
+      "name": "Badge Green",
+      "kind": "chip",
+      "refersTo": "badge-green",
+      "description": "Indicador de estado positivo. Pill compacto, verde sobre verde oscuro.",
+      "html": "<span class=\"ds-badge-green\">Disponible</span>",
+      "css": ".ds-badge-green { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 100px; font-size: 0.75rem; font-weight: 600; font-family: 'Inter', sans-serif; background: rgba(57,255,20,0.12); color: #39FF14; border: 1px solid #1a7a09; }"
+    },
+    {
+      "name": "Badge Amber",
+      "kind": "chip",
+      "refersTo": "badge-amber",
+      "description": "Indicador de estado en progreso. Pill compacto, ámbar sobre ámbar oscuro.",
+      "html": "<span class=\"ds-badge-amber\">En Cocina</span>",
+      "css": ".ds-badge-amber { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 100px; font-size: 0.75rem; font-weight: 600; font-family: 'Inter', sans-serif; background: rgba(255,179,0,0.12); color: #FFB300; border: 1px solid #7a5500; }"
+    },
+    {
+      "name": "Category Tab",
+      "kind": "chip",
+      "description": "Filtro de categoría de menú. Semi-pill, activo con glow verde suave.",
+      "html": "<button class=\"ds-cat-tab ds-cat-tab--active\">🍖 Almuerzos</button>",
+      "css": ".ds-cat-tab { padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; font-family: 'Inter', sans-serif; background: #1e1e1e; color: #9E9080; border: 1px solid rgba(255,255,255,0.06); cursor: pointer; transition: all 0.18s ease; white-space: nowrap; } .ds-cat-tab:hover { background: #252525; color: #F2ECD8; border-color: rgba(255,255,255,0.12); } .ds-cat-tab--active { background: #0d3d05; color: #39FF14; border-color: #1a7a09; box-shadow: 0 0 10px rgba(57,255,20,0.12); }"
+    },
+    {
+      "name": "Toast — Success",
+      "kind": "custom",
+      "description": "Notificación flotante de éxito. Fondo oscuro verde, borde verde, glow suave.",
+      "html": "<div class=\"ds-toast-success\"><span>✓</span> Pedido enviado correctamente</div>",
+      "css": ".ds-toast-success { min-width: 280px; padding: 12px 18px; border-radius: 10px; font-size: 0.88rem; font-weight: 500; font-family: 'Inter', sans-serif; background: rgba(10,30,10,0.92); color: #39FF14; border: 1px solid #1a7a09; box-shadow: 0 0 6px #39FF14, 0 0 14px rgba(57,255,20,0.4); backdrop-filter: blur(12px); display: flex; align-items: center; gap: 10px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Rancho Encendido",
+    "overview": "Raíces auténticas de rancho cruzadas con energía neón. Lo que huele a fogata, se ve encendido. Este sistema no imita ningún referente extranjero de restaurante — es colombiano, local, y se ve mejor que cualquier cosa importada. El fondo es negro profundo porque el neón solo brilla en la oscuridad.\n\nLa densidad es media-alta: este es un sistema operativo, no una landing page. Los meseros, el personal de cocina y los administradores actúan bajo presión de tiempo real. Los clientes que escanean el QR entran a un flujo que debe funcionar en su primer intento, sin instrucciones.\n\nEste sistema rechaza explícitamente: la frialdad corporativa del fast food genérico, la fealdad tabular de los sistemas ERP heredados, la genericidad de las apps de delivery, y el minimalismo blanco que le roba identidad al negocio.",
+    "keyCharacteristics": [
+      "Fondo ultra-oscuro en 6 pasos (void → surface-top) como base tonal",
+      "Dos acentos neón (verde primario, ámbar secundario) con vocabulario de brillo",
+      "Tipografía dual: Rajdhani para jerarquía de datos, Inter para cuerpo operativo",
+      "Elevación a través de brillo neón en estado activo, no sombras tradicionales",
+      "Bordes translúcidos (rgba) como separadores que no pesan visualmente"
+    ],
+    "rules": [
+      { "name": "The Neon Earns Its Glow Rule",    "body": "El verde y el ámbar brillan solo en estados activos. El glow en reposo es permitido solo en botón primary y texto de marca. Si el glow aparece en más del 10% de los elementos simultáneamente, hay algo incorrecto.", "section": "colors" },
+      { "name": "The Rajdhani-Only-for-Data Rule",  "body": "Rajdhani aparece solo en display, números y datos de alta jerarquía. Inter lo reemplaza en cuanto el contenido necesita ser leído linealmente.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule",         "body": "Ningún elemento tiene box-shadow en reposo excepto el botón primary. El glow aparece como respuesta a estado — hover, focus, active — nunca decorativamente.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar #39FF14 exclusivamente para acciones primarias, estados activos y confirmaciones positivas",
+      "Do usar #FFB300 para estados en progreso, alertas no críticas y precios destacados",
+      "Do aplicar el glow como respuesta a estado. El glow en reposo solo para botón primary y texto de marca",
+      "Do usar la escala tonal de 6 fondos para crear profundidad sin sombras",
+      "Do mantener bordes como rgba(255,255,255,0.06) — translúcidos, no sólidos"
+    ],
+    "donts": [
+      "Don't usar fondos blancos o grises claros en ningún componente — dark-only sin excepción",
+      "Don't imitar el estilo frío y corporativo de apps de fast food (McDonald's, KFC)",
+      "Don't construir vistas con tablas grises sin jerarquía, como los sistemas ERP heredados",
+      "Don't replicar el look de Uber Eats o Rappi — este es un sistema de operación presencial",
+      "Don't agregar sombras ambient a cards o paneles — la profundidad es tonal, no de sombra",
+      "Don't poner más de dos acentos neón activos con glow intenso simultáneamente en pantalla",
+      "Don't usar border-radius 100px en botones — el pill es exclusivo de badges y category chips"
+    ]
+  }
+}
