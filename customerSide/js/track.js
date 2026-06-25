@@ -25,7 +25,7 @@ async function init() {
 
   const { data: order, error } = await supabase
     .from('orders')
-    .select('*, order_items(*)')
+    .select('*, order_items(*), drivers(full_name, phone)')
     .eq('id', orderId)
     .single()
 
@@ -51,6 +51,26 @@ function renderPage(order) {
   renderStatusBanner(order)
   renderItems(order)
   renderPayment(order)
+  renderDriverInfo(order)
+}
+
+async function renderDriverInfo(order) {
+  const card = document.getElementById('trackDriverCard')
+  if (order.order_type !== 'delivery' || !order.driver_id) { card.classList.add('hidden'); return }
+
+  let driver = order.drivers
+  if (!driver) {
+    const { data } = await supabase.from('drivers').select('full_name, phone').eq('id', order.driver_id).maybeSingle()
+    driver = data
+  }
+  if (!driver) { card.classList.add('hidden'); return }
+
+  card.classList.remove('hidden')
+  document.getElementById('trackDriverInfo').innerHTML = `
+    <div class="flex justify-between items-center">
+      <span style="font-weight:600">${driver.full_name}</span>
+      <a href="tel:${driver.phone}" class="btn btn-outline btn-sm">📞 ${driver.phone}</a>
+    </div>`
 }
 
 function renderStatusBanner(order) {
@@ -118,11 +138,12 @@ function subscribeRealtime(id) {
     .on('postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
       async (payload) => {
-        const updated = { ...currentOrder, ...payload.new }
+        const updated = { ...currentOrder, ...payload.new, drivers: null }
         currentOrder  = updated
 
         renderStatusBanner(updated)
         renderStepper(updated)
+        renderDriverInfo(updated)
 
         // Show a toast when status advances
         const steps   = updated.order_type === 'delivery' ? DELIVERY_STEPS : TAKEOUT_STEPS

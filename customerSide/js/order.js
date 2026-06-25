@@ -2,11 +2,11 @@ import { supabase, getCustomerSession, getProfile, calcTotals, fmt } from '../..
 import { toast } from './utils.js'
 import { getItemModifierGroups, openModifierModal, modifiersExtraPrice, modifiersSummary, buildLineKey } from '../../shared/modifier-modal.js'
 
-const DELIVERY_FEE = 3000   // COP — costo fijo de domicilio
-
 let menuItems    = []
 let categories   = []
 let cart         = []
+let zones        = []
+let selectedZone = null
 let orderType    = 'takeout'   // 'takeout' | 'delivery'
 let paymentMethod = 'cash'     // 'cash' | 'nequi'
 let userProfile  = null
@@ -21,11 +21,36 @@ async function init() {
     if (userProfile.phone)     document.getElementById('custPhone').value = userProfile.phone
   }
 
-  await loadMenu()
+  await Promise.all([loadMenu(), loadZones()])
   setupOrderTypeTabs()
   setupPaymentTabs()
   setupSearch()
+  setupZoneSelect()
   renderCart()
+}
+
+// ─── Delivery Zones ───────────────────────────────────────────────
+async function loadZones() {
+  const { data } = await supabase.from('delivery_zones').select('*').eq('active', true).order('display_order')
+  zones = data || []
+  const sel = document.getElementById('deliveryZone')
+  zones.forEach(z => {
+    const opt = document.createElement('option')
+    opt.value = z.id
+    opt.textContent = `${z.name} — ${fmt.currency(z.fee)}`
+    sel.appendChild(opt)
+  })
+}
+
+function setupZoneSelect() {
+  document.getElementById('deliveryZone').addEventListener('change', (e) => {
+    selectedZone = zones.find(z => z.id === e.target.value) || null
+    renderCart()
+  })
+}
+
+function currentDeliveryFee() {
+  return orderType === 'delivery' ? (selectedZone?.fee ?? 0) : 0
 }
 
 // ─── Load Menu ────────────────────────────────────────────────────
@@ -135,10 +160,11 @@ function setupOrderTypeTabs() {
 function updateFormForType() {
   const isDelivery = orderType === 'delivery'
   document.getElementById('formTitle').textContent        = isDelivery ? 'Datos de entrega' : 'Datos para recoger'
+  document.getElementById('zoneGroup').classList.toggle('hidden', !isDelivery)
   document.getElementById('addressGroup').classList.toggle('hidden', !isDelivery)
   document.getElementById('pickupTimeGroup').classList.toggle('hidden', isDelivery)
   document.getElementById('deliveryFeeRow').style.display = isDelivery ? '' : 'none'
-  document.getElementById('deliveryFee').textContent      = fmt.currency(DELIVERY_FEE)
+  document.getElementById('deliveryFee').textContent      = fmt.currency(currentDeliveryFee())
   updatePaymentNotice()
 }
 
@@ -211,10 +237,11 @@ function renderCart() {
 
   const subtotal    = cart.reduce((s, i) => s + i.price * i.qty, 0)
   const { tax, total } = calcTotals(subtotal)
-  const grandTotal  = total + (orderType === 'delivery' ? DELIVERY_FEE : 0)
+  const grandTotal  = total + currentDeliveryFee()
 
   document.getElementById('cartSubtotal').textContent = fmt.currency(subtotal)
   document.getElementById('cartTax').textContent      = fmt.currency(tax)
+  document.getElementById('deliveryFee').textContent  = fmt.currency(currentDeliveryFee())
   document.getElementById('cartTotal').textContent    = fmt.currency(grandTotal)
 }
 
@@ -243,6 +270,12 @@ async function placeOrder() {
     msgEl.classList.remove('hidden')
     return
   }
+  if (orderType === 'delivery' && !selectedZone) {
+    msgEl.textContent = 'Selecciona tu zona de entrega.'
+    msgEl.className   = 'alert alert-error'
+    msgEl.classList.remove('hidden')
+    return
+  }
 
   const btn = document.getElementById('placeOrderBtn')
   btn.disabled    = true
@@ -250,7 +283,8 @@ async function placeOrder() {
 
   const subtotal   = cart.reduce((s, i) => s + i.price * i.qty, 0)
   const { tax, total } = calcTotals(subtotal)
-  const grandTotal = total + (orderType === 'delivery' ? DELIVERY_FEE : 0)
+  const deliveryFee = currentDeliveryFee()
+  const grandTotal = total + deliveryFee
 
   const { data: order, error: orderErr } = await supabase
     .from('orders')
@@ -260,6 +294,8 @@ async function placeOrder() {
       delivery_name:    name,
       delivery_phone:   phone,
       delivery_address: orderType === 'delivery' ? address : null,
+      delivery_zone_id: orderType === 'delivery' ? selectedZone?.id ?? null : null,
+      delivery_fee:     deliveryFee,
       notes,
       status:           'open',
       delivery_status:  'pending',

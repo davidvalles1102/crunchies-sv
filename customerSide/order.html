@@ -116,7 +116,13 @@
           </select>
         </div>
 
-        <!-- Delivery address (delivery only) -->
+        <!-- Delivery zone + address (delivery only) -->
+        <div class="form-group hidden" id="zoneGroup">
+          <label class="form-label">Zona de entrega *</label>
+          <select id="deliveryZone" class="form-control">
+            <option value="">Selecciona tu zona...</option>
+          </select>
+        </div>
         <div class="form-group hidden" id="addressGroup">
           <label class="form-label">Dirección de entrega *</label>
           <textarea id="custAddress" class="form-control" rows="2" placeholder="Calle, número, colonia, referencias..."></textarea>

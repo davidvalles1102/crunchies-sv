@@ -46,6 +46,8 @@
         <button class="btn btn-outline btn-sm delivery-filter" data-filter="delivery">🛵 Domicilio</button>
         <button class="btn btn-outline btn-sm delivery-filter" data-filter="takeout">🥡 Para Llevar</button>
       </div>
+      <button class="btn btn-outline btn-sm" id="manageDriversBtn">🛵 Repartidores</button>
+      <button class="btn btn-outline btn-sm" id="manageZonesBtn">📍 Zonas</button>
     </div>
   </header>
 
@@ -92,6 +94,46 @@
     </div>
     <div class="modal-body" id="detailModalBody"></div>
     <div class="modal-footer" id="detailModalFooter"></div>
+  </div>
+</div>
+
+<!-- Drivers management modal -->
+<div class="modal-backdrop hidden" id="driversModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h3>Repartidores</h3>
+      <button class="modal-close" id="driversModalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="driversList" class="flex-col gap-8"></div>
+      <hr class="receipt__divider mt-16">
+      <h4 class="mt-16 mb-16">Nuevo repartidor</h4>
+      <form id="addDriverForm" class="flex gap-8">
+        <input type="text" id="newDriverName"  class="form-control" placeholder="Nombre" style="flex:1" required>
+        <input type="tel"  id="newDriverPhone" class="form-control" placeholder="Teléfono" style="flex:1" required>
+        <button type="submit" class="btn btn-primary btn-sm">+ Agregar</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delivery zones management modal -->
+<div class="modal-backdrop hidden" id="zonesModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3>Zonas de Entrega</h3>
+      <button class="modal-close" id="zonesModalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="zonesList" class="flex-col gap-8"></div>
+      <hr class="receipt__divider mt-16">
+      <h4 class="mt-16 mb-16">Nueva zona</h4>
+      <form id="addZoneForm" class="flex gap-8">
+        <input type="text"   id="newZoneName" class="form-control" placeholder="Nombre de la zona" style="flex:1" required>
+        <input type="number" id="newZoneFee"  class="form-control" placeholder="Tarifa $" step="0.01" min="0" style="width:110px" required>
+        <button type="submit" class="btn btn-primary btn-sm">+ Agregar</button>
+      </form>
+    </div>
   </div>
 </div>
 

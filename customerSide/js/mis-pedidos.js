@@ -42,7 +42,7 @@ async function searchOrders(phone) {
 
   const { data, error } = await supabase
     .from('orders')
-    .select('*, order_items(*)')
+    .select('*, order_items(*), drivers(full_name, phone)')
     .eq('delivery_phone', phone)
     .in('order_type', ['delivery', 'takeout'])
     .gte('created_at', since.toISOString())
@@ -104,6 +104,10 @@ function buildCard(order) {
       </div>
 
       <div class="mis-pedidos-card__items">${itemsText}</div>
+
+      ${isDelivery && isActive && order.drivers ? `
+        <div class="text-xs mt-8" style="color:var(--green)">🛵 ${order.drivers.full_name} — <a href="tel:${order.drivers.phone}" style="color:inherit">${order.drivers.phone}</a></div>
+      ` : ''}
 
       <div class="mis-pedidos-card__footer">
         <span class="text-xs text-muted">${fmt.datetime(order.created_at)}</span>

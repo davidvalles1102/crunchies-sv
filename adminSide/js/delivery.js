@@ -3,6 +3,8 @@ import { initAdminShell, toast } from './admin-auth.js'
 import { modifiersSummary } from '../../shared/modifier-modal.js'
 
 let allOrders  = []
+let drivers    = []
+let zones      = []
 let typeFilter = 'all'   // 'all' | 'delivery' | 'takeout'
 
 // Delivery status flow:
@@ -40,8 +42,156 @@ async function init() {
   document.getElementById('detailModalClose').addEventListener('click', () =>
     document.getElementById('orderDetailModal').classList.add('hidden'))
 
+  document.getElementById('manageDriversBtn').addEventListener('click', () => {
+    renderDriversList()
+    document.getElementById('driversModal').classList.remove('hidden')
+  })
+  document.getElementById('driversModalClose').addEventListener('click', () => document.getElementById('driversModal').classList.add('hidden'))
+  document.getElementById('addDriverForm').addEventListener('submit', addDriver)
+
+  document.getElementById('manageZonesBtn').addEventListener('click', () => {
+    renderZonesList()
+    document.getElementById('zonesModal').classList.remove('hidden')
+  })
+  document.getElementById('zonesModalClose').addEventListener('click', () => document.getElementById('zonesModal').classList.add('hidden'))
+  document.getElementById('addZoneForm').addEventListener('submit', addZone)
+
+  await Promise.all([loadDrivers(), loadZones()])
   await loadOrders()
   subscribeRealtime()
+}
+
+// ─── Drivers ────────────────────────────────────────────────────────
+async function loadDrivers() {
+  const { data } = await supabase.from('drivers').select('*').order('full_name')
+  drivers = data || []
+}
+
+function renderDriversList() {
+  const el = document.getElementById('driversList')
+  if (!drivers.length) {
+    el.innerHTML = '<p class="text-muted text-sm">Sin repartidores registrados.</p>'
+    return
+  }
+  el.innerHTML = drivers.map(d => {
+    const workload = allOrders.filter(o => o.driver_id === d.id && ['ready', 'on_the_way'].includes(o.delivery_status)).length
+    return `
+    <div class="card" style="padding:10px 14px">
+      <div class="flex justify-between items-center">
+        <div>
+          <strong>${d.full_name}</strong>
+          <span class="text-muted text-xs"> · 📞 ${d.phone}</span>
+          ${!d.active ? '<span class="badge badge-muted text-xs">Inactivo</span>' : ''}
+        </div>
+        <div class="flex gap-8 items-center">
+          ${workload > 0 ? `<span class="badge badge-amber text-xs">${workload} en ruta</span>` : ''}
+          <button class="btn btn-outline btn-sm" onclick="toggleDriverActive('${d.id}', ${!d.active})">${d.active ? 'Desactivar' : 'Activar'}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteDriver('${d.id}')">✕</button>
+        </div>
+      </div>
+    </div>`
+  }).join('')
+}
+
+async function addDriver(e) {
+  e.preventDefault()
+  const full_name = document.getElementById('newDriverName').value.trim()
+  const phone     = document.getElementById('newDriverPhone').value.trim()
+  if (!full_name || !phone) return
+
+  const { error } = await supabase.from('drivers').insert({ full_name, phone })
+  if (error) { toast('Error al agregar repartidor', 'error'); return }
+
+  toast('Repartidor agregado')
+  e.target.reset()
+  await loadDrivers()
+  renderDriversList()
+  renderBoard()
+}
+
+window.toggleDriverActive = async (id, newVal) => {
+  const { error } = await supabase.from('drivers').update({ active: newVal }).eq('id', id)
+  if (error) { toast('Error', 'error'); return }
+  await loadDrivers()
+  renderDriversList()
+  renderBoard()
+}
+
+window.deleteDriver = async (id) => {
+  if (!confirm('¿Eliminar este repartidor? Las órdenes asignadas quedarán sin repartidor.')) return
+  const { error } = await supabase.from('drivers').delete().eq('id', id)
+  if (error) { toast('Error al eliminar', 'error'); return }
+  toast('Repartidor eliminado')
+  await loadDrivers()
+  renderDriversList()
+  await loadOrders()
+}
+
+window.assignDriver = async (orderId, driverId) => {
+  const { error } = await supabase.from('orders').update({ driver_id: driverId || null }).eq('id', orderId)
+  if (error) { toast('Error al asignar repartidor', 'error'); return }
+  const driver = drivers.find(d => d.id === driverId)
+  toast(driverId ? `🛵 Asignado a ${driver?.full_name}` : 'Repartidor desasignado', 'success')
+  await loadOrders()
+}
+
+// ─── Delivery Zones ───────────────────────────────────────────────
+async function loadZones() {
+  const { data } = await supabase.from('delivery_zones').select('*').order('display_order')
+  zones = data || []
+}
+
+function renderZonesList() {
+  const el = document.getElementById('zonesList')
+  if (!zones.length) {
+    el.innerHTML = '<p class="text-muted text-sm">Sin zonas registradas. El costo de envío en el pedido web no se podrá calcular hasta crear al menos una.</p>'
+    return
+  }
+  el.innerHTML = zones.map(z => `
+    <div class="card" style="padding:10px 14px">
+      <div class="flex justify-between items-center">
+        <div>
+          <strong>${z.name}</strong>
+          <span class="neon-amber text-sm"> — ${fmt.currency(z.fee)}</span>
+          ${!z.active ? '<span class="badge badge-muted text-xs">Inactiva</span>' : ''}
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-outline btn-sm" onclick="toggleZoneActive('${z.id}', ${!z.active})">${z.active ? 'Desactivar' : 'Activar'}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteZone('${z.id}')">✕</button>
+        </div>
+      </div>
+    </div>`).join('')
+}
+
+async function addZone(e) {
+  e.preventDefault()
+  const name = document.getElementById('newZoneName').value.trim()
+  const fee  = parseFloat(document.getElementById('newZoneFee').value)
+  if (!name || isNaN(fee)) return
+
+  const { error } = await supabase.from('delivery_zones').insert({ name, fee, display_order: zones.length })
+  if (error) { toast('Error al agregar zona', 'error'); return }
+
+  toast('Zona agregada')
+  e.target.reset()
+  await loadZones()
+  renderZonesList()
+}
+
+window.toggleZoneActive = async (id, newVal) => {
+  const { error } = await supabase.from('delivery_zones').update({ active: newVal }).eq('id', id)
+  if (error) { toast('Error', 'error'); return }
+  await loadZones()
+  renderZonesList()
+}
+
+window.deleteZone = async (id) => {
+  if (!confirm('¿Eliminar esta zona de entrega?')) return
+  const { error } = await supabase.from('delivery_zones').delete().eq('id', id)
+  if (error) { toast('Error al eliminar', 'error'); return }
+  toast('Zona eliminada')
+  await loadZones()
+  renderZonesList()
 }
 
 // ─── Load ─────────────────────────────────────────────────────────
@@ -107,6 +257,11 @@ function renderBoard() {
       else advanceStatus(id, action)
     })
   })
+
+  board.querySelectorAll('.driver-select').forEach(sel => {
+    sel.addEventListener('click', (e) => e.stopPropagation())
+    sel.addEventListener('change', (e) => assignDriver(e.target.dataset.orderId, e.target.value))
+  })
 }
 
 function buildCard(order) {
@@ -141,6 +296,14 @@ function buildCard(order) {
         <div class="text-xs mt-4" style="color:${order.payment_method === 'nequi' ? 'var(--green)' : 'var(--text-muted)'}">
           ${order.payment_method === 'nequi' ? '📱 Nequi — verificar pago' : '💵 Efectivo'}
         </div>
+        ${isDelivery ? `
+          <div class="flex gap-8 items-center mt-8">
+            <span class="text-xs text-muted">🛵 Repartidor:</span>
+            <select class="form-control driver-select" data-order-id="${order.id}" style="flex:1;padding:4px 8px;font-size:.8rem">
+              <option value="">Sin asignar</option>
+              ${drivers.filter(d => d.active).map(d => `<option value="${d.id}" ${order.driver_id === d.id ? 'selected' : ''}>${d.full_name}</option>`).join('')}
+            </select>
+          </div>` : ''}
       </div>
 
       <div class="delivery-card__items">
@@ -212,6 +375,8 @@ function openDetail(id) {
               ${o.payment_method === 'nequi' ? '📱 Nequi' : '💵 Efectivo'}
             </span>
           </div>
+          ${isDelivery ? `<div class="flex justify-between"><span class="text-muted">Repartidor</span><span>${drivers.find(d => d.id === o.driver_id)?.full_name ?? 'Sin asignar'}</span></div>` : ''}
+          ${o.delivery_fee > 0 ? `<div class="flex justify-between"><span class="text-muted">Costo de envío</span><span>${fmt.currency(o.delivery_fee)}</span></div>` : ''}
         </div>
       </div>
       <div class="card">

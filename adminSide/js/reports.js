@@ -42,6 +42,7 @@ async function loadAll() {
   ])
 
   renderKPIs(orders, payments, expenses)
+  renderDeliveryTimeKPI(orders)
   renderDailySalesChart(orders)
   renderPaymentPieChart(payments, orders)
   renderCategoryChart(orderItems)
@@ -72,6 +73,21 @@ function renderKPIs(orders, payments, expenses) {
   netEl.textContent = fmt.currency(netProfit)
   netEl.classList.toggle('text-danger', netProfit < 0)
   netEl.classList.toggle('neon-green', netProfit >= 0)
+}
+
+function renderDeliveryTimeKPI(orders) {
+  const avgMinutes = (type) => {
+    const completed = orders?.filter(o => o.order_type === type && o.status === 'delivered') ?? []
+    if (!completed.length) return null
+    const totalMin = completed.reduce((s, o) => s + (new Date(o.updated_at) - new Date(o.created_at)) / 60000, 0)
+    return Math.round(totalMin / completed.length)
+  }
+
+  const deliveryAvg = avgMinutes('delivery')
+  const takeoutAvg  = avgMinutes('takeout')
+
+  document.getElementById('rAvgDeliveryTime').textContent = deliveryAvg === null ? '—' : `${deliveryAvg} min`
+  document.getElementById('rAvgTakeoutTime').textContent  = takeoutAvg  === null ? '—' : `${takeoutAvg} min`
 }
 
 function renderDailySalesChart(orders) {
