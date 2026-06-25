@@ -2,7 +2,7 @@ import { supabase } from '../../shared/supabase-client.js'
 import { initAdminShell, toast } from './admin-auth.js'
 
 let tables   = []
-let activeQR = null
+let activeQR = null   // { type: 'table'|'menu', id, number }
 
 const STATUS_LABEL = { available: 'Disponible', occupied: 'Ocupada', reserved: 'Reservada', maintenance: 'Mantenimiento' }
 const STATUS_BADGE = { available: 'badge-green', occupied: 'badge-danger', reserved: 'badge-amber', maintenance: 'badge-muted' }
@@ -12,6 +12,7 @@ async function init() {
   if (!ctx) return
   await loadTables()
   setupModal()
+  document.getElementById('showMenuQrBtn').addEventListener('click', showMenuQR)
 }
 
 async function loadTables() {
@@ -57,19 +58,12 @@ function setupModal() {
     if (!canvas) return
     const a = document.createElement('a')
     a.href = canvas.toDataURL('image/png')
-    a.download = `mesa-${activeQR.number}-qr.png`
+    a.download = activeQR.type === 'menu' ? 'menu-vitrina-qr.png' : `mesa-${activeQR.number}-qr.png`
     a.click()
   })
 }
 
-window.showQR = (id, number) => {
-  activeQR = { id, number }
-  const url = `${location.origin}/customerSide/table-order.html?table=${id}`
-
-  document.getElementById('qrModalTitle').textContent = `QR — Mesa ${number}`
-  document.getElementById('qrUrl').textContent = url
-  document.getElementById('qrModal').classList.remove('hidden')
-
+function renderQR(url) {
   const container = document.getElementById('qrContainer')
   container.innerHTML = ''
   new QRCode(container, {
@@ -80,6 +74,29 @@ window.showQR = (id, number) => {
     colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.H
   })
+}
+
+window.showQR = (id, number) => {
+  activeQR = { type: 'table', id, number }
+  const url = `${location.origin}/customerSide/table-order.html?table=${id}`
+
+  document.getElementById('qrModalTitle').textContent = `QR — Mesa ${number}`
+  document.getElementById('qrModalSubtitle').classList.add('hidden')
+  document.getElementById('qrUrl').textContent = url
+  document.getElementById('qrModal').classList.remove('hidden')
+  renderQR(url)
+}
+
+window.showMenuQR = () => {
+  activeQR = { type: 'menu' }
+  const url = `${location.origin}/customerSide/index.html`
+
+  document.getElementById('qrModalTitle').textContent = '📋 QR — Menú (Vitrina)'
+  document.getElementById('qrModalSubtitle').textContent = 'Solo para ver el menú — sin carrito ni pedido. Ideal para vitrina, redes sociales o publicidad.'
+  document.getElementById('qrModalSubtitle').classList.remove('hidden')
+  document.getElementById('qrUrl').textContent = url
+  document.getElementById('qrModal').classList.remove('hidden')
+  renderQR(url)
 }
 
 window.releaseTable = async (id, number) => {
