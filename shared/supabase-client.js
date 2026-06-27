@@ -2,8 +2,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 // ─── Replace these values with your Supabase project credentials ───────────
 // Supabase → Project Settings → API
-const SUPABASE_URL  = 'https://gnjwwhuuzwcxcuqzevyn.supabase.co'
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imduand3aHV1endjeGN1cXpldnluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1MjI1NDksImV4cCI6MjA5ODA5ODU0OX0.UEFxh2pz36s9VsXzZf--DdWaDQTyLGqAfVko87fgH6w'
+const SUPABASE_URL  = 'https://hrzlidatjxzgmxvbscgd.supabase.co'
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyemxpZGF0anh6Z214dmJzY2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyODYyMjQsImV4cCI6MjA5Mzg2MjIyNH0.pKOQ8SLZfR0Lc2vTE05sxs2AWOebq7cY6Zc_ZXNHmMc'
 // ───────────────────────────────────────────────────────────────────────────
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON)
