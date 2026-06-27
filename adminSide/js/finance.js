@@ -28,7 +28,7 @@ const SEED_ITEMS = [
 
 let plChart, pieChart
 let days = 30
-let _payments = [], _expenses = [], _items = []
+let _orders = [], _expenses = [], _items = []
 let _usingDemo = false
 
 // ── Deterministic demo data (no DB needed) ─────────────────────────────────
@@ -39,7 +39,7 @@ function buildStaticDemo() {
   const ri   = (lo, hi) => Math.floor(rng() * (hi - lo + 1)) + lo
   const pick = ()       => SEED_ITEMS[Math.floor(rng() * SEED_ITEMS.length)]
 
-  const payments = [], expenses = [], items = []
+  const orders = [], expenses = [], items = []
 
   for (let d = 0; d < 30; d++) {
     const base = new Date()
@@ -60,9 +60,7 @@ function buildStaticDemo() {
         total += item.price * qty
         items.push({ item_name: item.name, item_price: item.price, quantity: qty, created_at: created })
       }
-      const r = rng()
-      payments.push({ amount: total, created_at: created,
-        method: r < 0.75 ? 'cash' : r < 0.95 ? 'card' : 'transfer' })
+      orders.push({ total, created_at: created })
     }
 
     expenses.push({ expense_date: dateStr, category: 'insumos', amount: ri(50,80) })
@@ -74,7 +72,7 @@ function buildStaticDemo() {
     if (rng() < 0.3)         expenses.push({ expense_date: dateStr, category: 'transporte',    amount: ri(15,30) })
   }
 
-  return { payments, expenses, items }
+  return { orders, expenses, items }
 }
 
 async function init() {
@@ -94,27 +92,31 @@ async function loadAll() {
   const since = new Date(Date.now() - days * 86400_000).toISOString().split('T')[0]
 
   const [
-    { data: payments, error: errP },
+    // Ingresos reales = total de la orden, no solo lo que pasó por `payments`
+    // (domicilio/llevar se cobran en efectivo/Nequi fuera del sistema y NUNCA
+    // generan fila en `payments` — usar esa tabla aquí subestimaría ingresos)
+    { data: orders,   error: errO },
     { data: expenses, error: errE },
     { data: items,    error: errI }
   ] = await Promise.all([
-    supabase.from('payments').select('amount, method, created_at').gte('created_at', since + 'T00:00:00'),
+    supabase.from('orders').select('total, created_at, order_type')
+      .in('status', ['paid', 'delivered']).gte('created_at', since + 'T00:00:00'),
     supabase.from('expenses').select('*').gte('expense_date', since).order('expense_date'),
     supabase.from('order_items').select('item_name, item_price, quantity').gte('created_at', since + 'T00:00:00')
   ])
 
   const expensesMissing = errE && errE.code === '42P01'
   if (expensesMissing) showExpensesSetup()
-  if (errP) toast('Error al cargar pagos', 'error')
+  if (errO) toast('Error al cargar órdenes', 'error')
 
-  const realPayments  = payments  || []
+  const realOrders    = orders    || []
   const realExpenses  = expensesMissing ? [] : (expenses || [])
   const realItems     = items     || []
-  const hasRealData   = realPayments.length > 0 || realExpenses.length > 0
+  const hasRealData   = realOrders.length > 0 || realExpenses.length > 0
 
   if (hasRealData) {
     _usingDemo = false
-    _payments  = realPayments
+    _orders    = realOrders
     _expenses  = realExpenses
     _items     = realItems
     hideSeedBanner()
@@ -122,7 +124,7 @@ async function loadAll() {
     // No DB data — render from static demo so charts are always populated
     _usingDemo = true
     const demo = buildStaticDemo()
-    _payments  = demo.payments
+    _orders    = demo.orders
     _expenses  = demo.expenses
     _items     = demo.items
     showSeedBanner()
@@ -178,6 +180,14 @@ function hideSeedBanner() {
 // ── Seed runner ────────────────────────────────────────────────────────────
 
 async function runSeed() {
+  const ok = confirm(
+    '⚠️ Esto va a INSERTAR 30 días de órdenes, items, pagos y gastos ficticios ' +
+    'directamente en tu base de datos real (no es una simulación).\n\n' +
+    'Úsalo solo para poblar un ambiente de pruebas — no lo hagas en producción ' +
+    'con clientes reales.\n\n¿Continuar?'
+  )
+  if (!ok) return
+
   document.getElementById('_seedBtn').disabled = true
   document.getElementById('_seedProgress').style.display = 'block'
   const bar = document.getElementById('_seedBar')
@@ -243,19 +253,19 @@ async function runSeed() {
 // ── Render functions ───────────────────────────────────────────────────────
 
 function renderKPIs() {
-  const revenue  = _payments.reduce((s, p) => s + +p.amount, 0)
+  const revenue  = _orders.reduce((s, o) => s + +o.total, 0)
   const expenses = _expenses.reduce((s, e) => s + +e.amount, 0)
   const profit   = revenue - expenses
   const margin   = revenue > 0 ? (profit / revenue * 100) : 0
 
   document.getElementById('kpiRevenue').textContent      = fmt.currency(revenue)
-  document.getElementById('kpiOrders').textContent       = `${_payments.length} transacciones`
+  document.getElementById('kpiOrders').textContent       = `${_orders.length} órdenes`
   document.getElementById('kpiExpenses').textContent     = fmt.currency(expenses)
   document.getElementById('kpiExpenseCount').textContent = `${_expenses.length} registros`
   document.getElementById('kpiProfit').textContent       = fmt.currency(profit)
   document.getElementById('kpiMargin').textContent       = margin.toFixed(1) + '%'
   document.getElementById('kpiMarginSub').textContent    = profit >= 0 ? 'Período rentable' : 'Período en pérdida'
-  document.getElementById('kpiAvgTicket').textContent    = fmt.currency(_payments.length ? revenue / _payments.length : 0)
+  document.getElementById('kpiAvgTicket').textContent    = fmt.currency(_orders.length ? revenue / _orders.length : 0)
 
   document.getElementById('kpiProfit').style.color = profit >= 0 ? 'var(--green)' : 'var(--danger)'
   const card = document.getElementById('kpiProfitCard')
@@ -265,7 +275,7 @@ function renderKPIs() {
 
 function renderPLChart() {
   const revByDay = {}, expByDay = {}
-  _payments.forEach(p => { const d = p.created_at.slice(0,10); revByDay[d] = (revByDay[d]||0) + +p.amount })
+  _orders.forEach(o => { const d = o.created_at.slice(0,10); revByDay[d] = (revByDay[d]||0) + +o.total })
   _expenses.forEach(e => { const d = e.expense_date; expByDay[d] = (expByDay[d]||0) + +e.amount })
   const allDays = [...new Set([...Object.keys(revByDay), ...Object.keys(expByDay)])].sort()
 
@@ -321,7 +331,7 @@ function renderTopProducts() {
 
 function renderEDC() {
   const revByDay = {}, expByDay = {}
-  _payments.forEach(p => { const d = p.created_at.slice(0,10); revByDay[d] = (revByDay[d]||0) + +p.amount })
+  _orders.forEach(o => { const d = o.created_at.slice(0,10); revByDay[d] = (revByDay[d]||0) + +o.total })
   _expenses.forEach(e => { const d = e.expense_date; expByDay[d] = (expByDay[d]||0) + +e.amount })
   const allDays = [...new Set([...Object.keys(revByDay), ...Object.keys(expByDay)])].sort()
   const tbody = document.getElementById('edcTableBody')
@@ -342,7 +352,7 @@ function renderEDC() {
 
 function exportEDC() {
   const revByDay = {}, expByDay = {}
-  _payments.forEach(p => { const d = p.created_at.slice(0,10); revByDay[d] = (revByDay[d]||0) + +p.amount })
+  _orders.forEach(o => { const d = o.created_at.slice(0,10); revByDay[d] = (revByDay[d]||0) + +o.total })
   _expenses.forEach(e => { const d = e.expense_date; expByDay[d] = (expByDay[d]||0) + +e.amount })
   const allDays = [...new Set([...Object.keys(revByDay), ...Object.keys(expByDay)])].sort()
   let balance = 0
