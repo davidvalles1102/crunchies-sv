@@ -112,6 +112,19 @@ export type Expense = {
   profiles: { full_name: string | null } | null
 }
 
+export type Reservation = {
+  id: string
+  reservation_date: string
+  reservation_time: string
+  party_size: number
+  notes: string | null
+  status: 'pending' | 'confirmed' | 'seated' | 'cancelled' | 'no_show'
+  table_id: string | null
+  created_at: string
+  profiles: { full_name: string | null; phone: string | null; loyalty_points: number } | null
+  restaurant_tables: { number: number; location: string; capacity: number } | null
+}
+
 export type KitchenOrderItem = {
   id: string
   item_name: string
