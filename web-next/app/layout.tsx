@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bangers, Poppins } from "next/font/google";
 import "./styles/design-system.css";
 import "./styles/customer.css";
+import ToastProvider from "./components/ToastProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -19,7 +20,10 @@ const bangers = Bangers({
 });
 
 export const metadata: Metadata = {
-  title: "Crunchies — Menú",
+  title: {
+    template: "%s — Crunchies",
+    default: "Crunchies",
+  },
 };
 
 export default function RootLayout({
@@ -29,7 +33,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${poppins.variable} ${bangers.variable}`}>
-      <body>{children}</body>
+      <body>
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }

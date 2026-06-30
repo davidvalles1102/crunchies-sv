@@ -1,9 +1,11 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import NavBar from './components/NavBar'
 import MenuSection from './components/MenuSection'
 import type { Category, MenuItem } from '@/lib/types'
 
+export const metadata: Metadata = { title: 'Menú' }
 export const revalidate = 0
 
 export default async function HomePage() {
