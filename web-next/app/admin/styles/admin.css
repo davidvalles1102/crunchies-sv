@@ -306,6 +306,21 @@
 .ticket-table  { font-family: var(--font-d); font-size: 1.15rem; font-weight: 400; letter-spacing: .06em; color: var(--green); }
 .ticket-waiter { }
 
+.order-status-banner {
+  margin: 0 16px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  font-size: .82rem;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: .02em;
+  flex-shrink: 0;
+}
+.order-status-banner.status--kitchen { background: rgba(255,180,0,.12); color: var(--amber); border: 1px solid var(--amber-dim); }
+.order-status-banner.status--ready { background: var(--green-alpha); color: var(--green); border: 1px solid var(--green-dim); animation: pulse-banner 2s ease-in-out infinite; }
+.order-status-banner.status--delivered { background: var(--bg-2); color: var(--text-muted); border: 1px solid var(--border); }
+@keyframes pulse-banner { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+
 .ticket-items {
   flex: 1;
   overflow-y: auto;

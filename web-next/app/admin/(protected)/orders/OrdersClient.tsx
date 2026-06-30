@@ -16,6 +16,12 @@ import type { TicketItem, CurrentOrder, ReceiptData } from './types'
 const POINT_VALUE = 0.01
 const MAX_REDEEM_PERCENT = 0.5
 
+const ORDER_STATUS_BANNER: Record<string, { text: string; cls: string }> = {
+  in_kitchen: { text: '🟡 EN COCINA — preparando...', cls: 'status--kitchen' },
+  ready: { text: '✅ LISTA — llevar a la mesa', cls: 'status--ready' },
+  delivered: { text: '🍽️ ENTREGADA', cls: 'status--delivered' },
+}
+
 type OrderType = 'dine_in' | 'takeout' | 'delivery'
 
 type RawOrderItemModifier = { option_name: string; price_delta: number }
@@ -104,6 +110,24 @@ export default function OrdersClient() {
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    const orderId = currentOrder?.id
+    if (!orderId) return undefined
+
+    const channel = supabase
+      .channel(`pos-order-${orderId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` }, (payload) => {
+        const newStatus = (payload.new as { status?: string })?.status
+        if (!newStatus) return
+        setCurrentOrder((prev) => (prev && prev.id === orderId ? { ...prev, status: newStatus } : prev))
+        if (newStatus === 'ready') toast('✅ ¡Orden lista! Llevar a la mesa', 'success')
+      })
+      .subscribe()
+
+    return () => { channel.unsubscribe() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrder?.id])
 
   const switchOrderType = (type: OrderType) => {
     setOrderType(type)
@@ -488,6 +512,12 @@ export default function OrdersClient() {
             </div>
             <div className="ticket-order-id text-xs text-muted">{currentOrder ? `#${currentOrder.id.slice(0, 8)}` : ''}</div>
           </div>
+
+          {currentOrder && ORDER_STATUS_BANNER[currentOrder.status] && (
+            <div className={`order-status-banner ${ORDER_STATUS_BANNER[currentOrder.status].cls}`}>
+              {ORDER_STATUS_BANNER[currentOrder.status].text}
+            </div>
+          )}
 
           {orderType !== 'dine_in' && (
             <div className="pos-customer-fields">

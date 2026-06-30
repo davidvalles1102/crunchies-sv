@@ -39,7 +39,7 @@ export default function KitchenClient() {
   async function loadOrders() {
     const { data, error } = await supabase
       .from('orders')
-      .select('*, restaurant_tables(number), order_items(*)')
+      .select('*, restaurant_tables(number), order_items(*, order_item_modifiers(*))')
       .in('status', ['in_kitchen', 'ready'])
       .order('created_at')
 
