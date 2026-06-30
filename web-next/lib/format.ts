@@ -1,3 +1,11 @@
+export const TAX_RATE = 0.08 // 8% IVA Colombia — restaurantes y bares
+
+export function calcTotals(subtotal: number) {
+  const tax = Math.round(subtotal * TAX_RATE)
+  const total = Math.round(subtotal + tax)
+  return { subtotal: Math.round(subtotal), tax, total }
+}
+
 export const fmt = {
   currency: (n: number) => '$ ' + Math.round(+(n ?? 0)).toLocaleString('es-CO'),
   date: (d: string) => {

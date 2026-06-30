@@ -25,3 +25,39 @@ export type Profile = {
   role: string
   loyalty_points: number
 }
+
+export type ModifierOption = {
+  id: string
+  name: string
+  price_delta: number
+  is_default: boolean
+  display_order: number
+}
+
+export type ModifierGroup = {
+  id: string
+  name: string
+  selection_type: 'single' | 'multiple'
+  required: boolean
+  max_select: number | null
+  modifier_options: ModifierOption[]
+}
+
+export type DeliveryZone = {
+  id: string
+  name: string
+  fee: number
+  active: boolean
+  display_order: number
+}
+
+export type OrderMenuItem = {
+  id: string
+  category_id: string | null
+  name: string
+  description: string | null
+  price: number
+  image_url: string | null
+  available: boolean
+  categories: { name: string; icon: string | null } | null
+}
