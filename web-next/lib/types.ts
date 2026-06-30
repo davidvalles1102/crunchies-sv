@@ -111,3 +111,23 @@ export type Expense = {
   registered_by: string
   profiles: { full_name: string | null } | null
 }
+
+export type KitchenOrderItem = {
+  id: string
+  item_name: string
+  quantity: number
+  notes: string | null
+  order_item_modifiers?: OrderItemModifier[]
+}
+
+export type KitchenOrder = {
+  id: string
+  status: 'in_kitchen' | 'ready' | 'delivered'
+  order_type: 'dine_in' | 'takeout' | 'delivery'
+  delivery_name: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  restaurant_tables: { number: number } | null
+  order_items: KitchenOrderItem[]
+}
