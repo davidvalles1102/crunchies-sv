@@ -8,7 +8,7 @@ import Topbar from '../../components/Topbar'
 import LiveClock from '../../components/LiveClock'
 import { useToast } from '../../../components/ToastProvider'
 import type { RestaurantTable } from '@/lib/types'
-import './tables.css'
+import styles from './tables.module.css'
 
 const STATUS_LABEL: Record<string, string> = { available: 'Disponible', occupied: 'Ocupada', reserved: 'Reservada', maintenance: 'Mantenimiento' }
 const STATUS_BADGE: Record<string, string> = { available: 'badge-green', occupied: 'badge-danger', reserved: 'badge-amber', maintenance: 'badge-muted' }
@@ -95,18 +95,18 @@ export default function TablesClient() {
       </Topbar>
 
       <div className="admin-content">
-        <div className="tables-grid">
+        <div className={styles['tables-grid']}>
           {tables.length === 0 ? (
             <p className="text-muted">No hay mesas registradas en la base de datos.</p>
           ) : (
             tables.map((t) => (
-              <div key={t.id} className={`tbl-card tbl-card--${t.status}`}>
-                <div className="tbl-card__top">
-                  <div className="tbl-card__num">Mesa {t.number}</div>
+              <div key={t.id} className={`${styles['tbl-card']} ${styles[`tbl-card--${t.status}`] ?? ''}`}>
+                <div className={styles['tbl-card__top']}>
+                  <div className={styles['tbl-card__num']}>Mesa {t.number}</div>
                   <span className={`badge ${STATUS_BADGE[t.status] ?? 'badge-muted'}`}>{STATUS_LABEL[t.status] ?? t.status}</span>
                 </div>
-                <div className="tbl-card__meta">📍 {t.location} &nbsp;·&nbsp; 👤 {t.capacity} personas</div>
-                <div className="tbl-card__actions">
+                <div className={styles['tbl-card__meta']}>📍 {t.location} &nbsp;·&nbsp; 👤 {t.capacity} personas</div>
+                <div className={styles['tbl-card__actions']}>
                   <button className="btn btn-primary btn-sm" onClick={() => showQR(t)}>📱 Ver QR</button>
                   {t.status === 'occupied' ? (
                     <button className="btn btn-danger btn-sm" onClick={() => releaseTable(t)}>🔓 Liberar</button>
@@ -128,14 +128,14 @@ export default function TablesClient() {
             <h3>{activeQR?.type === 'menu' ? '📋 QR — Menú (Vitrina)' : `QR — Mesa ${activeQR?.type === 'table' ? activeQR.number : ''}`}</h3>
             <button className="modal-close" onClick={closeModal}>✕</button>
           </div>
-          <div className="modal-body qr-body">
+          <div className={`modal-body ${styles['qr-body']}`}>
             {activeQR?.type === 'menu' && (
               <p className="text-muted text-sm">Solo para ver el menú — sin carrito ni pedido. Ideal para vitrina, redes sociales o publicidad.</p>
             )}
             <div style={{ borderRadius: 'var(--r-md)', overflow: 'hidden', border: '6px solid #fff', display: 'inline-block', background: '#fff', width: 256, height: 256 }}>
               <canvas ref={canvasRef} width={256} height={256}></canvas>
             </div>
-            <p className="qr-url">{qrUrl}</p>
+            <p className={styles['qr-url']}>{qrUrl}</p>
             <button className="btn btn-primary btn-full" onClick={downloadQr}>⬇ Descargar PNG</button>
           </div>
         </div>

@@ -178,7 +178,7 @@ Todas las tablas tienen RLS activa:
 - `categories` / `menu_items`: lectura pública (`anon`); escritura solo `admin`.
 - `expenses`, `drivers`, `delivery_zones`: solo `admin`.
 
-Los scripts de cada cambio de schema están en `supabase/*.sql` — se ejecutan manualmente desde el SQL Editor de Supabase (no hay migraciones automatizadas).
+Los scripts de cada cambio de schema están organizados en `supabase/` (`schema/`, `migrations/`, `seed/`, `menu/` — ver [`supabase/README.md`](supabase/README.md)) y se ejecutan manualmente desde el SQL Editor de Supabase (no hay migraciones automatizadas).
 
 ---
 
@@ -197,7 +197,7 @@ El guard vive en `app/admin/AdminContext.tsx` vía `useRequireRole(rolesPermitid
 
 ## Menú y Precios
 
-El menú se maneja **en dólares (USD), con centavos reales** (no redondeado) — ver `lib/format.ts` (`fmt.currency`, `calcTotals`). Categorías actuales: Burgers, Alitas y Chunks (4 tamaños cada uno), Papas, Combos. El script de referencia para reemplazar el menú está en `supabase/reset_menu_crunchies.sql`.
+El menú se maneja **en dólares (USD), con centavos reales** (no redondeado) — ver `lib/format.ts` (`fmt.currency`, `calcTotals`). Categorías actuales: Burgers, Alitas y Chunks (4 tamaños cada uno), Papas, Combos. El script de referencia para reemplazar el menú está en `supabase/menu/reset_menu_crunchies.sql`.
 
 Las imágenes del menú se sirven localmente desde `web-next/public/menu/` (no desde URLs externas).
 
@@ -222,7 +222,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
 
 ### 2. Base de datos
 
-En Supabase → **SQL Editor**, ejecuta en orden: `supabase/schema.sql`, `supabase/modifiers_schema.sql`, `supabase/delivery_management_schema.sql`, `supabase/expenses_create.sql`, `supabase/anon_ordering_rls.sql`, `supabase/enable_realtime.sql`, y el resto de scripts según necesidad (ver cada archivo en `supabase/`).
+En Supabase → **SQL Editor**, sigue el orden documentado en [`supabase/README.md`](supabase/README.md): primero `schema/`, luego `migrations/`, luego `menu/reset_menu_crunchies.sql`, y opcionalmente `seed/`.
 
 ### 3. Cuentas de personal
 
@@ -301,4 +301,4 @@ Tipografía: **Bangers** (display, marca, mesas en cocina) + **Poppins** (todo e
 | Pedido por QR de mesa | `web-next/app/table-order/TableOrderClient.tsx` |
 | Generación de QR | `web-next/app/admin/(protected)/tables/TablesClient.tsx` |
 | Guard de autenticación admin | `web-next/app/admin/AdminContext.tsx` — `useRequireRole()` |
-| Schema de la base de datos | `supabase/schema.sql` y demás `supabase/*.sql` |
+| Schema de la base de datos | `supabase/schema/schema.sql` y demás `supabase/` (ver `supabase/README.md`) |

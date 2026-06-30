@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import NavBar from '../components/NavBar'
 import TrackClient from './TrackClient'
+import styles from './track.module.css'
 
 export const metadata: Metadata = { title: 'Seguimiento de Pedido' }
 
@@ -10,7 +11,7 @@ export default function TrackPage() {
     <>
       <NavBar />
 
-      <div className="track-layout">
+      <div className={styles['track-layout']}>
         <Suspense fallback={null}>
           <TrackClient />
         </Suspense>

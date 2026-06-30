@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { useToast } from '../components/ToastProvider'
-import './track.css'
+import styles from './track.module.css'
 
 type TrackOrder = {
   id: string
@@ -121,37 +121,37 @@ export default function TrackClient() {
 
   return (
     <div>
-      <div className="track-header">
+      <div className={styles['track-header']}>
         <div>
           <p className="text-muted text-sm" style={{ marginBottom: 4 }}>Seguimiento de pedido</p>
-          <h2 className="track-order-id">Pedido <span className="neon-green">#{order.id.slice(0, 8).toUpperCase()}</span></h2>
+          <h2 className={styles['track-order-id']}>Pedido <span className="neon-green">#{order.id.slice(0, 8).toUpperCase()}</span></h2>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span className="track-type-badge">{isDelivery ? '🛵 Domicilio' : '🥡 Para Llevar'}</span>
-          <div className="track-live">
-            <div className="track-live-dot"></div>
+          <span className={styles['track-type-badge']}>{isDelivery ? '🛵 Domicilio' : '🥡 Para Llevar'}</span>
+          <div className={styles['track-live']}>
+            <div className={styles['track-live-dot']}></div>
             <span>En vivo</span>
           </div>
         </div>
       </div>
 
-      <div className="track-status-banner" style={{ borderColor: bannerBorder, background: bannerBg }}>
-        <span className="track-status-icon">{currentStep.icon}</span>
+      <div className={styles['track-status-banner']} style={{ borderColor: bannerBorder, background: bannerBg }}>
+        <span className={styles['track-status-icon']}>{currentStep.icon}</span>
         <div>
-          <div className="track-status-label">{currentStep.label}</div>
-          <div className="track-status-desc text-muted text-sm">{currentStep.desc}</div>
+          <div className={styles['track-status-label']}>{currentStep.label}</div>
+          <div className="text-muted text-sm">{currentStep.desc}</div>
         </div>
       </div>
 
-      <div className="track-stepper">
+      <div className={styles['track-stepper']}>
         {steps.map((step) => {
           const stepIdx = STATUS_ORDER.indexOf(step.key)
           const done = stepIdx < currentIdx
           const active = step.key === status
           return (
-            <div key={step.key} className={`track-step${done ? ' done' : active ? ' active' : ''}`}>
-              <div className="track-step__circle">{done ? '✓' : step.icon}</div>
-              <div className="track-step__label">{step.label}</div>
+            <div key={step.key} className={`${styles['track-step']}${done ? ` ${styles.done}` : active ? ` ${styles.active}` : ''}`}>
+              <div className={styles['track-step__circle']}>{done ? '✓' : step.icon}</div>
+              <div className={styles['track-step__label']}>{step.label}</div>
             </div>
           )
         })}
@@ -167,7 +167,7 @@ export default function TrackClient() {
         </div>
       )}
 
-      <div className="track-detail-grid">
+      <div className={styles['track-detail-grid']}>
         <div className="card">
           <h4 className="mb-12">Tu Pedido</h4>
           <div className="flex-col gap-6">
@@ -178,7 +178,7 @@ export default function TrackClient() {
               </div>
             ))}
           </div>
-          <div className="track-total-row">
+          <div className={styles['track-total-row']}>
             <span className="text-muted">Total</span>
             <span className="neon-amber" style={{ fontSize: '1.1rem' }}>{fmt.currency(order.total)}</span>
           </div>
@@ -189,7 +189,7 @@ export default function TrackClient() {
           {isNequi ? (
             <div>
               <div style={{ color: 'var(--green)', fontWeight: 600, marginBottom: 6 }}>📱 Nequi</div>
-              <div className="track-nequi-number">312 828 2045</div>
+              <div className={styles['track-nequi-number']}>312 828 2045</div>
               <p className="text-xs text-muted">Recuerda transferir {fmt.currency(order.total)} si aún no lo has hecho.</p>
             </div>
           ) : (
