@@ -2,7 +2,7 @@
 
 Restaurante de pollo, alitas y chunks. Este repositorio contiene el sistema completo: punto de venta (POS) para el personal, panel de cocina en tiempo real, y sitio web para clientes con pedidos en línea, delivery y pedido por QR desde la mesa.
 
-> **Nota:** este proyecto fue migrado de un sitio estático en HTML/Vanilla JS a **Next.js**. El código vigente vive en [`web-next/`](web-next/). Las carpetas `adminSide/` y `customerSide/` en la raíz son la versión anterior, ya deprecada — se conservan solo como referencia histórica y no reciben cambios nuevos.
+> **Nota:** este proyecto fue migrado de un sitio estático en HTML/Vanilla JS a **Next.js**. Todo el código vive en [`web-next/`](web-next/) — no hay archivos `.html` ni JS suelto en el repo.
 
 ---
 
