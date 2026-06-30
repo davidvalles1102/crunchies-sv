@@ -1,6 +1,8 @@
 # Crunchies — Sistema POS & Pedidos en Línea
 
-Restaurante de pollo y alas en Piamonte, Cauca, Colombia. Este repositorio contiene el sistema completo: punto de venta (POS) para el personal, panel de cocina en tiempo real, y sitio web para clientes con pedidos en línea y delivery.
+Restaurante de pollo, alitas y chunks. Este repositorio contiene el sistema completo: punto de venta (POS) para el personal, panel de cocina en tiempo real, y sitio web para clientes con pedidos en línea, delivery y pedido por QR desde la mesa.
+
+> **Nota:** este proyecto fue migrado de un sitio estático en HTML/Vanilla JS a **Next.js**. El código vigente vive en [`web-next/`](web-next/). Las carpetas `adminSide/` y `customerSide/` en la raíz son la versión anterior, ya deprecada — se conservan solo como referencia histórica y no reciben cambios nuevos.
 
 ---
 
@@ -8,34 +10,36 @@ Restaurante de pollo y alas en Piamonte, Cauca, Colombia. Este repositorio conti
 
 | Capa | Tecnología |
 |------|-----------|
-| Frontend | HTML + CSS + Vanilla JS ES Modules (sin build) |
+| Framework | Next.js 16 (App Router, Turbopack) |
+| UI | React 19 + TypeScript |
 | Base de datos | Supabase (PostgreSQL) |
 | Autenticación | Supabase Auth (JWT) |
 | Tiempo real | Supabase Realtime (`postgres_changes`) |
-| Hosting | Vercel (sitio estático) |
+| Hosting | Vercel |
 | Recibos | jsPDF (formato 80 mm) |
 | Gráficas | Chart.js v4 |
+| Códigos QR | `qrcode` |
 
-No hay bundler, no hay framework. Los módulos JS se sirven directamente con `import/export` nativo. El proyecto funciona con cualquier servidor HTTP estático.
+Todo el código de cliente vive en Client Components (`'use client'`) que consumen Supabase directamente desde el navegador; no hay capa de API propia — Supabase + RLS hacen ese trabajo.
 
 ---
 
 ## Flujo del Sistema
 
 ```
-Cliente escanea QR / abre el sitio
+Cliente escanea QR de mesa / abre el sitio
         │
         ▼
-  Navega el menú → agrega items → llena datos → hace pedido
+  Navega el menú → agrega items → confirma pedido
         │
         ▼
   Orden llega a la cocina (Realtime) ──────────────────────────────────┐
         │                                                               │
         ▼                                                               ▼
-  Staff ve la orden en el POS (orders.html)              Cocina ve la tarjeta en kitchen.html
-        │                                                               │
+  Staff ve la orden en el POS (/admin/orders)            Cocina ve la tarjeta en /admin/kitchen
+        │ (banner en vivo: 🟡 en cocina → ✅ lista)                      │
         ▼                                                               ▼
-  Cocina marca "Listo" ──────────────────────────────── Cliente ve el estado en mis-pedidos.html
+  Cocina marca "Listo" ──────────────────────────────── Cliente ve el estado en /mis-pedidos o /track
         │
         ▼
   Mesero entrega → POS procesa pago → recibo PDF / WhatsApp
@@ -44,103 +48,95 @@ Cliente escanea QR / abre el sitio
   Sistema suma puntos de lealtad al cliente
 ```
 
+Si se agrega o aumenta un platillo a una orden que ya estaba `ready`/`delivered` (ej. la mesa pide algo extra), el POS la reenvía automáticamente a `in_kitchen` para que cocina no se la pierda.
+
 ---
 
-## Estructura del Proyecto
+## Estructura del Proyecto (`web-next/`)
 
 ```
-neon-y-sabor/
-├── shared/
-│   ├── supabase-client.js      ← Cliente Supabase + helpers fmt + TAX_RATE
-│   └── css/
-│       └── design-system.css   ← Variables, botones, cards, modales, tablas (base global)
+web-next/
+├── app/
+│   ├── page.tsx                      ← Vitrina pública del menú (home)
+│   ├── components/
+│   │   ├── MenuSection.tsx           ← Grid de categorías + platillos
+│   │   ├── NavBar.tsx
+│   │   └── ToastProvider.tsx         ← Notificaciones globales
+│   │
+│   ├── auth/                         ← Login / registro cliente
+│   ├── order/                        ← Pedido online (para llevar / domicilio)
+│   ├── table-order/                  ← Pedido desde la mesa vía QR (?table=<id>)
+│   ├── mis-pedidos/                  ← Historial + estado en vivo del cliente
+│   ├── track/                        ← Seguimiento de un pedido por ID (sin login)
+│   ├── reservations/                 ← Reservaciones (cliente)
+│   ├── profile/                      ← Puntos de lealtad, historial, cuenta
+│   │
+│   ├── admin/
+│   │   ├── login/
+│   │   ├── kitchen/                  ← Display de cocina (fuera del grupo protegido,
+│   │   │                                solo exige sesión — sin gate de rol específico)
+│   │   ├── components/               ← Sidebar, Topbar, LiveClock
+│   │   ├── styles/admin.css          ← Layout sidebar/topbar + POS + cocina
+│   │   └── (protected)/              ← Requiere rol admin/waiter via useRequireRole()
+│   │       ├── dashboard/
+│   │       ├── orders/               ← Terminal POS (menú + ticket + pago + recibo)
+│   │       ├── delivery/             ← Gestión de domicilio/para llevar
+│   │       ├── tables/               ← Mesas + generación de QR
+│   │       ├── payments/             ← Historial de pagos
+│   │       ├── menu-management/      ← CRUD platillos, categorías, modificadores
+│   │       ├── reservations/         ← Gestión de reservaciones (staff)
+│   │       ├── reports/              ← Reportes y gráficas
+│   │       ├── customers/            ← CRM + ajuste de puntos
+│   │       ├── finance/              ← Balance, EDC, datos de prueba
+│   │       └── expense-tracker/      ← Registro de gastos
+│   │
+│   └── styles/                       ← design-system.css, customer.css
 │
-├── customerSide/               ← Sitio público para clientes
-│   ├── index.html              ← Menú con tabs de categoría + búsqueda
-│   ├── auth.html               ← Login / Registro / Reset de contraseña
-│   ├── order.html              ← Orden online (para llevar / domicilio)
-│   ├── table-order.html        ← Orden desde la mesa vía QR
-│   ├── mis-pedidos.html        ← Historial de pedidos + estado en vivo
-│   ├── track.html              ← Seguimiento en tiempo real del pedido
-│   ├── reservations.html       ← Hacer / ver reservaciones
-│   ├── profile.html            ← Puntos de lealtad, historial, cuenta
-│   ├── css/
-│   │   ├── customer.css        ← Estilos del sitio público
-│   │   ├── order.css           ← Layout de la página de pedidos
-│   │   └── track.css           ← Stepper de seguimiento
-│   └── js/
-│       ├── auth.js
-│       ├── menu.js
-│       ├── order.js
-│       ├── table-order.js
-│       ├── mis-pedidos.js
-│       ├── track.js
-│       ├── reservations.js
-│       ├── profile.js
-│       └── utils.js
+├── lib/
+│   ├── supabase/client.ts            ← Cliente Supabase (browser)
+│   ├── supabase/server.ts            ← Cliente Supabase (server components)
+│   ├── supabase/auth.ts              ← getSession() helper
+│   ├── format.ts                     ← fmt.currency / fmt.date / TAX_RATE / calcTotals
+│   ├── modifiers.ts                  ← Helpers de modificadores (selección, precio extra)
+│   └── types.ts                      ← Tipos compartidos (Order, MenuItem, etc.)
 │
-└── adminSide/                  ← Panel de personal (requiere auth)
-    ├── login.html
-    ├── dashboard.html          ← KPIs + gráficas en tiempo real
-    ├── orders.html             ← Terminal POS (menú + ticket split-panel)
-    ├── kitchen.html            ← Display de cocina (Realtime)
-    ├── delivery.html           ← Gestión de pedidos a domicilio
-    ├── tables.html             ← Mesas y zonas
-    ├── payments.html           ← Historial de pagos + reimpresión + CSV
-    ├── menu-management.html    ← CRUD platillos y categorías
-    ├── reservations.html       ← Gestión de reservaciones
-    ├── reports.html            ← Reportes de ventas, gastos, gráficas, CSV
-    ├── customers.html          ← CRM clientes + ajuste de puntos
-    ├── expense-tracker.html    ← Registro de gastos por categoría
-    ├── css/admin.css           ← Layout sidebar/topbar + POS + cocina
-    └── js/
-        ├── admin-auth.js       ← Guard de auth + shell de la barra lateral
-        ├── dashboard.js
-        ├── orders.js           ← Lógica completa del POS + pago + recibo
-        ├── kitchen.js          ← Suscripción Realtime + timer de órdenes
-        ├── delivery.js
-        ├── tables.js
-        ├── payments.js
-        ├── menu-management.js
-        ├── reservations.js
-        ├── reports.js
-        ├── customers.js
-        └── expense-tracker.js
+└── public/menu/                      ← Imágenes del menú (servidas localmente)
 ```
 
 ---
 
 ## Módulos: Qué Hace Cada Uno
 
-### Customer Side
+### Sitio Público (Cliente)
 
-| Página | Función |
-|--------|---------|
-| `index.html` | Vitrina pública del menú. Tabs de categoría, búsqueda en tiempo real, cards con imagen, precio y descripción. |
-| `auth.html` | Login / registro / reset de contraseña. Tabs que cambian el formulario sin recargar. Redirige según rol. |
-| `order.html` | Flujo de pedido online. Selector Para Llevar / Domicilio. Muestra zonas y costo de envío. Pago: Efectivo o Nequi (número 312 828 2045). |
-| `table-order.html` | Lo mismo que `order.html` pero el tipo es `dine_in` y el número de mesa viene por URL query param (`?table=3`). |
-| `mis-pedidos.html` | Historial de pedidos del cliente logueado. Stepper de pasos (Recibida → Cocina → Lista → Entregada). Se refresca cada 30 s. |
-| `track.html` | Seguimiento de un pedido específico por ID. Para compartir el link al cliente sin login. |
-| `reservations.html` | Formulario para hacer reservación (fecha, hora, personas, nombre, tel). Lista de las reservaciones del usuario. |
-| `profile.html` | Saldo de puntos de lealtad, historial de transacciones, estadísticas del perfil, edición de nombre. |
+| Ruta | Función |
+|------|---------|
+| `/` | Vitrina del menú. Tabs de categoría, búsqueda, cards con imagen, precio y descripción. |
+| `/auth` | Login / registro / reset de contraseña. |
+| `/order` | Pedido online: Para Llevar / Domicilio, zonas y costo de envío, efectivo o Nequi. |
+| `/table-order?table=<id>` | Igual que `/order` pero `order_type: dine_in`, mesa identificada por la URL del QR. Envía la orden directo a `in_kitchen` (sin paso intermedio). |
+| `/mis-pedidos` | Historial del cliente logueado, stepper de estado. |
+| `/track` | Seguimiento de un pedido específico por ID, sin necesidad de login. |
+| `/reservations` | Crear / ver reservaciones propias. |
+| `/profile` | Saldo de puntos de lealtad, historial, edición de perfil. |
 
-### Admin Panel
+### Panel Admin
 
-| Página | Función | Roles |
-|--------|---------|-------|
-| `login.html` | Login del personal. Redirige a `dashboard.html` si es admin/waiter, a `kitchen.html` si es kitchen. | Todos |
-| `dashboard.html` | 5 KPIs: ventas del día, ventas semana, mesas ocupadas, órdenes en cocina, gastos del día. Gráfica de ventas 7 días (línea), distribución de pagos (donut), top platillos, órdenes recientes. Auto-refresca cada 60 s. | admin, waiter |
-| `orders.html` | Terminal POS. Panel izquierdo: menú con tabs + búsqueda. Panel derecho: ticket con items, totales, IVA. Modal de pago (efectivo/tarjeta/transferencia, cambio automático, búsqueda de cliente, canje de puntos). Modal de recibo con impresión y WhatsApp. | admin, waiter |
-| `kitchen.html` | Display para la cocina. Sin sidebar. Dos columnas: "En Preparación" (badge amber) y "Listo para Servir" (badge verde). Timer por orden (verde < 15 min, amber 15–25, rojo > 25). Historial colapsable del día. Suscripción Realtime. | admin, kitchen |
-| `delivery.html` | Tarjetas de pedidos de domicilio/takeout con nombre, dirección, items, estado, tiempo estimado, botones de avance de estado y asignación de repartidor. | admin, waiter |
-| `tables.html` | Grid de mesas por zona. Estado: libre / ocupada / reservada. Asignación de mesero. | admin, waiter |
-| `payments.html` | Tabla de pagos del día (filtrable por fecha). Totales por método. Reimpresión de recibo. Exportar CSV. | admin, waiter |
-| `menu-management.html` | CRUD de categorías (modal) y platillos (modal). Upload de imagen (URL). Toggle de disponibilidad. | admin |
-| `reservations.html` | Lista de todas las reservaciones. Filtro por fecha. Cambio de estado (pendiente → confirmada → cancelada). | admin, waiter |
-| `reports.html` | Período configurable (7/30/90 días). 8 KPIs. 6 gráficas (ventas diarias, métodos de pago, categorías, gastos, ingresos vs gastos, top 10 platillos). Tabla detallada con filtros. Exportar CSV. | admin |
-| `customers.html` | Lista de clientes con búsqueda. Historial de pedidos reales. Notas internas. Ajuste manual de puntos. | admin |
-| `expense-tracker.html` | Registro diario de gastos por categoría (insumos, nómina, renta, servicios, etc.). Resumen del día. | admin |
+| Ruta | Función | Roles |
+|------|---------|-------|
+| `/admin/login` | Login del personal. | Todos |
+| `/admin/dashboard` | KPIs del día, gráficas, órdenes activas. | admin, waiter |
+| `/admin/orders` | Terminal POS: menú + ticket, modal de pago (efectivo/tarjeta/transferencia, canje de puntos), banner de estado en vivo, recibo PDF + WhatsApp. | admin, waiter |
+| `/admin/kitchen` | Display de cocina. Columnas "En Preparación" / "Listo para Servir" + historial del día. Realtime sobre `orders`. | sesión autenticada (filtrado real por RLS a admin/waiter/kitchen) |
+| `/admin/delivery` | Tarjetas de domicilio/para llevar, avance de estado, asignación de repartidor. | admin, waiter |
+| `/admin/tables` | Mesas + generación/descarga de código QR por mesa y QR de vitrina del menú. | admin, waiter |
+| `/admin/payments` | Historial de pagos, reimpresión de recibo. | admin, waiter |
+| `/admin/menu-management` | CRUD de categorías, platillos y grupos de modificadores. | admin |
+| `/admin/reservations` | Gestión de todas las reservaciones. | admin, waiter |
+| `/admin/reports` | KPIs y gráficas (ventas, métodos de pago, categorías, gastos, top platillos). | admin |
+| `/admin/customers` | CRM de clientes, historial real de pedidos, ajuste de puntos. | admin |
+| `/admin/finance` | Balance financiero. | admin |
+| `/admin/expense-tracker` | Registro de gastos por categoría. | admin |
 
 ---
 
@@ -150,18 +146,19 @@ neon-y-sabor/
 
 | Tabla | Descripción |
 |-------|-------------|
-| `profiles` | Extiende `auth.users`. Columnas: `role`, `full_name`, `phone`, `loyalty_points`. |
-| `categories` | Categorías del menú (`name`, `sort_order`, `active`). |
-| `menu_items` | Platillos (`name`, `description`, `price`, `image_url`, `category_id`, `available`, `featured`). |
-| `restaurant_tables` | Mesas físicas (`number`, `zone`, `capacity`, `status`, `assigned_waiter_id`). |
-| `orders` | Encabezado de orden. Columnas clave: `status`, `order_type`, `total`, `subtotal`, `tax`, `table_id`, `waiter_id`, `delivery_name`, `delivery_phone`, `delivery_address`, `delivery_fee`, `payment_method`, `customer_id`, `driver_id`. |
-| `order_items` | Líneas de la orden (`order_id`, `item_name`, `quantity`, `item_price`, `notes`). |
-| `payments` | Pagos procesados (`order_id`, `method`, `amount`, `change_given`, `cashier_id`). |
-| `reservations` | Reservaciones (`date`, `time`, `party_size`, `guest_name`, `phone`, `notes`, `status`). |
-| `expenses` | Gastos (`expense_date`, `category`, `amount`, `description`, `created_by`). |
-| `loyalty_transactions` | Historial de puntos (`customer_id`, `points`, `type` earned/redeemed, `order_id`). |
-| `delivery_zones` | Zonas de delivery (`name`, `price`, `estimated_minutes`, `active`). |
-| `drivers` | Repartidores (`name`, `phone`, `active`). |
+| `profiles` | Extiende `auth.users`. `role`, `full_name`, `phone`, `loyalty_points`. |
+| `categories` | Categorías del menú (`name`, `icon`, `display_order`, `active`). |
+| `menu_items` | Platillos (`name`, `description`, `price`, `image_url`, `category_id`, `available`, `is_featured`). |
+| `modifier_groups` / `modifier_options` / `menu_item_modifier_groups` | Variantes y extras por platillo (ej. tamaños, "sin cebolla"). |
+| `restaurant_tables` | Mesas físicas (`number`, `location`, `capacity`, `status`). |
+| `orders` | Encabezado de orden (`status`, `order_type`, `total`, `subtotal`, `tax`, `table_id`, `waiter_id`, datos de delivery, `customer_id`). |
+| `order_items` | Líneas de orden (`order_id`, `item_name`, `quantity`, `item_price`, `notes`). |
+| `order_item_modifiers` | Modificadores aplicados a cada línea. |
+| `payments` | Pagos procesados (`order_id`, `method`, `amount`). |
+| `reservations` | Reservaciones (`date`, `time`, `party_size`, `status`). |
+| `expenses` | Gastos (`expense_date`, `category`, `amount`). |
+| `loyalty_transactions` | Historial de puntos (`customer_id`, `points`, `type`, `order_id`). |
+| `delivery_zones` / `drivers` | Zonas de entrega y repartidores. |
 
 ### Estados de una Orden (`orders.status`)
 
@@ -170,15 +167,18 @@ open → in_kitchen → ready → delivered → paid
                                       ↘ cancelled
 ```
 
+`delivery_status` (solo para `order_type` delivery/takeout) avanza por separado: `pending → preparing → ready → on_the_way → delivered`, y se sincroniza con `orders.status` (`preparing` ⇒ `in_kitchen`).
+
 ### RLS (Row Level Security)
 
-Todas las tablas tienen RLS activa. Políticas clave:
+Todas las tablas tienen RLS activa:
 
-- `profiles`: cada usuario solo lee/edita la suya. Admin lee todas.
-- `orders`: `customer` solo ve sus propias órdenes; `waiter`/`admin` ven todas.
-- `menu_items`: lectura pública (anon); escritura solo admin.
-- `order_items`: los clientes pueden insertar en órdenes propias; el personal ve todo.
-- `expenses`, `drivers`, `delivery_zones`: solo admin.
+- `profiles`: cada usuario lee/edita la suya; admin lee todas.
+- `orders` / `order_items`: `anon` puede insertar (pedido por QR/web sin cuenta, `customer_id IS NULL`); `admin`/`waiter`/`kitchen` ven y editan todo.
+- `categories` / `menu_items`: lectura pública (`anon`); escritura solo `admin`.
+- `expenses`, `drivers`, `delivery_zones`: solo `admin`.
+
+Los scripts de cada cambio de schema están en `supabase/*.sql` — se ejecutan manualmente desde el SQL Editor de Supabase (no hay migraciones automatizadas).
 
 ---
 
@@ -186,156 +186,101 @@ Todas las tablas tienen RLS activa. Políticas clave:
 
 | Rol | Acceso |
 |-----|--------|
-| `admin` | Todo: panel completo, reportes, gestión de menú, clientes, gastos. |
+| `admin` | Todo: panel completo, reportes, gestión de menú, clientes, finanzas. |
 | `waiter` | POS, cocina, delivery, mesas, pagos, reservaciones, dashboard. |
-| `kitchen` | Solo `kitchen.html` (display de cocina). |
-| `customer` | Solo sitio público. No puede acceder al panel admin. |
+| `kitchen` | Pantalla de cocina (acceso real controlado por RLS, no por gate de UI). |
+| `customer` | Solo sitio público. |
 
-El guard de autenticación vive en `adminSide/js/admin-auth.js`. Llama a `initAdminShell(allowedRoles)` al inicio de cada página admin y redirige a login si el rol no coincide.
+El guard vive en `app/admin/AdminContext.tsx` vía `useRequireRole(rolesPermitidos)`, usado en cada página dentro de `app/admin/(protected)/`.
 
 ---
 
-## Configuración Inicial (5 Pasos)
+## Menú y Precios
 
-### 1. Crear proyecto en Supabase
+El menú se maneja **en dólares (USD), con centavos reales** (no redondeado) — ver `lib/format.ts` (`fmt.currency`, `calcTotals`). Categorías actuales: Burgers, Alitas y Chunks (4 tamaños cada uno), Papas, Combos. El script de referencia para reemplazar el menú está en `supabase/reset_menu_crunchies.sql`.
 
-Ve a [supabase.com](https://supabase.com) → New Project → elige nombre y contraseña.
+Las imágenes del menú se sirven localmente desde `web-next/public/menu/` (no desde URLs externas).
 
-### 2. Ejecutar el schema
+---
 
-En el dashboard de Supabase → **SQL Editor** → New Query → pega el contenido de `supabase/schema.sql` → Run.
+## Mesas y Código QR
 
-Luego ejecuta `supabase/seed.sql` para poblar categorías, platillos de ejemplo y mesas.
+5 mesas (`restaurant_tables`), todas "Salón Principal", capacidad 4, sin zonas especiales. Cada mesa tiene su propio QR (`/admin/tables`) que apunta a `/table-order?table=<id>` usando el dominio donde se generó (`window.location.origin`) — generar los QR siempre desde el dominio de producción correcto.
 
-### 3. Activar Realtime
+---
 
-En Supabase → **Database → Replication** → activa las tablas `orders` y `order_items`.
+## Configuración Inicial
 
-### 4. Agregar credenciales
+### 1. Variables de entorno
 
-Abre `shared/supabase-client.js` y reemplaza:
-
-```js
-const SUPABASE_URL  = 'https://xxxx.supabase.co'
-const SUPABASE_ANON = 'tu-anon-key'
-```
-
-Ambos valores están en: Supabase → **Project Settings → API**.
-
-### 5. Crear cuentas de personal
-
-En Supabase → **Authentication → Users** → Invite user (o usar el formulario de login).  
-Luego en **Table Editor → profiles** → establece la columna `role`:
+Crea `web-next/.env.local`:
 
 ```
-admin   → acceso completo
-waiter  → POS, cocina, pagos, dashboard
-kitchen → solo pantalla de cocina
+NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
 ```
+
+### 2. Base de datos
+
+En Supabase → **SQL Editor**, ejecuta en orden: `supabase/schema.sql`, `supabase/modifiers_schema.sql`, `supabase/delivery_management_schema.sql`, `supabase/expenses_create.sql`, `supabase/anon_ordering_rls.sql`, `supabase/enable_realtime.sql`, y el resto de scripts según necesidad (ver cada archivo en `supabase/`).
+
+### 3. Cuentas de personal
+
+Supabase → **Authentication → Users** → crear usuario. Luego en **Table Editor → profiles**, asignar `role`: `admin`, `waiter` o `kitchen`.
 
 ---
 
 ## Ejecutar Localmente
 
-Los ES Modules requieren un servidor HTTP — abrir los `.html` directamente con `file://` no funciona.
-
 ```bash
-# VS Code: instala la extensión "Live Server" → click derecho en index.html → Open with Live Server
-
-# Node
-npx http-server . -p 8080
-
-# Python
-python -m http.server 8080
+cd web-next
+npm install
+npm run dev
 ```
 
-Luego abre `http://localhost:8080/customerSide/index.html` para el sitio de clientes  
-o `http://localhost:8080/adminSide/login.html` para el panel.
+Abre `http://localhost:3000`.
 
 ---
 
 ## Despliegue
 
-El proyecto se despliega en **Vercel** como sitio estático. No hay build ni servidor de Node — Vercel sirve los archivos directamente.
+Proyecto en Vercel: **`crunchies-next`** → `https://crunchies-next.vercel.app` (Root Directory: `web-next`, framework Next.js, autodetectado).
 
-URL de producción: `crunchies.vercel.app`
-
-Para desplegar:
-1. Conecta el repositorio en [vercel.com](https://vercel.com)
-2. Framework: **Other** (no framework)
-3. Output directory: `.` (raíz del repo)
-4. No hay variables de entorno — las credenciales de Supabase van directamente en `shared/supabase-client.js`
+> Existe un proyecto Vercel anterior (`neon-y-sabor.vercel.app`) que sigue sirviendo la versión vieja en HTML — está deprecado, no es el sitio de producción actual.
 
 ---
 
 ## Sistema de Diseño
 
-### Paleta de Colores
-
 | Variable | Valor | Uso |
 |----------|-------|-----|
 | `--green` | `#FF6600` | Acento primario (alias "green" por compatibilidad histórica) |
 | `--amber` | `#FF9900` | Acento secundario, precios, advertencias |
-| `--bg-0`  | `#0E0908` | Fondo de página |
-| `--bg-2`  | `#1E1210` | Modales, panel POS ticket |
-| `--bg-3`  | `#261510` | Cards, sidebar |
-| `--text-primary`   | `#FFFFFF` | Texto principal |
-| `--text-secondary` | `#BFA099` | Texto secundario |
-| `--text-muted`     | `#7A5248` | Labels, placeholders |
+| `--bg-0` / `--bg-2` / `--bg-3` | `#0E0908` / `#1E1210` / `#261510` | Fondo / modales / cards |
+| `--text-primary` / `--text-secondary` / `--text-muted` | `#FFFFFF` / `#BFA099` / `#7A5248` | Jerarquía de texto |
 | `--danger` | `#FF4455` | Errores, cancelaciones |
 
-### Tipografía
-
-- **Bangers** — Títulos display, marca CRUNCHIES, nombres de mesa en cocina.
-- **Poppins** — Todo el cuerpo, **incluyendo números y precios**. Bangers no es legible en datos monetarios.
-
-```css
---font:   'Poppins', system-ui, sans-serif;
---font-d: 'Bangers', 'Poppins', sans-serif;
-```
-
----
-
-## IVA y Totales
-
-El IVA está configurado como **8%** (Colombia — restaurantes y bares) en `shared/supabase-client.js`:
-
-```js
-export const TAX_RATE = 0.08
-```
-
-Los totales se calculan con `calcTotals(subtotal)` que redondea a enteros (pesos colombianos no tienen decimales en la práctica).
+Tipografía: **Bangers** (display, marca, mesas en cocina) + **Poppins** (todo el cuerpo, incluyendo precios).
 
 ---
 
 ## Puntos de Lealtad
 
-- **Acumulación**: 1 punto por cada $1.000 COP gastados (configurado en `orders.js` y `payments.js`).
-- **Canje**: máximo 50% del total de la orden. Valor: $1 COP por punto.
-- **Gestión**: el staff puede ajustar puntos manualmente desde `customers.html`.
-- **Historial**: tabla `loyalty_transactions` con tipo `earned` / `redeemed`.
+- **Acumulación**: 1 punto por cada $1 pagado (aplica en POS, pedido web y delivery).
+- **Canje**: máximo 50% del total de la orden, $0.01 por punto.
+- **Gestión manual**: desde `/admin/customers`.
+- **Historial**: tabla `loyalty_transactions`, tipo `earned` / `redeemed`.
 
 ---
 
 ## Realtime (Suscripciones Activas)
 
-| Módulo | Canal | Evento |
-|--------|-------|--------|
-| `kitchen.js` | `postgres_changes` en `orders` | INSERT, UPDATE — refresca las columnas |
-| `track.js` | `postgres_changes` en `orders` | UPDATE — actualiza el stepper del cliente |
-| `delivery.js` | `postgres_changes` en `orders` | INSERT, UPDATE — actualiza las tarjetas de delivery |
-
----
-
-## Datos del Restaurante
-
-| | |
-|-|-|
-| **Nombre** | Crunchies |
-| **Dirección** | Piamonte, Cauca, Colombia |
-| **Teléfono / Nequi** | 312 828 2045 |
-| **Horario** | Lun–Dom 6:30–15:30 y 16:00–23:00 |
-| **Especialidad** | Pollo, alas y sabores de rancho |
+| Página/Componente | Canal | Qué hace |
+|--------------------|-------|----------|
+| `KitchenClient.tsx` | `postgres_changes` en `orders` (todos los eventos) | Refresca las columnas de cocina y el historial del día. |
+| `OrdersClient.tsx` (POS) | `postgres_changes` UPDATE en `orders`, filtrado a la orden activa | Banner en vivo del estado del ticket (🟡 en cocina → ✅ lista → 🍽️ entregada). |
+| `TrackClient.tsx` | `postgres_changes` UPDATE en `orders` | Actualiza el stepper del cliente. |
+| `DeliveryClient.tsx` | `postgres_changes` en `orders` | Actualiza las tarjetas de domicilio/para llevar. |
 
 ---
 
@@ -343,17 +288,17 @@ Los totales se calculan con `calcTotals(subtotal)` que redondea a enteros (pesos
 
 | Necesito cambiar... | Archivo |
 |---------------------|---------|
-| Credenciales de Supabase | `shared/supabase-client.js` |
-| IVA o cálculo de totales | `shared/supabase-client.js` — `TAX_RATE`, `calcTotals` |
-| Colores del sistema | `shared/css/design-system.css` — variables `:root` |
-| Layout del sidebar / topbar | `adminSide/css/admin.css` |
-| Estilos del POS | `adminSide/css/admin.css` — sección `POS Layout` |
-| Lógica del POS (items, ticket, pago) | `adminSide/js/orders.js` |
-| Lógica de pago + recibo | `adminSide/js/payments.js` (historial) / `orders.js` (modal) |
-| Datos del dashboard | `adminSide/js/dashboard.js` |
-| Gráficas de reportes | `adminSide/js/reports.js` |
-| Display de cocina | `adminSide/kitchen.html` + `adminSide/js/kitchen.js` |
-| Menú para clientes | `customerSide/index.html` + `customerSide/js/menu.js` |
-| Flujo de pedido online | `customerSide/order.html` + `customerSide/js/order.js` |
-| Guard de autenticación | `adminSide/js/admin-auth.js` — `initAdminShell()` |
-| Schema de la base de datos | `supabase/schema.sql` |
+| Credenciales de Supabase | `web-next/.env.local` |
+| Impuesto o cálculo de totales | `web-next/lib/format.ts` — `TAX_RATE`, `calcTotals` |
+| Formato de moneda | `web-next/lib/format.ts` — `fmt.currency` |
+| Colores del sistema | `web-next/app/styles/design-system.css` |
+| Layout del sidebar / topbar | `web-next/app/admin/styles/admin.css` |
+| Estilos del POS / banner de estado | `web-next/app/admin/styles/admin.css` |
+| Lógica del POS (items, ticket, pago) | `web-next/app/admin/(protected)/orders/OrdersClient.tsx` |
+| Recibo PDF | `web-next/app/admin/(protected)/orders/receipt-pdf.ts` |
+| Display de cocina | `web-next/app/admin/kitchen/KitchenClient.tsx` |
+| Menú para clientes | `web-next/app/components/MenuSection.tsx` |
+| Pedido por QR de mesa | `web-next/app/table-order/TableOrderClient.tsx` |
+| Generación de QR | `web-next/app/admin/(protected)/tables/TablesClient.tsx` |
+| Guard de autenticación admin | `web-next/app/admin/AdminContext.tsx` — `useRequireRole()` |
+| Schema de la base de datos | `supabase/schema.sql` y demás `supabase/*.sql` |
