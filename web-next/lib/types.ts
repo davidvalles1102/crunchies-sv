@@ -17,3 +17,11 @@ export type MenuItem = {
   is_featured: boolean
   categories: { name: string } | null
 }
+
+export type Profile = {
+  id: string
+  full_name: string | null
+  phone: string | null
+  role: string
+  loyalty_points: number
+}
