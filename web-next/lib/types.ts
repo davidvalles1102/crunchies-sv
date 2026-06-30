@@ -112,6 +112,37 @@ export type Expense = {
   profiles: { full_name: string | null } | null
 }
 
+export type Driver = {
+  id: string
+  full_name: string
+  phone: string
+  active: boolean
+}
+
+export type DeliveryOrderItem = {
+  id: string
+  item_name: string
+  item_price: number
+  quantity: number
+  order_item_modifiers?: OrderItemModifier[]
+}
+
+export type DeliveryOrder = {
+  id: string
+  order_type: 'delivery' | 'takeout'
+  delivery_status: 'pending' | 'preparing' | 'ready' | 'on_the_way' | 'delivered' | null
+  delivery_name: string | null
+  delivery_phone: string | null
+  delivery_address: string | null
+  delivery_fee: number
+  driver_id: string | null
+  payment_method: 'cash' | 'nequi'
+  total: number
+  notes: string | null
+  created_at: string
+  order_items: DeliveryOrderItem[]
+}
+
 export type Reservation = {
   id: string
   reservation_date: string
