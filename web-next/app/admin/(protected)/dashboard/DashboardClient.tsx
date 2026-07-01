@@ -60,7 +60,11 @@ export default function DashboardClient() {
 
   useEffect(() => {
     const loadDashboard = async () => {
-      const today = new Date().toISOString().split('T')[0]
+      // El Salvador = UTC-6, sin horario de verano
+      const SV_OFFSET_MS = 6 * 60 * 60 * 1000
+      const localNow = new Date(Date.now() - SV_OFFSET_MS)
+      const today = localNow.toISOString().split('T')[0]   // fecha local "YYYY-MM-DD"
+      const todayStart = `${today}T06:00:00Z`              // 00:00 SV = 06:00 UTC
       const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString()
 
       const [
@@ -73,14 +77,14 @@ export default function DashboardClient() {
         { data: todayExpenses },
         { data: recent },
       ] = await Promise.all([
-        supabase.from('payments').select('amount').gte('created_at', `${today}T00:00:00`),
+        supabase.from('payments').select('amount').gte('created_at', todayStart),
         supabase.from('payments').select('amount, created_at').gte('created_at', weekAgo),
         supabase.from('restaurant_tables').select('status'),
         supabase.from('orders').select('id').in('status', ['in_kitchen']),
-        supabase.from('payments').select('method, amount').gte('created_at', `${today}T00:00:00`),
-        supabase.from('order_items').select('item_name, quantity, item_price').gte('created_at', `${today}T00:00:00`),
+        supabase.from('payments').select('method, amount').gte('created_at', todayStart),
+        supabase.from('order_items').select('item_name, quantity, item_price').gte('created_at', todayStart),
         supabase.from('expenses').select('amount').eq('expense_date', today),
-        supabase.from('orders').select('*, restaurant_tables(number)').gte('created_at', `${today}T00:00:00`).order('created_at', { ascending: false }).limit(8),
+        supabase.from('orders').select('*, restaurant_tables(number)').gte('created_at', todayStart).order('created_at', { ascending: false }).limit(8),
       ])
 
       setSalesToday((todayOrders || []).reduce((s, p) => s + Number(p.amount), 0))
