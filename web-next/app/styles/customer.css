@@ -306,7 +306,7 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
-@media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; max-width: 480px; } }
+@media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; max-width: 100%; } }
 
 .info-card {
   background: var(--bg-2);

@@ -87,7 +87,7 @@ export default function PaymentsClient() {
   return (
     <>
       <Topbar title="Historial de Pagos">
-        <input type="date" className="form-control" style={{ width: 160 }} value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
+        <input type="date" className="form-control date-filter-input" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
         <button className="btn btn-outline btn-sm" onClick={exportCSV}>↓ Exportar CSV</button>
       </Topbar>
 

@@ -133,6 +133,18 @@
   .sidebar.open { transform: translateX(0); }
 }
 
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 499; /* just below sidebar z-index:500 */
+  cursor: pointer;
+}
+@media (max-width: 900px) {
+  .sidebar.open ~ .sidebar-backdrop { display: block; }
+}
+
 .topbar__title {
   font-family: var(--font-d);
   font-size: 1.3rem;
@@ -180,6 +192,8 @@
 
 /* ─── Table Wrap ─────────────────────────────────────────────── */
 .table-wrap { overflow-x: auto; border-radius: var(--r-md); }
+.date-filter-input { width: 160px; min-width: 0; }
+@media (max-width: 768px) { .date-filter-input { width: 100%; } }
 .text-center { text-align: center; }
 
 /* ─── POS Layout ─────────────────────────────────────────────── */
@@ -420,6 +434,9 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   margin-top: 8px;
+}
+@media (max-width: 360px) {
+  .pay-methods { grid-template-columns: 1fr; }
 }
 .pay-method {
   padding: 10px 6px;
@@ -1012,10 +1029,15 @@
   .pos-order-type-btn  { flex: 1; padding: 8px 4px; font-size: .75rem; }
   .table-picker        { flex: 1; order: 2; min-width: 0; }
   #newOrderBtn         { order: 3; white-space: nowrap; }
+
+  /* Touch targets ≥44px en móvil */
+  .qty-btn          { width: 36px; height: 36px; font-size: 1rem; }
+  .ticket-item__del { padding: 10px; }
+  .pos-cat          { padding: 9px 14px; }
 }
 
-/* ─── POS: ticket como bottom-sheet en móvil ─────────────────── */
-@media (max-width: 768px) {
+/* ─── POS: ticket como bottom-sheet en tablet/móvil ──────────── */
+@media (max-width: 900px) {
   .pos-body .admin-main { height: 100vh; overflow: hidden; }
 
   .pos-layout {
@@ -1112,16 +1134,16 @@
   }
 }
 
-/* Elementos solo-móvil ocultos en escritorio */
-@media (min-width: 769px) {
+/* Elementos solo-móvil/tablet ocultos en escritorio */
+@media (min-width: 901px) {
   .mob-cart-fab      { display: none !important; }
   .ticket-mob-handle { display: none !important; }
   .mob-backdrop      { display: none !important; }
 }
 .mob-cart-fab { display: none; } /* estado base antes del media query */
 
-/* ─── POS ticket: reduce height en teléfonos muy bajos (landscape) ─── */
-@media (max-width: 768px) and (max-height: 600px) {
+/* ─── POS ticket: reduce height en pantallas bajas (landscape) ─── */
+@media (max-width: 900px) and (max-height: 600px) {
   .pos-ticket-panel { height: 55vh !important; max-height: 55vh !important; }
 }
 

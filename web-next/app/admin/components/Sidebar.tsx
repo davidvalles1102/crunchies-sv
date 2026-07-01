@@ -31,25 +31,30 @@ export default function Sidebar() {
     router.push('/admin/login')
   }
 
+  const closeSidebar = () => document.getElementById('sidebar')?.classList.remove('open')
+
   return (
-    <aside className="sidebar" id="sidebar">
-      <div className="sidebar__brand">CRUNCHIES</div>
-      <nav className="sidebar__nav">
-        {LINKS.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className={`slink${pathname === l.href ? ' active' : ''}`}
-            onClick={() => document.getElementById('sidebar')?.classList.remove('open')}
-          >
-            {l.label}
-          </Link>
-        ))}
-      </nav>
-      <div className="sidebar__footer">
-        <div className="sidebar__user">{profile.full_name || session.user.email} · {profile.role}</div>
-        <button className="slink slink--danger" onClick={logout}>⏻ Salir</button>
-      </div>
-    </aside>
+    <>
+      <aside className="sidebar" id="sidebar">
+        <div className="sidebar__brand">CRUNCHIES</div>
+        <nav className="sidebar__nav">
+          {LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={`slink${pathname === l.href ? ' active' : ''}`}
+              onClick={closeSidebar}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="sidebar__footer">
+          <div className="sidebar__user">{profile.full_name || session.user.email} · {profile.role}</div>
+          <button className="slink slink--danger" onClick={logout}>⏻ Salir</button>
+        </div>
+      </aside>
+      <div className="sidebar-backdrop" onClick={closeSidebar} aria-hidden="true" />
+    </>
   )
 }

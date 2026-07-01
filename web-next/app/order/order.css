@@ -326,6 +326,8 @@
 @media (max-width: 768px) {
   .order-panel-header { padding: 14px 16px 10px; }
   .order-items-grid   { padding: 10px 12px; }
+  .order-item-add     { width: 36px; height: 36px; font-size: 1.1rem; }
+  .pos-cat            { padding: 9px 14px; }
 }
 
 /* ─── Responsive — 480px ──────────────────────────────────────── */

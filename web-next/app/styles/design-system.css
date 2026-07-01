@@ -454,8 +454,9 @@ select.form-control { appearance: none; cursor: pointer; }
 
 /* ─── Touch tap targets (≥44px) ─────────────────────────────── */
 @media (max-width: 768px) {
-  .btn    { min-height: 44px; }
-  .btn-sm { min-height: 44px; }
+  .btn        { min-height: 44px; }
+  .btn-sm     { min-height: 44px; }
+  .modal-close { padding: 10px; }
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────── */
