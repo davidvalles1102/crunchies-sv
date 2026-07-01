@@ -52,30 +52,15 @@ export default function PaymentsClient() {
     doc.save(`recibo-${p.receipt_number}.pdf`)
   }
 
-  const confirmWhatsApp = async () => {
+  const confirmWhatsApp = () => {
     const raw = waPhone.trim().replace(/[\s\-()+]/g, '')
     if (!raw) { toast('Ingresa un número de WhatsApp', 'warning'); return }
     if (!receiptPayment) return
 
     const doc = buildPaymentPDF(receiptPayment)
-    const blob = doc.output('blob')
-    const file = new File([blob], `recibo-${receiptPayment.receipt_number}.pdf`, { type: 'application/pdf' })
-
-    // Mobile: use native share sheet so WhatsApp receives the PDF directly
-    if (typeof navigator.share === 'function' && navigator.canShare?.({ files: [file] })) {
-      setWaOpen(false)
-      try {
-        await navigator.share({ files: [file], title: `Recibo ${receiptPayment.receipt_number}` })
-      } catch {
-        // user cancelled share sheet — no-op
-      }
-      return
-    }
-
-    // Desktop fallback: download PDF then open WhatsApp
     doc.save(`recibo-${receiptPayment.receipt_number}.pdf`)
-    toast('PDF descargado — adjúntalo manualmente en WhatsApp 📎', 'info')
     window.open(`https://wa.me/${raw}`, '_blank')
+    toast('PDF descargado — adjúntalo en la conversación de WhatsApp', 'info')
     setWaOpen(false)
   }
 
