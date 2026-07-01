@@ -1,0 +1,370 @@
+/* ================================================================
+   Portal Styles — Crunchies Staff Portals (Kitchen / Delivery / Waiter)
+   Mobile-first, touch-optimized
+   ================================================================ */
+
+/* ─── Shell ─────────────────────────────────────────────────────── */
+.portal-body {
+  min-height: 100vh;
+  background: var(--bg-0);
+  display: flex;
+  flex-direction: column;
+}
+
+.portal-header {
+  height: 54px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  flex-shrink: 0;
+}
+
+.portal-header__left { display: flex; align-items: center; gap: 12px; }
+.portal-header__brand { font-family: var(--font-d); font-size: 1rem; color: var(--green); letter-spacing: .08em; }
+.portal-header__staff { font-size: .8rem; color: var(--text-secondary); }
+.portal-header__right { display: flex; align-items: center; gap: 10px; }
+
+/* ─── PIN Screen ─────────────────────────────────────────────────── */
+.pin-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-0);
+  gap: 28px;
+  padding: 24px;
+}
+
+.pin-icon { font-size: 3.5rem; line-height: 1; }
+.pin-portal-name {
+  font-family: var(--font-d);
+  font-size: 1.6rem;
+  color: var(--green);
+  letter-spacing: .08em;
+}
+.pin-sub { font-size: .85rem; color: var(--text-muted); margin-top: -14px; }
+
+.pin-display {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  height: 28px;
+}
+.pin-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border-lit);
+  background: transparent;
+  transition: background .12s, border-color .12s;
+}
+.pin-dot--filled { background: var(--green); border-color: var(--green); }
+
+.pin-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 82px);
+  gap: 10px;
+}
+.pin-key {
+  height: 82px;
+  font-size: 1.6rem;
+  font-weight: 600;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  transition: background .1s, transform .08s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.pin-key:active { background: var(--bg-3); transform: scale(.94); }
+.pin-key--del { font-size: 1.2rem; color: var(--text-secondary); }
+.pin-key--empty { visibility: hidden; pointer-events: none; }
+
+.pin-error {
+  height: 20px;
+  color: #ef4444;
+  font-size: .85rem;
+  text-align: center;
+}
+.pin-loading { color: var(--text-muted); font-size: .85rem; }
+
+/* ─── Waiter: Table Grid ─────────────────────────────────────────── */
+.waiter-tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+.waiter-table-card {
+  aspect-ratio: 1;
+  border-radius: var(--r-md);
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  gap: 6px;
+  transition: transform .1s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.waiter-table-card:active { transform: scale(.96); }
+
+.waiter-table-card--available {
+  background: rgba(16, 185, 129, .08);
+  border-color: var(--green);
+}
+.waiter-table-card--available .waiter-table-num { color: var(--green); }
+
+.waiter-table-card--occupied {
+  background: var(--bg-2);
+  border-color: var(--border-lit);
+}
+.waiter-table-card--occupied .waiter-table-num { color: var(--text-primary); }
+
+.waiter-table-card--ready {
+  background: rgba(245, 158, 11, .12);
+  border-color: var(--amber);
+  animation: pulse-table 2s infinite;
+}
+.waiter-table-card--ready .waiter-table-num { color: var(--amber); }
+
+.waiter-table-card--reserved {
+  background: rgba(99, 102, 241, .08);
+  border-color: rgba(99, 102, 241, .4);
+}
+.waiter-table-card--reserved .waiter-table-num { color: #818cf8; }
+
+.waiter-table-card--maintenance {
+  background: var(--bg-1);
+  border-color: var(--border);
+  opacity: .5;
+  pointer-events: none;
+}
+
+.waiter-table-num { font-size: 2rem; font-weight: 700; line-height: 1; }
+.waiter-table-loc { font-size: .65rem; color: var(--text-muted); text-align: center; padding: 0 4px; }
+.waiter-table-badge {
+  font-size: .65rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--amber);
+  color: #000;
+  font-weight: 700;
+}
+
+@keyframes pulse-table {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, .35); }
+  50% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+}
+
+/* ─── Waiter: Order View ─────────────────────────────────────────── */
+.waiter-order-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.waiter-menu-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.waiter-cat-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+}
+.waiter-cat-tabs::-webkit-scrollbar { display: none; }
+.waiter-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+.waiter-item-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 10px;
+  cursor: pointer;
+  transition: border-color .1s, background .1s;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.waiter-item-card:active { background: var(--bg-3); }
+.waiter-item-name { font-size: .88rem; font-weight: 600; line-height: 1.25; }
+.waiter-item-price { font-size: .82rem; color: var(--amber); font-weight: 600; }
+
+.waiter-ticket {
+  width: 280px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+}
+.waiter-ticket-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+.waiter-ticket-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.waiter-ticket-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: .85rem;
+}
+.waiter-ticket-item__name { flex: 1; }
+.waiter-ticket-item__price { color: var(--text-secondary); white-space: nowrap; }
+.waiter-ticket-totals { padding: 10px 14px; border-top: 1px solid var(--border); font-size: .85rem; }
+.waiter-ticket-total { font-weight: 700; color: var(--green); font-size: 1.1rem; }
+.waiter-ticket-actions {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+}
+
+/* Mobile: ticket as bottom sheet on waiter */
+@media (max-width: 640px) {
+  .waiter-order-layout { flex-direction: column; }
+  .waiter-ticket {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    max-height: 45vh;
+  }
+  .waiter-items-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+}
+
+/* ─── Delivery Portal ────────────────────────────────────────────── */
+.delivery-portal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+}
+.delivery-portal-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.delivery-portal-card--on-the-way { border-color: var(--amber); }
+.delivery-portal-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+}
+.delivery-portal-card__address {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--amber);
+  padding: 14px 16px 6px;
+  line-height: 1.3;
+}
+.delivery-portal-card__customer {
+  padding: 0 16px 10px;
+  font-size: .85rem;
+  color: var(--text-secondary);
+}
+.delivery-portal-card__items {
+  padding: 0 16px 10px;
+  font-size: .85rem;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.delivery-portal-card__actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ─── Staff Admin ────────────────────────────────────────────────── */
+.staff-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.staff-card--inactive { opacity: .5; }
+.staff-card__info { display: flex; flex-direction: column; gap: 3px; }
+.staff-card__name { font-weight: 600; font-size: .95rem; }
+.staff-card__meta { font-size: .78rem; color: var(--text-muted); }
+.staff-card__pin {
+  font-family: monospace;
+  font-size: 1.1rem;
+  letter-spacing: .15em;
+  color: var(--text-secondary);
+  background: var(--bg-3);
+  padding: 2px 10px;
+  border-radius: 4px;
+}
+.staff-card__actions { display: flex; gap: 6px; align-items: center; }
+
+.perf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.perf-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px;
+}
+.perf-card__name { font-weight: 700; font-size: 1rem; margin-bottom: 12px; }
+.perf-stat { display: flex; justify-content: space-between; font-size: .85rem; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.perf-stat:last-child { border-bottom: none; }
+.perf-stat__val { font-weight: 600; color: var(--amber); }
+
+/* ─── Role badges ────────────────────────────────────────────────── */
+.role-badge-kitchen  { background: rgba(245,158,11,.15); color: var(--amber); border: 1px solid rgba(245,158,11,.3); }
+.role-badge-delivery { background: rgba(16,185,129,.12); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+.role-badge-waiter   { background: rgba(99,102,241,.12); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+
+/* ─── Portal tabs section title ──────────────────────────────────── */
+.portal-section-title {
+  padding: 14px 16px 8px;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}

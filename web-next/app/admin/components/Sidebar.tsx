@@ -18,6 +18,7 @@ const LINKS = [
   { href: '/admin/reports',          label: '📈 Reportes' },
   { href: '/admin/customers',        label: '👥 Clientes' },
   { href: '/admin/tables',           label: '🪑 Mesas' },
+  { href: '/admin/staff',            label: '🔐 Staff & Portales' },
 ]
 
 export default function Sidebar() {
