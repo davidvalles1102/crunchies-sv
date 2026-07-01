@@ -63,6 +63,43 @@
   .order-menu-panel { padding-bottom: 80px; } /* clear the fixed cart bar */
 }
 
+/* ─── Category pill buttons ──────────────────────────────── */
+.order-cat-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.order-cat-tabs::-webkit-scrollbar { display: none; }
+
+.pos-cat {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: .8rem;
+  font-weight: 600;
+  background: var(--bg-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all var(--t);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.pos-cat:hover {
+  background: var(--bg-4);
+  color: var(--text-primary);
+  border-color: var(--border-lit);
+}
+.pos-cat.active {
+  background: var(--green-dark);
+  color: var(--green);
+  border-color: var(--green-dim);
+  box-shadow: 0 0 10px var(--green-alpha);
+}
+
 /* ─── Mobile cart bar ─────────────────────────────────────── */
 .mobile-cart-bar {
   display: none;
