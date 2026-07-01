@@ -36,7 +36,12 @@ export default function Sidebar() {
       <div className="sidebar__brand">CRUNCHIES</div>
       <nav className="sidebar__nav">
         {LINKS.map((l) => (
-          <Link key={l.href} href={l.href} className={`slink${pathname === l.href ? ' active' : ''}`}>
+          <Link
+            key={l.href}
+            href={l.href}
+            className={`slink${pathname === l.href ? ' active' : ''}`}
+            onClick={() => document.getElementById('sidebar')?.classList.remove('open')}
+          >
             {l.label}
           </Link>
         ))}
