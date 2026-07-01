@@ -27,6 +27,15 @@
   font-size: 2rem;
   font-weight: 700;
   line-height: 1;
+  display: flex;
+  flex-direction: column;
+}
+.tbl-card__num-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  line-height: 1.4;
+  opacity: 0.75;
 }
 .tbl-card--available  .tbl-card__num { color: var(--green); text-shadow: var(--glow-green-s); }
 .tbl-card--occupied   .tbl-card__num { color: var(--danger); }

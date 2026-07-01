@@ -102,7 +102,7 @@ export default function TablesClient() {
             tables.map((t) => (
               <div key={t.id} className={`${styles['tbl-card']} ${styles[`tbl-card--${t.status}`] ?? ''}`}>
                 <div className={styles['tbl-card__top']}>
-                  <div className={styles['tbl-card__num']}>Mesa {t.number}</div>
+                  <div className={styles['tbl-card__num']}><span className={styles['tbl-card__num-label']}>Mesa</span>{t.number}</div>
                   <span className={`badge ${STATUS_BADGE[t.status] ?? 'badge-muted'}`}>{STATUS_LABEL[t.status] ?? t.status}</span>
                 </div>
                 <div className={styles['tbl-card__meta']}>📍 {t.location} &nbsp;·&nbsp; 👤 {t.capacity} personas</div>
