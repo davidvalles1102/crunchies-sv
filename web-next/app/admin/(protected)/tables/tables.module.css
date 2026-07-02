@@ -1,4 +1,4 @@
-.tables-grid {
+﻿.tables-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 16px;
@@ -13,7 +13,7 @@
   gap: 10px;
   transition: border-color var(--t);
 }
-.tbl-card--available  { border-color: var(--green-dim); }
+.tbl-card--available  { border-color: var(--orange-dim); }
 .tbl-card--occupied   { border-color: var(--danger); }
 .tbl-card--reserved   { border-color: var(--amber-dim); }
 .tbl-card--maintenance{ border-color: var(--border); }
@@ -36,7 +36,7 @@
   font-weight: 700;
   line-height: 1.2;
 }
-.tbl-card--available  .tbl-card__num { color: var(--green); text-shadow: var(--glow-green-s); }
+.tbl-card--available  .tbl-card__num { color: var(--orange); text-shadow: var(--glow-orange-s); }
 .tbl-card--occupied   .tbl-card__num { color: var(--danger); }
 .tbl-card--reserved   .tbl-card__num { color: var(--amber); }
 .tbl-card--maintenance .tbl-card__num { color: var(--text-muted); }

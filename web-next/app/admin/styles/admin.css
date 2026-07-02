@@ -1,4 +1,4 @@
-/* ================================================================
+﻿/* ================================================================
    Admin / Staff Panel — Styles
    Crunchies
    ================================================================ */
@@ -49,7 +49,7 @@
   padding: 22px 20px 18px;
   border-bottom: 1px solid var(--border);
   text-align: center;
-  color: var(--green);
+  color: var(--orange);
 }
 
 .sidebar__nav {
@@ -79,7 +79,7 @@
   text-decoration: none;
 }
 .slink:hover  { background: var(--bg-3); color: var(--text-primary); }
-.slink.active { background: var(--green-alpha); color: var(--green); }
+.slink.active { background: var(--orange-alpha); color: var(--orange); }
 .slink--danger:hover { background: var(--danger-dim); color: var(--danger); }
 
 .sidebar__footer {
@@ -243,7 +243,7 @@
   flex-shrink: 0;
 }
 .pos-cat:hover  { background: var(--bg-4); color: var(--text-primary); border-color: var(--border-lit); }
-.pos-cat.active { background: var(--green-dark); color: var(--green); border-color: var(--green-dim); box-shadow: 0 0 10px var(--green-alpha); }
+.pos-cat.active { background: var(--orange-dark); color: var(--orange); border-color: var(--orange-dim); box-shadow: 0 0 10px var(--orange-alpha); }
 
 /* ─── Menu management category tabs (menu-management.html) ──────── */
 .category-tabs {
@@ -264,7 +264,7 @@
   transition: all var(--t);
 }
 .cat-tab:hover  { background: var(--bg-4); color: var(--text-primary); border-color: var(--border-lit); }
-.cat-tab.active { background: var(--green-dark); color: var(--green); border-color: var(--green-dim); box-shadow: 0 0 10px var(--green-alpha); }
+.cat-tab.active { background: var(--orange-dark); color: var(--orange); border-color: var(--orange-dim); box-shadow: 0 0 10px var(--orange-alpha); }
 
 .pos-search-wrap { padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 
@@ -290,10 +290,10 @@
   min-height: 90px;
 }
 .pos-item-card:hover {
-  border-color: var(--green-dim);
+  border-color: var(--orange-dim);
   background: var(--bg-4);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px var(--green-alpha);
+  box-shadow: 0 4px 16px var(--orange-alpha);
 }
 .pos-item-card:active { transform: scale(.97); }
 .pos-item-card--unavail { opacity: .35; pointer-events: none; }
@@ -317,7 +317,7 @@
   align-items: center;
   flex-shrink: 0;
 }
-.ticket-table  { font-family: var(--font-d); font-size: 1.15rem; font-weight: 400; letter-spacing: .06em; color: var(--green); }
+.ticket-table  { font-family: var(--font-d); font-size: 1.15rem; font-weight: 400; letter-spacing: .06em; color: var(--orange); }
 .ticket-waiter { }
 
 .order-status-banner {
@@ -331,7 +331,7 @@
   flex-shrink: 0;
 }
 .order-status-banner.status--kitchen { background: rgba(255,180,0,.12); color: var(--amber); border: 1px solid var(--amber-dim); }
-.order-status-banner.status--ready { background: var(--green-alpha); color: var(--green); border: 1px solid var(--green-dim); animation: pulse-banner 2s ease-in-out infinite; }
+.order-status-banner.status--ready { background: var(--orange-alpha); color: var(--orange); border: 1px solid var(--orange-dim); animation: pulse-banner 2s ease-in-out infinite; }
 .order-status-banner.status--delivered { background: var(--bg-2); color: var(--text-muted); border: 1px solid var(--border); }
 @keyframes pulse-banner { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
 
@@ -379,7 +379,7 @@
   cursor: pointer;
   transition: all var(--t);
 }
-.qty-btn:hover { border-color: var(--green); color: var(--green); }
+.qty-btn:hover { border-color: var(--orange); color: var(--orange); }
 .qty-btn.minus:hover { border-color: var(--danger); color: var(--danger); }
 .qty-num { font-weight: 700; min-width: 20px; text-align: center; font-size: .9rem; }
 .ticket-item__price { font-family: var(--font); font-size: .92rem; font-weight: 700; color: var(--amber); min-width: 60px; text-align: right; }
@@ -427,7 +427,7 @@
 /* ─── Payment Modal ──────────────────────────────────────────── */
 .pay-summary { text-align: center; padding: 8px 0; }
 .pay-total-label  { font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); }
-.pay-total-amount { font-family: var(--font); font-size: 2.4rem; font-weight: 700; color: var(--green); }
+.pay-total-amount { font-family: var(--font); font-size: 2.4rem; font-weight: 700; color: var(--orange); }
 
 .pay-methods {
   display: grid;
@@ -449,7 +449,7 @@
   cursor: pointer;
   transition: all var(--t);
 }
-.pay-method.active { background: var(--green-alpha); color: var(--green); border-color: var(--green-dim); }
+.pay-method.active { background: var(--orange-alpha); color: var(--orange); border-color: var(--orange-dim); }
 
 .change-display { font-size: .9rem; color: var(--text-secondary); }
 
@@ -467,7 +467,7 @@
   cursor: pointer;
   transition: background var(--t);
 }
-.suggestion-item:hover { background: var(--bg-4); color: var(--green); }
+.suggestion-item:hover { background: var(--bg-4); color: var(--orange); }
 
 /* ─── Kitchen Display ────────────────────────────────────────── */
 .kitchen-body { display: block; }
@@ -485,7 +485,7 @@
   top: 0;
   z-index: 100;
 }
-.kitchen-brand { font-family: var(--font-d); font-size: 1.2rem; font-weight: 400; letter-spacing: .08em; color: var(--green); }
+.kitchen-brand { font-family: var(--font-d); font-size: 1.2rem; font-weight: 400; letter-spacing: .08em; color: var(--orange); }
 .kitchen-topbar__right { display: flex; align-items: center; gap: 16px; }
 
 .kitchen-layout {
@@ -524,7 +524,7 @@
   overflow: hidden;
   animation: slideDown .3s ease;
 }
-.kitchen-card--ready { border-color: var(--green-dim); box-shadow: 0 0 16px var(--green-alpha); }
+.kitchen-card--ready { border-color: var(--orange-dim); box-shadow: 0 0 16px var(--orange-alpha); }
 .kitchen-card--urgent { border-color: var(--danger); box-shadow: 0 0 16px var(--danger-dim); animation: pulse 1s ease-in-out infinite; }
 
 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -539,7 +539,7 @@
 }
 .kitchen-card__table { font-family: var(--font-d); font-size: 1.4rem; font-weight: 400; letter-spacing: .06em; }
 .kitchen-card__timer { font-family: var(--font); font-size: .88rem; font-weight: 700; }
-.timer--ok     { color: var(--green); }
+.timer--ok     { color: var(--orange); }
 .timer--warn   { color: var(--amber); }
 .timer--urgent { color: var(--danger); }
 
@@ -647,9 +647,9 @@
   font-weight: 700;
   padding: 2px 9px;
   border-radius: 100px;
-  background: var(--green-alpha);
-  color: var(--green);
-  border: 1px solid var(--green-dim);
+  background: var(--orange-alpha);
+  color: var(--orange);
+  border: 1px solid var(--orange-dim);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -734,7 +734,7 @@
   filter: blur(120px);
   opacity: .08;
 }
-.login-glow--green { top: -200px; right: -150px; background: var(--green); }
+.login-glow--orange { top: -200px; right: -150px; background: var(--orange); }
 .login-glow--amber { bottom: -200px; left: -150px; background: var(--amber); }
 
 .login-card {
@@ -756,7 +756,7 @@
   margin-bottom: 32px;
   line-height: 1.2;
   letter-spacing: .10em;
-  color: var(--green);
+  color: var(--orange);
 }
 
 /* ─── Menu Management Grid ───────────────────────────────────── */
@@ -812,7 +812,7 @@
   font-size: .88rem;
   color: var(--text-secondary);
 }
-.checkbox-label input[type=checkbox] { accent-color: var(--green); width: 16px; height: 16px; }
+.checkbox-label input[type=checkbox] { accent-color: var(--orange); width: 16px; height: 16px; }
 
 /* ─── Receipt Print ──────────────────────────────────────────── */
 .receipt {
@@ -853,7 +853,7 @@
 }
 .top-item-rank.top-1 { background: var(--amber-alpha); color: var(--amber); }
 .top-item-rank.top-2 { background: var(--bg-5); color: var(--text-secondary); }
-.top-item-rank.top-3 { background: var(--green-dark); color: var(--green); }
+.top-item-rank.top-3 { background: var(--orange-dark); color: var(--orange); }
 
 .top-item-bar {
   flex: 1;
@@ -865,7 +865,7 @@
 }
 .top-item-bar__fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--green-dim), var(--green));
+  background: linear-gradient(90deg, var(--orange-dim), var(--orange));
   border-radius: 2px;
 }
 
@@ -965,7 +965,7 @@
   transition: all var(--t);
   white-space: nowrap;
 }
-.pos-order-type-btn.active { background: var(--bg-2); color: var(--green); }
+.pos-order-type-btn.active { background: var(--bg-2); color: var(--orange); }
 
 .pos-customer-fields {
   padding: 10px 16px;
@@ -992,13 +992,13 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--green);
-  box-shadow: var(--glow-green-s);
+  background: var(--orange);
+  box-shadow: var(--glow-orange-s);
   animation: blink 2s ease-in-out infinite;
 }
 .realtime-dot.dot--active {
   opacity: 1;
-  color: var(--green);
+  color: var(--orange);
 }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
@@ -1108,7 +1108,7 @@
     z-index: 380;
     align-items: center;
     gap: 10px;
-    background: var(--green);
+    background: var(--orange);
     color: #fff;
     border: none;
     border-radius: 100px;
@@ -1116,14 +1116,14 @@
     font-size: .88rem;
     font-weight: 700;
     line-height: 1;
-    box-shadow: var(--glow-green-s), 0 6px 24px rgba(0,0,0,.60);
+    box-shadow: var(--glow-orange-s), 0 6px 24px rgba(0,0,0,.60);
     cursor: pointer;
     transition: transform var(--t), box-shadow var(--t);
   }
   .mob-cart-fab:active { transform: scale(.95); }
   .mob-cart-fab__count {
     background: #fff;
-    color: var(--green);
+    color: var(--orange);
     border-radius: 100px;
     font-size: .72rem;
     font-weight: 800;
@@ -1183,6 +1183,6 @@
   letter-spacing: .02em;
 }
 #orderStatusBanner.status--kitchen  { background: rgba(255,180,0,.12); color: var(--amber); border: 1px solid var(--amber-dim); }
-#orderStatusBanner.status--ready    { background: rgba(0,220,130,.12); color: var(--green); border: 1px solid var(--green-dim); animation: pulse-banner 2s ease-in-out infinite; }
+#orderStatusBanner.status--ready    { background: rgba(0,220,130,.12); color: var(--orange); border: 1px solid var(--orange-dim); animation: pulse-banner 2s ease-in-out infinite; }
 #orderStatusBanner.status--delivered{ background: var(--bg-2); color: var(--text-muted); border: 1px solid var(--border); }
 @keyframes pulse-banner { 0%,100% { opacity:1 } 50% { opacity:.6 } }

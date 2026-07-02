@@ -12,7 +12,7 @@ import ModifierModal from './ModifierModal'
 import SuccessModal from './SuccessModal'
 import './order.css'
 
-const ORDERING_ENABLED = false
+const ORDERING_ENABLED = process.env.NEXT_PUBLIC_ORDERING_ENABLED === 'true'
 
 type CartLine = {
   id: string

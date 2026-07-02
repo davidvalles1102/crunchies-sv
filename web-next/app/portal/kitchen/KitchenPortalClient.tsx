@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -201,7 +201,7 @@ function KCard({ order, elapsed, onReady }: {
             ✅ Marcar Listo
           </button>
         ) : (
-          <div style={{ padding: '6px 0', color: 'var(--green)', fontSize: '.85rem', fontWeight: 600, textAlign: 'center', flex: 1 }}>
+          <div style={{ padding: '6px 0', color: 'var(--orange)', fontSize: '.85rem', fontWeight: 600, textAlign: 'center', flex: 1 }}>
             🍽️ Listo — el mesero confirma la entrega
           </div>
         )}

@@ -1,4 +1,4 @@
-/* ================================================================
+﻿/* ================================================================
    Crunchies — Design System
    Warm dark mode · Orange (#FF6600) + Amber (#FF9900) accents
    Bangers (display) · Poppins (body)
@@ -21,13 +21,13 @@
   --text-invert:    #1E1210;
 
   /* Orange — primary accent (#FF6600) */
-  --green:        #FF6600;
-  --green-dim:    #7A3000;
-  --green-dark:   #3D1800;
-  --green-alpha:  rgba(255, 102, 0, 0.10);
+  --orange:        #FF6600;
+  --orange-dim:    #7A3000;
+  --orange-dark:   #3D1800;
+  --orange-alpha:  rgba(255, 102, 0, 0.10);
   /* Minimal shadow — no neon glow */
-  --glow-green:   0 4px 20px rgba(255, 102, 0, 0.35);
-  --glow-green-s: 0 2px 10px rgba(255, 102, 0, 0.25);
+  --glow-orange:   0 4px 20px rgba(255, 102, 0, 0.35);
+  --glow-orange-s: 0 2px 10px rgba(255, 102, 0, 0.25);
 
   /* Amber — secondary accent (#FF9900) */
   --amber:        #FF9900;
@@ -80,7 +80,7 @@ html { scroll-behavior: smooth; }
 
 /* ─── Focus visible ──────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--green);
+  outline: 2px solid var(--orange);
   outline-offset: 2px;
 }
 button:focus-visible,
@@ -90,9 +90,9 @@ a:focus-visible,
 .pos-cat:focus-visible,
 .nav-link:focus-visible,
 .auth-tab:focus-visible {
-  outline: 2px solid var(--green);
+  outline: 2px solid var(--orange);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px var(--green-alpha);
+  box-shadow: 0 0 0 4px var(--orange-alpha);
 }
 
 body {
@@ -106,7 +106,7 @@ body {
 
 img { display: block; max-width: 100%; }
 a  { color: inherit; text-decoration: none; }
-button { cursor: pointer; font-family: inherit; border: none; outline: none; }
+button { cursor: pointer; font-family: inherit; border: none; }
 input, select, textarea { font-family: inherit; outline: none; }
 ul { list-style: none; }
 
@@ -123,14 +123,14 @@ h4 { font-size: .92rem;  font-weight: 600; }
 .text-muted     { color: var(--text-muted); }
 .text-secondary { color: var(--text-secondary); }
 /* Functional color classes — no text-shadow for smooth look */
-.text-green  { color: var(--green); }
+.text-green  { color: var(--orange); }
 .text-amber  { color: var(--amber); }
 .text-danger { color: var(--danger); }
 
 /* Legacy neon classes — kept for HTML compat, no glow */
-.neon-green { color: var(--green); }
+.neon-green { color: var(--orange); }
 .neon-amber { color: var(--amber); }
-.neon-border-green { border: 1px solid var(--green); }
+.neon-border-green { border: 1px solid var(--orange); }
 .neon-border-amber { border: 1px solid var(--amber); }
 
 /* ─── Buttons ────────────────────────────────────────────────── */
@@ -148,13 +148,13 @@ h4 { font-size: .92rem;  font-weight: 600; }
 }
 
 .btn-primary {
-  background: var(--green);
+  background: var(--orange);
   color: #fff;
-  box-shadow: var(--glow-green-s);
+  box-shadow: var(--glow-orange-s);
 }
 .btn-primary:hover {
   background: #FF7A1F;
-  box-shadow: var(--glow-green);
+  box-shadow: var(--glow-orange);
   transform: translateY(-1px);
 }
 
@@ -174,7 +174,7 @@ h4 { font-size: .92rem;  font-weight: 600; }
   border: 1px solid var(--border-lit);
   color: var(--text-secondary);
 }
-.btn-outline:hover { border-color: var(--green); color: var(--green); background: var(--green-alpha); }
+.btn-outline:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-alpha); }
 
 .btn-ghost {
   background: transparent;
@@ -209,7 +209,7 @@ h4 { font-size: .92rem;  font-weight: 600; }
   transition: border-color var(--t);
 }
 .card:hover { border-color: var(--border-lit); }
-.card-green:hover { border-color: var(--green); }
+.card-green:hover { border-color: var(--orange); }
 .card-amber:hover { border-color: var(--amber); }
 
 /* ─── Form Controls ──────────────────────────────────────────── */
@@ -227,8 +227,8 @@ h4 { font-size: .92rem;  font-weight: 600; }
   width: 100%;
 }
 .form-control:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px var(--green-alpha);
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px var(--orange-alpha);
 }
 .form-control::placeholder { color: var(--text-muted); }
 
@@ -245,7 +245,7 @@ select.form-control { appearance: none; cursor: pointer; }
   letter-spacing: .03em;
   text-transform: uppercase;
 }
-.badge-green   { background: var(--green-alpha); color: var(--green); border: 1px solid var(--green-dim); }
+.badge-green   { background: var(--orange-alpha); color: var(--orange); border: 1px solid var(--orange-dim); }
 .badge-amber   { background: var(--amber-alpha); color: var(--amber); border: 1px solid var(--amber-dim); }
 .badge-danger  { background: var(--danger-dim);  color: var(--danger); border: 1px solid rgba(255,68,85,.30); }
 .badge-info    { background: var(--info-dim);    color: var(--info);   border: 1px solid rgba(74,158,224,.30); }
@@ -283,7 +283,7 @@ select.form-control { appearance: none; cursor: pointer; }
   font-size: .86rem;
   border: 1px solid;
 }
-.alert-success { background: var(--green-alpha); color: var(--green); border-color: var(--green-dim); }
+.alert-success { background: var(--orange-alpha); color: var(--orange); border-color: var(--orange-dim); }
 .alert-error   { background: var(--danger-dim);  color: var(--danger); border-color: rgba(255,68,85,.30); }
 .alert-info    { background: var(--info-dim);    color: var(--info);   border-color: rgba(74,158,224,.30); }
 .alert-warning { background: var(--amber-alpha); color: var(--amber);  border-color: var(--amber-dim); }
@@ -315,7 +315,7 @@ select.form-control { appearance: none; cursor: pointer; }
   align-items: center;
   gap: 10px;
 }
-.toast.success { background: rgba(28, 14, 5, 0.95); color: var(--green); border: 1px solid var(--green-dim); box-shadow: var(--glow-green-s); }
+.toast.success { background: rgba(28, 14, 5, 0.95); color: var(--orange); border: 1px solid var(--orange-dim); box-shadow: var(--glow-orange-s); }
 .toast.error   { background: rgba(28, 8, 8, 0.95);  color: var(--danger); border: 1px solid rgba(255,68,85,.40); }
 .toast.info    { background: rgba(8, 18, 28, 0.95); color: var(--info);   border: 1px solid rgba(74,158,224,.40); }
 .toast.warning { background: rgba(28, 18, 5, 0.95); color: var(--amber);  border: 1px solid var(--amber-dim); }
@@ -328,7 +328,7 @@ select.form-control { appearance: none; cursor: pointer; }
   width: 20px;
   height: 20px;
   border: 2px solid var(--bg-5);
-  border-top-color: var(--green);
+  border-top-color: var(--orange);
   border-radius: 50%;
   animation: spin .7s linear infinite;
   display: inline-block;
@@ -412,7 +412,7 @@ select.form-control { appearance: none; cursor: pointer; }
 /* Poppins (not Bangers) for numbers — cleaner data display */
 .stat-value { font-family: var(--font); font-size: 1.9rem; font-weight: 700; color: var(--text-primary); line-height: 1.1; }
 .stat-sub   { font-size: .78rem; color: var(--text-secondary); }
-.stat-green .stat-value { color: var(--green); }
+.stat-green .stat-value { color: var(--orange); }
 .stat-amber .stat-value { color: var(--amber); }
 .stat-danger .stat-value { color: var(--danger); }
 
@@ -425,7 +425,7 @@ select.form-control { appearance: none; cursor: pointer; }
   font-size: .86rem;
   color: var(--text-secondary);
 }
-.checkbox-label input[type=checkbox] { accent-color: var(--green); width: 16px; height: 16px; }
+.checkbox-label input[type=checkbox] { accent-color: var(--orange); width: 16px; height: 16px; }
 
 /* ─── Utility ────────────────────────────────────────────────── */
 .flex        { display: flex; }
@@ -450,7 +450,7 @@ select.form-control { appearance: none; cursor: pointer; }
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-2); }
 ::-webkit-scrollbar-thumb { background: var(--bg-5); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
+::-webkit-scrollbar-thumb:hover { background: var(--orange-dim); }
 
 /* ─── Touch tap targets (≥44px) ─────────────────────────────── */
 @media (max-width: 768px) {

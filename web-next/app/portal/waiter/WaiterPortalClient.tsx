@@ -82,9 +82,6 @@ export default function WaiterPortalClient() {
 
   useEffect(() => {
     if (!session) return undefined
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) supabase.from('profiles').upsert({ id: user.id, role: 'waiter' }, { onConflict: 'id' })
-    })
     loadAll()
     const channel = supabase
       .channel('waiter-portal')

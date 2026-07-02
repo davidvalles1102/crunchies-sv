@@ -1,7 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Chart } from 'chart.js/auto'
+import {
+  Chart, BarController, LineController,
+  CategoryScale, LinearScale, BarElement, PointElement, LineElement,
+  Tooltip, Filler,
+} from 'chart.js'
+
+Chart.register(BarController, LineController, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Filler)
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { useRequireRole } from '../../AdminContext'
@@ -25,6 +31,7 @@ const METHOD_ICON: Record<string, string> = { cash: '💵', card: '💳', transf
 function chartOptions(prefix = '') {
   return {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -256,11 +263,11 @@ export default function ExpenseTrackerClient() {
             <div className="charts-grid mt-24">
               <div className="card">
                 <h3 className="mb-16">Gastos por Categoría</h3>
-                <canvas ref={categoryCanvasRef} height={220}></canvas>
+                <div style={{ position: 'relative', height: 220 }}><canvas ref={categoryCanvasRef}></canvas></div>
               </div>
               <div className="card">
                 <h3 className="mb-16">Gastos por Día</h3>
-                <canvas ref={dailyCanvasRef} height={220}></canvas>
+                <div style={{ position: 'relative', height: 220 }}><canvas ref={dailyCanvasRef}></canvas></div>
               </div>
             </div>
 

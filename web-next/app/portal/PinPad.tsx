@@ -25,9 +25,9 @@ export default function PinPad({ portalName, icon, expectedRole, onSuccess }: Pr
   async function submit(pin: string) {
     setLoading(true)
     setError('')
-    const session = await loginWithPin(pin)
+    const { session, error } = await loginWithPin(pin)
     if (!session || session.role !== expectedRole) {
-      setError('PIN inválido o sin acceso a este portal')
+      setError(error ?? 'PIN inválido o sin acceso a este portal')
       setDigits('')
       setLoading(false)
       return
@@ -59,16 +59,21 @@ export default function PinPad({ portalName, icon, expectedRole, onSuccess }: Pr
         : <div className="pin-error">{error}</div>}
 
       <div className="pin-pad">
-        {KEYS.map((k, i) => (
-          <button
-            key={i}
-            className={`pin-key${k === '⌫' ? ' pin-key--del' : ''}${k === '' ? ' pin-key--empty' : ''}`}
-            onClick={() => pressKey(k)}
-            type="button"
-          >
-            {k}
-          </button>
-        ))}
+        {KEYS.map((k, i) =>
+          k === '' ? (
+            <div key={i} aria-hidden="true" className="pin-key pin-key--empty" />
+          ) : (
+            <button
+              key={i}
+              className={`pin-key${k === '⌫' ? ' pin-key--del' : ''}`}
+              onClick={() => pressKey(k)}
+              type="button"
+              aria-label={k === '⌫' ? 'Borrar último dígito' : k}
+            >
+              {k}
+            </button>
+          )
+        )}
       </div>
     </div>
   )

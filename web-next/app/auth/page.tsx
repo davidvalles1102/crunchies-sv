@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import AuthClient from './AuthClient'
 
@@ -9,7 +9,7 @@ export default function AuthPage() {
     <div className="auth-page">
       <div className="auth-bg">
         <div className="auth-bg__grid"></div>
-        <div className="auth-bg__glow auth-bg__glow--green"></div>
+        <div className="auth-bg__glow auth-bg__glow--orange"></div>
         <div className="auth-bg__glow auth-bg__glow--amber"></div>
       </div>
 

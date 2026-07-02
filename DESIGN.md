@@ -1,47 +1,48 @@
 ---
-name: Neón y Sabor Mi Rancho
-description: Sistema de gestión de restaurante — oscuro, encendido y festivo
+name: Crunchies — Neón y Sabor
+description: Sistema de gestión de restaurante — warm dark mode, naranja encendido
 colors:
-  void:              "#080808"
-  night:             "#0f0f0f"
-  surface:           "#161616"
-  surface-raised:    "#1e1e1e"
-  surface-high:      "#252525"
-  surface-top:       "#2e2e2e"
-  ink:               "#F2ECD8"
-  ink-secondary:     "#9E9080"
-  ink-muted:         "#5A5045"
-  neon-green:        "#39FF14"
-  neon-green-dim:    "#1a7a09"
-  neon-green-dark:   "#0d3d05"
-  neon-amber:        "#FFB300"
-  neon-amber-dim:    "#7a5500"
-  neon-amber-dark:   "#3d2b00"
-  danger:            "#FF3B3B"
-  info:              "#00BFFF"
+  bg-0:            "#0E0908"
+  bg-1:            "#160C09"
+  bg-2:            "#1E1210"
+  bg-3:            "#261510"
+  bg-4:            "#2E1A12"
+  bg-5:            "#3A1913"
+  text-primary:    "#FFFFFF"
+  text-secondary:  "#BFA099"
+  text-muted:      "#7A5248"
+  orange:          "#FF6600"
+  orange-dim:      "#7A3000"
+  orange-dark:     "#3D1800"
+  orange-alpha:    "rgba(255,102,0,0.10)"
+  amber:           "#FF9900"
+  amber-dim:       "#7A4A00"
+  amber-dark:      "#3D2400"
+  danger:          "#FF4455"
+  info:            "#4A9EE0"
 typography:
   display:
-    fontFamily: "'Rajdhani', 'Inter', sans-serif"
-    fontSize: "clamp(2rem, 4vw, 3rem)"
-    fontWeight: 700
+    fontFamily: "'Bangers', 'Poppins', sans-serif"
+    fontSize: "3rem"
+    fontWeight: 400
+    lineHeight: 1
+    letterSpacing: "0.06em"
+  headline:
+    fontFamily: "'Bangers', 'Poppins', sans-serif"
+    fontSize: "1.6rem"
+    fontWeight: 400
     lineHeight: 1.1
     letterSpacing: "0.04em"
-  headline:
-    fontFamily: "'Rajdhani', 'Inter', sans-serif"
-    fontSize: "1.35rem"
-    fontWeight: 600
-    lineHeight: 1.3
-    letterSpacing: "0.02em"
   body:
-    fontFamily: "'Inter', system-ui, sans-serif"
-    fontSize: "0.9rem"
+    fontFamily: "'Poppins', system-ui, sans-serif"
+    fontSize: "0.88rem"
     fontWeight: 400
-    lineHeight: 1.55
+    lineHeight: 1.6
   label:
-    fontFamily: "'Inter', system-ui, sans-serif"
-    fontSize: "0.78rem"
+    fontFamily: "'Poppins', system-ui, sans-serif"
+    fontSize: "0.72rem"
     fontWeight: 600
-    letterSpacing: "0.06em"
+    letterSpacing: "0.07em"
 rounded:
   sm: "6px"
   md: "10px"
@@ -55,28 +56,28 @@ spacing:
   xl:  "32px"
 components:
   button-primary:
-    backgroundColor: "{colors.neon-green}"
-    textColor: "{colors.void}"
+    backgroundColor: "{colors.orange}"
+    textColor: "#FFFFFF"
     rounded: "{rounded.md}"
     padding: "10px 20px"
   button-primary-hover:
-    backgroundColor: "{colors.neon-green}"
-    textColor: "{colors.void}"
+    backgroundColor: "#FF7A1F"
+    textColor: "#FFFFFF"
     rounded: "{rounded.md}"
     padding: "10px 20px"
   button-amber:
-    backgroundColor: "{colors.neon-amber}"
-    textColor: "{colors.void}"
+    backgroundColor: "{colors.amber}"
+    textColor: "#FFFFFF"
     rounded: "{rounded.md}"
     padding: "10px 20px"
   button-outline:
     backgroundColor: "transparent"
-    textColor: "{colors.ink}"
+    textColor: "{colors.text-secondary}"
     rounded: "{rounded.md}"
     padding: "10px 20px"
   button-ghost:
     backgroundColor: "transparent"
-    textColor: "{colors.ink-secondary}"
+    textColor: "{colors.text-muted}"
     rounded: "{rounded.md}"
     padding: "10px 20px"
   card:

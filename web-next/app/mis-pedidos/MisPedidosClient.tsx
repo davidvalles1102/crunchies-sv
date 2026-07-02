@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
@@ -77,7 +77,7 @@ function OrderCard({ order }: { order: Order }) {
       <div className="mis-pedidos-card__items">{itemsText}</div>
 
       {isDelivery && isActive && order.drivers && (
-        <div className="text-xs mt-8" style={{ color: 'var(--green)' }}>
+        <div className="text-xs mt-8" style={{ color: 'var(--orange)' }}>
           🛵 {order.drivers.full_name} — <a href={`tel:${order.drivers.phone}`} style={{ color: 'inherit' }}>{order.drivers.phone}</a>
         </div>
       )}

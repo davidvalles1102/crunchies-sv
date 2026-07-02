@@ -1,4 +1,4 @@
-/* ─── Loading / Error screens ─────────────────────────────── */
+﻿/* ─── Loading / Error screens ─────────────────────────────── */
 .full-screen {
   min-height: 100vh;
   display: flex;
@@ -18,7 +18,7 @@
   top: 0;
   z-index: 50;
   background: var(--bg-1);
-  border-bottom: 2px solid var(--green-dim);
+  border-bottom: 2px solid var(--orange-dim);
   padding: 10px 20px;
   display: flex;
   align-items: center;
@@ -34,8 +34,8 @@
   font-family: var(--font-d);
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--green);
-  text-shadow: var(--glow-green-s);
+  color: var(--orange);
+  text-shadow: var(--glow-orange-s);
 }
 .table-banner__loc {
   font-size: .75rem;
@@ -94,10 +94,10 @@
   border-color: var(--border-lit);
 }
 .pos-cat.active {
-  background: var(--green-dark);
-  color: var(--green);
-  border-color: var(--green-dim);
-  box-shadow: 0 0 10px var(--green-alpha);
+  background: var(--orange-dark);
+  color: var(--orange);
+  border-color: var(--orange-dim);
+  box-shadow: 0 0 10px var(--orange-alpha);
 }
 
 /* ─── Mobile cart bar ─────────────────────────────────────── */
@@ -106,7 +106,7 @@
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 200;
-  background: var(--green);
+  background: var(--orange);
   color: #000;
   padding: 14px 20px;
   align-items: center;
@@ -174,14 +174,14 @@
 .success-icon {
   width: 80px; height: 80px;
   border-radius: 50%;
-  background: var(--green);
+  background: var(--orange);
   color: #000;
   font-size: 2.2rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--glow-green);
+  box-shadow: var(--glow-orange);
 }
 .success-order-num {
   font-family: var(--font-d);
@@ -200,7 +200,7 @@
   transition: border-color var(--ts), box-shadow var(--ts);
 }
 .tracker-order-card--ready {
-  border-color: var(--green-dim);
+  border-color: var(--orange-dim);
   animation: pulse-tracker 2s ease-in-out infinite;
 }
 @keyframes pulse-tracker {
@@ -217,7 +217,7 @@
 .tracker-order-num { font-family: var(--font-d); color: var(--amber); font-size: .95rem; }
 .tracker-status    { font-size: .82rem; text-align: right; }
 .tracker-status--kitchen { color: var(--amber) }
-.tracker-status--ready   { color: var(--green); font-weight: 700; text-shadow: var(--glow-green-s) }
+.tracker-status--ready   { color: var(--orange); font-weight: 700; text-shadow: var(--glow-orange-s) }
 .tracker-status--done    { color: var(--text-secondary) }
 .tracker-items {
   font-size: .82rem;
@@ -237,13 +237,13 @@
 
 /* ─── Item "in cart" indicator ───────────────────────────── */
 .order-item-card.in-cart {
-  border-color: var(--green-dim);
+  border-color: var(--orange-dim);
   background: var(--bg-4);
 }
 .order-item-add.in-cart {
-  background: var(--green);
+  background: var(--orange);
   color: #000;
-  box-shadow: var(--glow-green-s);
+  box-shadow: var(--glow-orange-s);
   font-size: .72rem;
   border-radius: var(--r-sm);
   width: auto;

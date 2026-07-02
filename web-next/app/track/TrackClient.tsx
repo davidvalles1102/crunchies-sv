@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
@@ -116,7 +116,7 @@ export default function TrackClient() {
   const currentIdx = STATUS_ORDER.indexOf(status)
   const isNequi = order.payment_method === 'nequi'
 
-  const bannerBorder = status === 'delivered' ? 'var(--green)' : status === 'on_the_way' ? 'var(--amber)' : 'var(--border-lit)'
+  const bannerBorder = status === 'delivered' ? 'var(--orange)' : status === 'on_the_way' ? 'var(--amber)' : 'var(--border-lit)'
   const bannerBg = status === 'delivered' ? 'rgba(0,220,130,.08)' : status === 'on_the_way' ? 'var(--amber-alpha)' : 'var(--bg-2)'
 
   return (
@@ -158,7 +158,7 @@ export default function TrackClient() {
       </div>
 
       {isDelivery && order.driver_id && driverInfo && (
-        <div className="card" style={{ borderColor: 'var(--green-dim)' }}>
+        <div className="card" style={{ borderColor: 'var(--orange-dim)' }}>
           <h4 className="mb-12">🛵 Tu Repartidor</h4>
           <div className="flex justify-between items-center">
             <span style={{ fontWeight: 600 }}>{driverInfo.full_name}</span>
@@ -188,7 +188,7 @@ export default function TrackClient() {
           <h4 className="mb-12">Pago</h4>
           {isNequi ? (
             <div>
-              <div style={{ color: 'var(--green)', fontWeight: 600, marginBottom: 6 }}>📱 Nequi</div>
+              <div style={{ color: 'var(--orange)', fontWeight: 600, marginBottom: 6 }}>📱 Nequi</div>
               <div className={styles['track-nequi-number']}>+503 7311 8276</div>
               <p className="text-xs text-muted">Recuerda transferir {fmt.currency(order.total)} si aún no lo has hecho.</p>
             </div>

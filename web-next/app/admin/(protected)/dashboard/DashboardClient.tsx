@@ -1,8 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Chart } from 'chart.js/auto'
+import {
+  Chart, LineController, DoughnutController,
+  CategoryScale, LinearScale, PointElement, LineElement, ArcElement,
+  Tooltip, Legend, Filler,
+} from 'chart.js'
 import { createClient } from '@/lib/supabase/client'
+
+Chart.register(LineController, DoughnutController, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend, Filler)
 import { fmt } from '@/lib/format'
 import { useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
@@ -25,16 +31,24 @@ type RecentOrder = {
   restaurant_tables: { number: number } | null
 }
 
+function cssVar(name: string) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
 function chartOptions() {
+  const muted = cssVar('--text-muted')
+  const bg2   = cssVar('--bg-2')
+  const bg3   = cssVar('--bg-3')
   return {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      tooltip: { backgroundColor: '#261510', borderColor: '#3A1913', borderWidth: 1, titleColor: '#FFFFFF', bodyColor: '#BFA099' },
+      tooltip: { backgroundColor: bg3, borderColor: bg2, borderWidth: 1, titleColor: '#FFFFFF', bodyColor: cssVar('--text-secondary') },
     },
     scales: {
-      x: { ticks: { color: '#7A5248', font: { size: 11 } }, grid: { color: 'rgba(255,150,80,0.05)' } },
-      y: { ticks: { color: '#7A5248', font: { size: 11 } }, grid: { color: 'rgba(255,150,80,0.05)' } },
+      x: { ticks: { color: muted, font: { size: 11 } }, grid: { color: 'rgba(255,150,80,0.05)' } },
+      y: { ticks: { color: muted, font: { size: 11 } }, grid: { color: 'rgba(255,150,80,0.05)' } },
     },
   }
 }
@@ -43,6 +57,8 @@ export default function DashboardClient() {
   useRequireRole(['admin', 'waiter'])
   const supabase = createClient()
 
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [salesToday, setSalesToday] = useState(0)
   const [ordersTodayCount, setOrdersTodayCount] = useState(0)
   const [salesWeek, setSalesWeek] = useState(0)
@@ -60,48 +76,53 @@ export default function DashboardClient() {
 
   useEffect(() => {
     const loadDashboard = async () => {
-      // El Salvador = UTC-6, sin horario de verano
-      const SV_OFFSET_MS = 6 * 60 * 60 * 1000
-      const localNow = new Date(Date.now() - SV_OFFSET_MS)
-      const today = localNow.toISOString().split('T')[0]   // fecha local "YYYY-MM-DD"
-      const todayStart = `${today}T06:00:00Z`              // 00:00 SV = 06:00 UTC
-      const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString()
+      try {
+        // El Salvador = UTC-6, sin horario de verano
+        const SV_OFFSET_MS = 6 * 60 * 60 * 1000
+        const localNow = new Date(Date.now() - SV_OFFSET_MS)
+        const today = localNow.toISOString().split('T')[0]   // fecha local "YYYY-MM-DD"
+        const todayStart = `${today}T06:00:00Z`              // 00:00 SV = 06:00 UTC
+        const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString()
 
-      const [
-        { data: todayOrders },
-        { data: weekOrders },
-        { data: tables },
-        { data: inKitchen },
-        { data: todayPayments },
-        { data: topItemsRaw },
-        { data: todayExpenses },
-        { data: recent },
-      ] = await Promise.all([
-        supabase.from('payments').select('amount').gte('created_at', todayStart),
-        supabase.from('payments').select('amount, created_at').gte('created_at', weekAgo),
-        supabase.from('restaurant_tables').select('status'),
-        supabase.from('orders').select('id').in('status', ['in_kitchen']),
-        supabase.from('payments').select('method, amount').gte('created_at', todayStart),
-        supabase.from('order_items').select('item_name, quantity, item_price').gte('created_at', todayStart),
-        supabase.from('expenses').select('amount').eq('expense_date', today),
-        supabase.from('orders').select('*, restaurant_tables(number)').gte('created_at', todayStart).order('created_at', { ascending: false }).limit(8),
-      ])
+        const results = await Promise.all([
+          supabase.from('payments').select('amount').gte('created_at', todayStart),
+          supabase.from('payments').select('amount, created_at').gte('created_at', weekAgo),
+          supabase.from('restaurant_tables').select('status'),
+          supabase.from('orders').select('id').in('status', ['in_kitchen']),
+          supabase.from('payments').select('method, amount').gte('created_at', todayStart),
+          supabase.from('order_items').select('item_name, quantity, item_price').gte('created_at', todayStart),
+          supabase.from('expenses').select('amount').eq('expense_date', today),
+          supabase.from('orders').select('*, restaurant_tables(number)').gte('created_at', todayStart).order('created_at', { ascending: false }).limit(8),
+        ])
 
-      setSalesToday((todayOrders || []).reduce((s, p) => s + Number(p.amount), 0))
-      setOrdersTodayCount(todayOrders?.length ?? 0)
-      setSalesWeek((weekOrders || []).reduce((s, p) => s + Number(p.amount), 0))
-      setTablesOccupied((tables || []).filter((t) => t.status === 'occupied').length)
-      setTablesTotal(tables?.length ?? 0)
-      setInKitchenCount(inKitchen?.length ?? 0)
-      setExpensesToday((todayExpenses || []).reduce((s, e) => s + Number(e.amount), 0))
-      setRecentOrders((recent as RecentOrder[]) ?? [])
+        if (results.some((r) => r.error)) throw new Error('Query error')
 
-      const byItem: Record<string, number> = {}
-      ;(topItemsRaw || []).forEach((i) => { byItem[i.item_name] = (byItem[i.item_name] || 0) + i.quantity })
-      setTopItems(Object.entries(byItem).sort((a, b) => b[1] - a[1]).slice(0, 6))
+        const [
+          { data: todayOrders }, { data: weekOrders }, { data: tables }, { data: inKitchen },
+          { data: todayPayments }, { data: topItemsRaw }, { data: todayExpenses }, { data: recent },
+        ] = results
 
-      renderSalesChart(weekOrders || [])
-      renderPaymentChart(todayPayments || [])
+        setSalesToday((todayOrders || []).reduce((s, p) => s + Number(p.amount), 0))
+        setOrdersTodayCount(todayOrders?.length ?? 0)
+        setSalesWeek((weekOrders || []).reduce((s, p) => s + Number(p.amount), 0))
+        setTablesOccupied((tables || []).filter((t) => t.status === 'occupied').length)
+        setTablesTotal(tables?.length ?? 0)
+        setInKitchenCount(inKitchen?.length ?? 0)
+        setExpensesToday((todayExpenses || []).reduce((s, e) => s + Number(e.amount), 0))
+        setRecentOrders((recent as RecentOrder[]) ?? [])
+
+        const byItem: Record<string, number> = {}
+        ;(topItemsRaw || []).forEach((i) => { byItem[i.item_name] = (byItem[i.item_name] || 0) + i.quantity })
+        setTopItems(Object.entries(byItem).sort((a, b) => b[1] - a[1]).slice(0, 6))
+
+        renderSalesChart(weekOrders || [])
+        renderPaymentChart(todayPayments || [])
+        setError(false)
+      } catch {
+        setError(true)
+      } finally {
+        setLoading(false)
+      }
     }
 
     const renderSalesChart = (payments: { amount: number; created_at: string }[]) => {
@@ -127,8 +148,8 @@ export default function DashboardClient() {
           labels,
           datasets: [{
             label: 'Ventas', data: values,
-            borderColor: '#FF6600', backgroundColor: 'rgba(255,102,0,0.08)',
-            fill: true, tension: 0.4, pointBackgroundColor: '#FF6600', pointRadius: 4, pointHoverRadius: 6,
+            borderColor: cssVar('--orange'), backgroundColor: cssVar('--orange-alpha'),
+            fill: true, tension: 0.4, pointBackgroundColor: cssVar('--orange'), pointRadius: 4, pointHoverRadius: 6,
           }],
         },
         options: chartOptions(),
@@ -145,13 +166,13 @@ export default function DashboardClient() {
         type: 'doughnut',
         data: {
           labels: Object.keys(byMethod),
-          datasets: [{ data: Object.values(byMethod), backgroundColor: ['#FF6600', '#FF9900', '#4A9EE0', '#FF4455'], borderColor: '#1E1210', borderWidth: 2 }],
+          datasets: [{ data: Object.values(byMethod), backgroundColor: [cssVar('--orange'), cssVar('--amber'), cssVar('--info'), cssVar('--danger')], borderColor: cssVar('--bg-2'), borderWidth: 2 }],
         },
         options: {
           responsive: true,
           plugins: {
-            legend: { position: 'bottom', labels: { color: '#7A5248', padding: 12, font: { size: 11 } } },
-            tooltip: { backgroundColor: '#261510', titleColor: '#FFFFFF', bodyColor: '#BFA099', borderColor: '#3A1913', borderWidth: 1 },
+            legend: { position: 'bottom', labels: { color: cssVar('--text-muted'), padding: 12, font: { size: 11 } } },
+            tooltip: { backgroundColor: cssVar('--bg-3'), titleColor: '#FFFFFF', bodyColor: cssVar('--text-secondary'), borderColor: cssVar('--bg-2'), borderWidth: 1 },
           },
         },
       })
@@ -176,39 +197,44 @@ export default function DashboardClient() {
       </Topbar>
 
       <div className="admin-content">
+        {error && (
+          <div className="alert alert-error mb-16" role="alert">
+            Error al cargar datos del dashboard. Verifica tu conexión.
+          </div>
+        )}
         <div className="stats-grid">
           <div className="stat-card stat-green">
             <div className="stat-label">Ventas Hoy</div>
-            <div className="stat-value">{fmt.currency(salesToday)}</div>
-            <div className="stat-sub">{ordersTodayCount} órdenes</div>
+            <div className="stat-value">{loading ? <span className="text-muted">—</span> : fmt.currency(salesToday)}</div>
+            <div className="stat-sub">{loading ? '' : `${ordersTodayCount} órdenes`}</div>
           </div>
           <div className="stat-card stat-amber">
             <div className="stat-label">Ventas Semana</div>
-            <div className="stat-value">{fmt.currency(salesWeek)}</div>
+            <div className="stat-value">{loading ? <span className="text-muted">—</span> : fmt.currency(salesWeek)}</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Mesas Ocupadas</div>
-            <div className="stat-value">{tablesOccupied}</div>
-            <div className="stat-sub">de {tablesTotal} mesas</div>
+            <div className="stat-value">{loading ? <span className="text-muted">—</span> : tablesOccupied}</div>
+            <div className="stat-sub">{loading ? '' : `de ${tablesTotal} mesas`}</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Órdenes en Cocina</div>
-            <div className="stat-value">{inKitchenCount}</div>
+            <div className="stat-value">{loading ? <span className="text-muted">—</span> : inKitchenCount}</div>
           </div>
           <div className="stat-card stat-danger">
             <div className="stat-label">Gastos de Hoy</div>
-            <div className="stat-value">{fmt.currency(expensesToday)}</div>
+            <div className="stat-value">{loading ? <span className="text-muted">—</span> : fmt.currency(expensesToday)}</div>
           </div>
         </div>
 
         <div className="charts-grid mt-20">
           <div className="card">
             <h3 className="mb-16">Ventas Últimos 7 Días</h3>
-            <canvas ref={salesCanvasRef} height={220}></canvas>
+            <div style={{ position: 'relative', height: 220 }}><canvas ref={salesCanvasRef}></canvas></div>
           </div>
           <div className="card">
             <h3 className="mb-16">Métodos de Pago (Hoy)</h3>
-            <canvas ref={paymentCanvasRef} height={220}></canvas>
+            <div style={{ position: 'relative', height: 220 }}><canvas ref={paymentCanvasRef}></canvas></div>
           </div>
         </div>
 

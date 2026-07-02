@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -141,7 +141,7 @@ export default function DeliveryPortalClient() {
 
                 <div className="delivery-portal-card__customer">
                   👤 {o.delivery_name || '—'} &nbsp;·&nbsp; 📞 {o.delivery_phone || '—'}
-                  <span style={{ marginLeft: 10, color: o.payment_method === 'nequi' ? 'var(--green)' : 'var(--amber)' }}>
+                  <span style={{ marginLeft: 10, color: o.payment_method === 'nequi' ? 'var(--orange)' : 'var(--amber)' }}>
                     {o.payment_method === 'nequi' ? '📱 Nequi' : `💵 Efectivo · ${fmt.currency(o.total)}`}
                   </span>
                 </div>

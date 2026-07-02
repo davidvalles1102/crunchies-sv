@@ -1,4 +1,4 @@
-/* ================================================================
+﻿/* ================================================================
    Order Tracking Page — Crunchies
    ================================================================ */
 
@@ -44,12 +44,12 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--green);
+  background: var(--orange);
   animation: pulse-live 1.5s ease-in-out infinite;
 }
 
 @keyframes pulse-live {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 var(--green-alpha); }
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 var(--orange-alpha); }
   50%       { opacity: .7; transform: scale(.9); box-shadow: 0 0 0 5px transparent; }
 }
 
@@ -75,7 +75,7 @@
   font-family: var(--font-d);
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--green);
+  color: var(--orange);
 }
 
 /* ─── Stepper ─────────────────────────────────────────────────── */
@@ -110,7 +110,7 @@
 }
 
 .track-step.done:not(:last-child)::after {
-  background: var(--green);
+  background: var(--orange);
 }
 
 .track-step__circle {
@@ -130,9 +130,9 @@
 }
 
 .track-step.done .track-step__circle {
-  border-color: var(--green);
+  border-color: var(--orange);
   background: rgba(0,220,130,.15);
-  box-shadow: 0 0 14px var(--green-alpha);
+  box-shadow: 0 0 14px var(--orange-alpha);
 }
 
 .track-step.active .track-step__circle {
@@ -156,7 +156,7 @@
   line-height: 1.3;
 }
 
-.track-step.done   .track-step__label { color: var(--green); }
+.track-step.done   .track-step__label { color: var(--orange); }
 .track-step.active .track-step__label { color: var(--amber); }
 
 /* ─── Detail Grid ─────────────────────────────────────────────── */
@@ -186,7 +186,7 @@
   font-family: var(--font-d);
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--green);
-  text-shadow: var(--glow-green-s);
+  color: var(--orange);
+  text-shadow: var(--glow-orange-s);
   margin: 8px 0;
 }

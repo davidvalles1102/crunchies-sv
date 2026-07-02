@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { Chart } from 'chart.js/auto'
@@ -371,7 +371,7 @@ export default function FinanceClient() {
         )}
 
         {usingDemo && (
-          <div style={{ background: 'rgba(255,102,0,.08)', border: '1px solid var(--green)', borderRadius: 10, padding: '16px 20px', marginBottom: 20 }}>
+          <div style={{ background: 'rgba(255,102,0,.08)', border: '1px solid var(--orange)', borderRadius: 10, padding: '16px 20px', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <strong style={{ color: 'var(--text)', fontSize: '.9rem' }}>📊 Vista previa con datos demo</strong>
@@ -382,7 +382,7 @@ export default function FinanceClient() {
             {seeding && (
               <div style={{ marginTop: 12 }}>
                 <div style={{ background: 'var(--bg2)', borderRadius: 6, height: 8, overflow: 'hidden' }}>
-                  <div style={{ background: 'var(--green)', height: '100%', width: `${seedProgress}%`, transition: 'width .3s' }} />
+                  <div style={{ background: 'var(--orange)', height: '100%', width: `${seedProgress}%`, transition: 'width .3s' }} />
                 </div>
                 <p style={{ fontSize: '.78rem', color: 'var(--muted)', marginTop: 6 }}>{seedLog}</p>
               </div>
@@ -403,7 +403,7 @@ export default function FinanceClient() {
           </div>
           <div className={`stat-card${profit >= 0 ? ' stat-green' : ' stat-danger'}`}>
             <div className="stat-label">Utilidad Neta</div>
-            <div className="stat-value" style={{ color: profit >= 0 ? 'var(--green)' : 'var(--danger)' }}>{fmt.currency(profit)}</div>
+            <div className="stat-value" style={{ color: profit >= 0 ? 'var(--orange)' : 'var(--danger)' }}>{fmt.currency(profit)}</div>
             <div className="stat-sub">{profit >= 0 ? 'Período rentable' : 'Período en pérdida'}</div>
           </div>
           <div className="stat-card">
@@ -469,10 +469,10 @@ export default function FinanceClient() {
                   edcRows.map((row) => (
                     <tr key={row.date}>
                       <td>{fmt.date(row.date)}</td>
-                      <td style={{ textAlign: 'right', color: 'var(--green)', fontWeight: 600 }}>{row.rev > 0 ? fmt.currency(row.rev) : '—'}</td>
+                      <td style={{ textAlign: 'right', color: 'var(--orange)', fontWeight: 600 }}>{row.rev > 0 ? fmt.currency(row.rev) : '—'}</td>
                       <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: 600 }}>{row.exp > 0 ? fmt.currency(row.exp) : '—'}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: row.net >= 0 ? 'var(--green)' : 'var(--danger)' }}>{fmt.currency(row.net)}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: row.balance >= 0 ? 'var(--green)' : 'var(--danger)' }}>{fmt.currency(row.balance)}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: row.net >= 0 ? 'var(--orange)' : 'var(--danger)' }}>{fmt.currency(row.net)}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: row.balance >= 0 ? 'var(--orange)' : 'var(--danger)' }}>{fmt.currency(row.balance)}</td>
                     </tr>
                   ))
                 )}

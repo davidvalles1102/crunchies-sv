@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -42,7 +42,7 @@ const ROLE_CFG = {
 }
 
 function genPin() {
-  return String(Math.floor(100000 + Math.random() * 900000))
+  return String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000))
 }
 
 export default function StaffClient() {
@@ -54,6 +54,7 @@ export default function StaffClient() {
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [perf, setPerf] = useState<StaffPerf[]>([])
   const [perfDays, setPerfDays] = useState(7)
+  const [revealedPins, setRevealedPins] = useState<Set<string>>(new Set())
 
   // Create form
   const [newName, setNewName] = useState('')
@@ -153,7 +154,7 @@ export default function StaffClient() {
             <button
               key={t}
               className="btn btn-outline btn-sm"
-              style={tab === t ? { borderColor: 'var(--green)', color: 'var(--green)' } : undefined}
+              style={tab === t ? { borderColor: 'var(--orange)', color: 'var(--orange)' } : undefined}
               onClick={() => setTab(t)}
             >
               {t === 'team' ? '👥 Equipo' : '📈 Rendimiento'}
@@ -190,7 +191,24 @@ export default function StaffClient() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div className="staff-card__pin">{m.pin}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div className="staff-card__pin">
+                            {revealedPins.has(m.id) ? m.pin : '●●●●●●'}
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            style={{ padding: '4px 8px', fontSize: '.8rem' }}
+                            onClick={() => setRevealedPins((prev) => {
+                              const next = new Set(prev)
+                              next.has(m.id) ? next.delete(m.id) : next.add(m.id)
+                              return next
+                            })}
+                            aria-label={revealedPins.has(m.id) ? 'Ocultar PIN' : 'Mostrar PIN'}
+                          >
+                            {revealedPins.has(m.id) ? '🙈' : '👁'}
+                          </button>
+                        </div>
                         <div className="staff-card__actions">
                           <button className="btn btn-outline btn-sm" onClick={() => toggleActive(m)}>
                             {m.active ? 'Desactivar' : 'Activar'}
@@ -247,7 +265,7 @@ export default function StaffClient() {
               <span className="text-sm text-muted">Período:</span>
               {[7, 14, 30].map((d) => (
                 <button key={d} className={`btn btn-outline btn-sm${perfDays === d ? ' active' : ''}`}
-                  style={perfDays === d ? { borderColor: 'var(--green)', color: 'var(--green)' } : undefined}
+                  style={perfDays === d ? { borderColor: 'var(--orange)', color: 'var(--orange)' } : undefined}
                   onClick={() => setPerfDays(d)}>
                   {d} días
                 </button>

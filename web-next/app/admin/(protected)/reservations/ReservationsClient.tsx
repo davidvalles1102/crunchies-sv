@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -258,8 +258,8 @@ export default function ReservationsClient() {
               <>
                 <div className="modal-body">
                   <div className="flex-col gap-16">
-                    <div className="card" style={{ borderColor: 'var(--green-dim)' }}>
-                      <h4 className="mb-12" style={{ color: 'var(--green)' }}>👤 Información del Cliente</h4>
+                    <div className="card" style={{ borderColor: 'var(--orange-dim)' }}>
+                      <h4 className="mb-12" style={{ color: 'var(--orange)' }}>👤 Información del Cliente</h4>
                       <div className="flex-col gap-8 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted">Nombre</span>

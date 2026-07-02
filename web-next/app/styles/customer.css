@@ -1,4 +1,4 @@
-/* ================================================================
+﻿/* ================================================================
    Customer Side — Specific Styles
    Crunchies
    ================================================================ */
@@ -13,7 +13,7 @@
   border-bottom: 1px solid var(--border);
   transition: background var(--ts);
 }
-.cust-nav.scrolled { border-bottom-color: var(--green-dim); }
+.cust-nav.scrolled { border-bottom-color: var(--orange-dim); }
 
 .cust-nav__inner {
   max-width: 1200px;
@@ -30,9 +30,9 @@
   font-size: 1.5rem;
   font-weight: 400;
   letter-spacing: .10em;
-  color: var(--green);
+  color: var(--orange);
 }
-.brand-neon { color: var(--green); }
+.brand-neon { color: var(--orange); }
 .brand-sep  { color: var(--text-muted); }
 .brand-rest { color: var(--text-primary); }
 
@@ -47,7 +47,7 @@
   transition: color var(--t), background var(--t);
 }
 .nav-link:hover, .nav-link.active { color: var(--text-primary); }
-.nav-link.active { color: var(--green); }
+.nav-link.active { color: var(--orange); }
 
 .nav-toggle { display: none; flex-direction: column; gap: 5px; background: none; padding: 10px 8px; }
 .nav-toggle span { width: 22px; height: 2px; background: var(--text-secondary); border-radius: 2px; transition: var(--t); }
@@ -103,7 +103,7 @@
   letter-spacing: .06em;
   margin-bottom: 20px;
 }
-.hero__title .neon-green { color: var(--green); }
+.hero__title .neon-green { color: var(--orange); }
 
 .hero__title-rest { color: var(--text-primary); }
 
@@ -123,9 +123,9 @@
   display: flex;
   gap: 4px;
 }
-.hero__neon-lines span:nth-child(1) { flex: 1; background: var(--green); box-shadow: var(--glow-green-s); }
+.hero__neon-lines span:nth-child(1) { flex: 1; background: var(--orange); box-shadow: var(--glow-orange-s); }
 .hero__neon-lines span:nth-child(2) { flex: 2; background: var(--amber); box-shadow: var(--glow-amber-s); }
-.hero__neon-lines span:nth-child(3) { flex: 1; background: var(--green); box-shadow: var(--glow-green-s); }
+.hero__neon-lines span:nth-child(3) { flex: 1; background: var(--orange); box-shadow: var(--glow-orange-s); }
 
 /* ─── Menu Section ───────────────────────────────────────────── */
 .menu-section {
@@ -159,9 +159,9 @@
 }
 .cat-tab:hover  { color: var(--text-primary); border-color: var(--border-lit); }
 .cat-tab.active {
-  background: var(--green-alpha);
-  color: var(--green);
-  border-color: var(--green-dim);
+  background: var(--orange-alpha);
+  color: var(--orange);
+  border-color: var(--orange-dim);
 }
 
 /* Search */
@@ -185,7 +185,7 @@
   flex-direction: column;
 }
 .menu-card:hover {
-  border-color: var(--green-dim);
+  border-color: var(--orange-dim);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.40);
   transform: translateY(-3px);
 }
@@ -230,8 +230,8 @@
 
 /* ─── Promo Band ─────────────────────────────────────────────── */
 .promo-band {
-  background: linear-gradient(135deg, var(--bg-2) 0%, var(--green-dark) 50%, var(--amber-dark) 100%);
-  border-top: 1px solid var(--green-dim);
+  background: linear-gradient(135deg, var(--bg-2) 0%, var(--orange-dark) 50%, var(--amber-dark) 100%);
+  border-top: 1px solid var(--orange-dim);
   border-bottom: 1px solid var(--amber-dim);
   padding: 48px 24px;
   text-align: center;
@@ -323,7 +323,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--green), var(--amber));
+  background: linear-gradient(90deg, var(--orange), var(--amber));
   opacity: 0;
   transition: opacity .2s;
 }
@@ -383,12 +383,12 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: var(--green-dark);
-  border: 2px solid var(--green);
-  box-shadow: var(--glow-green-s);
+  background: var(--orange-dark);
+  border: 2px solid var(--orange);
+  box-shadow: var(--glow-orange-s);
   font-size: 1.8rem;
   font-weight: 700;
-  color: var(--green);
+  color: var(--orange);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -397,10 +397,10 @@
 
 .points-card {
   background: var(--bg-4);
-  border: 1px solid var(--green-dim);
+  border: 1px solid var(--orange-dim);
   border-radius: var(--r-lg);
   padding: 16px;
-  box-shadow: inset 0 0 20px var(--green-alpha);
+  box-shadow: inset 0 0 20px var(--orange-alpha);
 }
 .points-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); }
 .points-value { font-family: var(--font); font-size: 2.5rem; font-weight: 700; }
@@ -423,7 +423,7 @@
 }
 .loyalty-item:last-child { border-bottom: none; }
 .loyalty-item__points { font-weight: 700; }
-.loyalty-item.earned .loyalty-item__points { color: var(--green); }
+.loyalty-item.earned .loyalty-item__points { color: var(--orange); }
 .loyalty-item.redeemed .loyalty-item__points { color: var(--amber); }
 
 /* ─── Auth Page ──────────────────────────────────────────────── */
@@ -452,7 +452,7 @@
   filter: blur(80px);
   opacity: .12;
 }
-.auth-bg__glow--green { top: -100px; left: -100px; background: var(--green); }
+.auth-bg__glow--orange { top: -100px; left: -100px; background: var(--orange); }
 .auth-bg__glow--amber { bottom: -100px; right: -100px; background: var(--amber); }
 
 .auth-card {
@@ -495,7 +495,7 @@
   background: transparent;
   transition: all var(--t);
 }
-.auth-tab.active { background: var(--bg-2); color: var(--green); }
+.auth-tab.active { background: var(--bg-2); color: var(--orange); }
 
 .auth-form { display: flex; flex-direction: column; gap: 16px; }
 
@@ -523,7 +523,7 @@
 .footer-divider {
   width: 60px;
   height: 2px;
-  background: linear-gradient(90deg, var(--green), var(--amber));
+  background: linear-gradient(90deg, var(--orange), var(--amber));
   margin: 0 auto 20px;
   border-radius: 2px;
 }
@@ -656,7 +656,7 @@
   z-index: 0;
 }
 
-.mini-step.done:not(:last-child)::after { background: var(--green); }
+.mini-step.done:not(:last-child)::after { background: var(--orange); }
 
 .mini-step__dot {
   width: 26px;
@@ -675,8 +675,8 @@
 }
 
 .mini-step.done .mini-step__dot {
-  border-color: var(--green);
-  background: var(--green-alpha);
+  border-color: var(--orange);
+  background: var(--orange-alpha);
 }
 
 .mini-step.active .mini-step__dot {
@@ -695,7 +695,7 @@
   line-height: 1.2;
 }
 
-.mini-step.done   .mini-step__label { color: var(--green); }
+.mini-step.done   .mini-step__label { color: var(--orange); }
 .mini-step.active .mini-step__label { color: var(--amber); }
 
 .mt-24 { margin-top: 24px; }

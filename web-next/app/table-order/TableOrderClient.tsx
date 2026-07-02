@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
@@ -287,7 +287,7 @@ export default function TableOrderClient() {
               onClick={() => setTrackerOpen(true)}
             >
               {readyCount > 0
-                ? <>🔔 <strong style={{ color: 'var(--green)' }}>{readyCount} listo{readyCount > 1 ? 's' : ''}</strong></>
+                ? <>🔔 <strong style={{ color: 'var(--orange)' }}>{readyCount} listo{readyCount > 1 ? 's' : ''}</strong></>
                 : `📋 Mis pedidos (${myOrders.length})`}
             </button>
           )}

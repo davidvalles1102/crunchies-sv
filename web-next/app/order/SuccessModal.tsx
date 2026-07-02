@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { fmt } from '@/lib/format'
@@ -38,7 +38,7 @@ export default function SuccessModal({
               : `Tu pedido estará listo para recoger en aproximadamente ${pickupMin} minutos.`}
           </p>
 
-          <div className="card mt-24" style={{ textAlign: 'left', borderColor: 'var(--green-dim)' }}>
+          <div className="card mt-24" style={{ textAlign: 'left', borderColor: 'var(--orange-dim)' }}>
             <div className="flex-col gap-8 text-sm">
               <div className="flex justify-between"><span className="text-muted">Nombre</span><span style={{ fontWeight: 600 }}>{order.delivery_name}</span></div>
               <div className="flex justify-between"><span className="text-muted">Teléfono</span><span>{order.delivery_phone}</span></div>
@@ -50,8 +50,8 @@ export default function SuccessModal({
                 <span className="neon-amber" style={{ fontWeight: 700, fontSize: '1.1rem' }}>{fmt.currency(total)}</span>
               </div>
               {isNequi ? (
-                <div style={{ background: 'rgba(0,220,130,.08)', border: '1px solid var(--green-dim)', borderRadius: 'var(--r-md)', padding: '10px 14px', marginTop: 8 }}>
-                  <div style={{ fontWeight: 600, color: 'var(--green)', marginBottom: 4 }}>📱 Pago por Nequi</div>
+                <div style={{ background: 'rgba(0,220,130,.08)', border: '1px solid var(--orange-dim)', borderRadius: 'var(--r-md)', padding: '10px 14px', marginTop: 8 }}>
+                  <div style={{ fontWeight: 600, color: 'var(--orange)', marginBottom: 4 }}>📱 Pago por Nequi</div>
                   <div style={{ fontSize: '.82rem', color: 'var(--text-secondary)' }}>
                     Transfiere <strong>{fmt.currency(total)}</strong> al número <strong>+503 7311 8276</strong> si aún no lo has hecho.
                   </div>

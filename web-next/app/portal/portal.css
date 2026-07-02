@@ -1,4 +1,4 @@
-/* ================================================================
+﻿/* ================================================================
    Portal Styles — Crunchies Staff Portals (Kitchen / Delivery / Waiter)
    Mobile-first, touch-optimized
    ================================================================ */
@@ -37,7 +37,7 @@
 .portal-header__brand {
   font-family: var(--font-d);
   font-size: 1rem;
-  color: var(--green);
+  color: var(--orange);
   letter-spacing: .08em;
   white-space: nowrap;
   overflow: hidden;
@@ -64,7 +64,7 @@
 .pin-portal-name {
   font-family: var(--font-d);
   font-size: 1.6rem;
-  color: var(--green);
+  color: var(--orange);
   letter-spacing: .08em;
 }
 .pin-sub { font-size: .85rem; color: var(--text-muted); margin-top: -14px; }
@@ -77,7 +77,7 @@
   background: transparent;
   transition: background .12s, border-color .12s;
 }
-.pin-dot--filled { background: var(--green); border-color: var(--green); }
+.pin-dot--filled { background: var(--orange); border-color: var(--orange); }
 
 .pin-pad {
   display: grid;
@@ -117,7 +117,7 @@
 }
 .portal-legend-item { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
 .portal-legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.dot-green  { background: var(--green); }
+.dot-green  { background: var(--orange); }
 .dot-muted  { background: var(--border-lit); }
 .dot-amber  { background: var(--amber); }
 
@@ -158,9 +158,9 @@
 
 .waiter-table-card--available {
   background: rgba(255, 102, 0, .07);
-  border-color: var(--green);
+  border-color: var(--orange);
 }
-.waiter-table-card--available .waiter-table-num { color: var(--green); }
+.waiter-table-card--available .waiter-table-num { color: var(--orange); }
 
 .waiter-table-card--occupied {
   background: var(--bg-2);
@@ -240,12 +240,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 .waiter-mob-tab.active {
-  color: var(--green);
+  color: var(--orange);
   background: var(--bg-0);
-  border-bottom-color: var(--green);
+  border-bottom-color: var(--orange);
 }
 .waiter-mob-badge {
-  background: var(--green);
+  background: var(--orange);
   color: #fff;
   border-radius: 20px;
   font-size: .7rem;
@@ -297,7 +297,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 .portal-cat-tab:hover  { background: var(--bg-4); color: var(--text-primary); border-color: var(--border-lit); }
-.portal-cat-tab.active { background: var(--green-dark); color: var(--green); border-color: var(--green-dim); }
+.portal-cat-tab.active { background: var(--orange-dark); color: var(--orange); border-color: var(--orange-dim); }
 
 .waiter-search {
   padding: 8px 12px;
@@ -339,7 +339,7 @@
   flex-direction: column;
   min-height: 120px;
 }
-.waiter-item-card:hover  { border-color: var(--green-dim); background: var(--bg-4); transform: translateY(-2px); box-shadow: 0 4px 16px var(--green-alpha); }
+.waiter-item-card:hover  { border-color: var(--orange-dim); background: var(--bg-4); transform: translateY(-2px); box-shadow: 0 4px 16px var(--orange-alpha); }
 .waiter-item-card:active { transform: scale(.97); box-shadow: none; }
 
 .waiter-item-img {
@@ -449,7 +449,7 @@
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
 }
-.portal-qty-btn:hover  { border-color: var(--green); color: var(--green); background: var(--green-alpha); }
+.portal-qty-btn:hover  { border-color: var(--orange); color: var(--orange); background: var(--orange-alpha); }
 .portal-qty-btn.minus:hover { border-color: var(--danger); color: var(--danger); }
 .portal-qty-num { font-weight: 700; min-width: 20px; text-align: center; font-size: .88rem; }
 
@@ -474,7 +474,7 @@
   font-weight: 700;
   font-size: .95rem;
 }
-.waiter-ticket-total { color: var(--green); font-size: 1.15rem; }
+.waiter-ticket-total { color: var(--orange); font-size: 1.15rem; }
 
 .waiter-ticket-actions {
   padding: 10px 12px;
@@ -498,7 +498,7 @@
   margin-top: 8px;
 }
 .portal-order-status.status--kitchen  { background: rgba(255, 153, 0, .12); color: var(--amber); border: 1px solid var(--amber-dim); }
-.portal-order-status.status--ready    { background: var(--green-alpha); color: var(--green); border: 1px solid var(--green-dim); animation: pulse-banner 2s ease-in-out infinite; }
+.portal-order-status.status--ready    { background: var(--orange-alpha); color: var(--orange); border: 1px solid var(--orange-dim); animation: pulse-banner 2s ease-in-out infinite; }
 .portal-order-status.status--delivered{ background: var(--bg-2); color: var(--text-muted); border: 1px solid var(--border); }
 @keyframes pulse-banner { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
 
@@ -555,7 +555,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 .portal-pay-method:hover  { background: var(--bg-4); color: var(--text-primary); }
-.portal-pay-method.active { background: var(--green-alpha); color: var(--green); border-color: var(--green-dim); }
+.portal-pay-method.active { background: var(--orange-alpha); color: var(--orange); border-color: var(--orange-dim); }
 
 .portal-change { font-size: .9rem; color: var(--text-secondary); }
 
@@ -644,7 +644,7 @@
 
 /* ─── Role badges ────────────────────────────────────────────────── */
 .role-badge-kitchen  { background: rgba(255,153,0,.15);   color: var(--amber); border: 1px solid rgba(255,153,0,.3); }
-.role-badge-delivery { background: rgba(255,102,0,.12);   color: var(--green); border: 1px solid rgba(255,102,0,.3); }
+.role-badge-delivery { background: rgba(255,102,0,.12);   color: var(--orange); border: 1px solid rgba(255,102,0,.3); }
 .role-badge-waiter   { background: rgba(99,102,241,.12);  color: #818cf8;      border: 1px solid rgba(99,102,241,.3); }
 
 /* ─── Portal section title ───────────────────────────────────────── */
@@ -739,7 +739,7 @@
   transition: border-color .2s;
 }
 .kitchen-card--ready {
-  border-color: var(--green);
+  border-color: var(--orange);
   background: rgba(102, 255, 102, .03);
 }
 .kitchen-card--urgent {
@@ -775,7 +775,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.kitchen-card--ready .kitchen-card__table { color: var(--green); }
+.kitchen-card--ready .kitchen-card__table { color: var(--orange); }
 
 .kitchen-card__meta {
   display: flex;
@@ -792,7 +792,7 @@
   border-radius: 20px;
   white-space: nowrap;
 }
-.timer--ok     { background: rgba(102,255,102,.12); color: var(--green); }
+.timer--ok     { background: rgba(102,255,102,.12); color: var(--orange); }
 .timer--warn   { background: rgba(255,153,0,.15);  color: var(--amber); }
 .timer--urgent { background: rgba(239,68,68,.15);  color: #ef4444; }
 
@@ -834,7 +834,7 @@
   flex-shrink: 0;
   line-height: 1;
 }
-.kitchen-card--ready .kitchen-item__qty { background: var(--green); }
+.kitchen-card--ready .kitchen-item__qty { background: var(--orange); }
 
 .kitchen-item__info {
   display: flex;
@@ -909,7 +909,7 @@
   background: rgba(255,153,0,.06);
 }
 .waiter-comanda-banner--ready {
-  border-color: var(--green-dim);
+  border-color: var(--orange-dim);
   background: rgba(102,255,102,.06);
 }
 .waiter-comanda-banner--delivered {
@@ -924,7 +924,7 @@
   margin-bottom: 6px;
 }
 .waiter-comanda-banner--kitchen .waiter-comanda-banner__header { color: var(--amber); }
-.waiter-comanda-banner--ready    .waiter-comanda-banner__header { color: var(--green); }
+.waiter-comanda-banner--ready    .waiter-comanda-banner__header { color: var(--orange); }
 .waiter-comanda-banner__items {
   display: flex;
   flex-direction: column;

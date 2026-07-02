@@ -1,4 +1,4 @@
-/* ================================================================
+﻿/* ================================================================
    Online Order Page — Crunchies
    ================================================================ */
 
@@ -54,8 +54,8 @@
 }
 .order-type-btn.active {
   background: var(--bg-2);
-  color: var(--green);
-  box-shadow: 0 0 10px var(--green-alpha);
+  color: var(--orange);
+  box-shadow: 0 0 10px var(--orange-alpha);
 }
 
 .order-cat-tabs {
@@ -89,10 +89,10 @@
   border-color: var(--border-lit);
 }
 .pos-cat.active {
-  background: var(--green-dark);
-  color: var(--green);
-  border-color: var(--green-dim);
-  box-shadow: 0 0 10px var(--green-alpha);
+  background: var(--orange-dark);
+  color: var(--orange);
+  border-color: var(--orange-dim);
+  box-shadow: 0 0 10px var(--orange-alpha);
 }
 
 .order-items-grid {
@@ -117,9 +117,9 @@
   flex-direction: column;
 }
 .order-item-card:hover {
-  border-color: var(--green-dim);
+  border-color: var(--orange-dim);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px var(--green-alpha);
+  box-shadow: 0 4px 16px var(--orange-alpha);
 }
 .order-item-card:active { transform: scale(.97); }
 .order-item-card--unavail { opacity: .35; pointer-events: none; }
@@ -148,9 +148,9 @@
 .order-item-add {
   width: 26px; height: 26px;
   border-radius: 50%;
-  background: var(--green-alpha);
-  border: 1px solid var(--green-dim);
-  color: var(--green);
+  background: var(--orange-alpha);
+  border: 1px solid var(--orange-dim);
+  color: var(--orange);
   font-size: 1rem;
   font-weight: 700;
   display: flex;
@@ -159,9 +159,9 @@
   transition: all var(--t);
 }
 .order-item-card:hover .order-item-add {
-  background: var(--green);
+  background: var(--orange);
   color: var(--text-invert);
-  box-shadow: var(--glow-green-s);
+  box-shadow: var(--glow-orange-s);
 }
 
 /* ─── Cart Panel (right) ─────────────────────────────────────── */
@@ -278,8 +278,8 @@
 }
 .payment-btn:first-child { border-right: 1px solid var(--border); }
 .payment-btn.active {
-  color: var(--green);
-  border-bottom-color: var(--green);
+  color: var(--orange);
+  border-bottom-color: var(--orange);
   background: var(--bg-3);
 }
 
@@ -298,7 +298,7 @@
 .nequi-info {
   padding: 14px 18px;
   background: rgba(0,220,130,.06);
-  border-bottom: 1px solid var(--green-dim);
+  border-bottom: 1px solid var(--orange-dim);
 }
 .nequi-header {
   display: flex;
@@ -310,9 +310,9 @@
   font-family: var(--font-d);
   font-size: 1.6rem;
   font-weight: 700;
-  color: var(--green);
+  color: var(--orange);
   letter-spacing: .04em;
-  text-shadow: var(--glow-green-s);
+  text-shadow: var(--glow-orange-s);
 }
 
 /* Actions */

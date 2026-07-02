@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -224,17 +224,17 @@ export default function DeliveryClient() {
         <div style={{ display: 'flex', gap: 6 }}>
           <button
             className="btn btn-outline btn-sm"
-            style={typeFilter === 'all' ? { borderColor: 'var(--green)', color: 'var(--green)' } : undefined}
+            style={typeFilter === 'all' ? { borderColor: 'var(--orange)', color: 'var(--orange)' } : undefined}
             onClick={() => setTypeFilter('all')}
           >Todos</button>
           <button
             className="btn btn-outline btn-sm"
-            style={typeFilter === 'delivery' ? { borderColor: 'var(--green)', color: 'var(--green)' } : undefined}
+            style={typeFilter === 'delivery' ? { borderColor: 'var(--orange)', color: 'var(--orange)' } : undefined}
             onClick={() => setTypeFilter('delivery')}
           >🛵 Domicilio</button>
           <button
             className="btn btn-outline btn-sm"
-            style={typeFilter === 'takeout' ? { borderColor: 'var(--green)', color: 'var(--green)' } : undefined}
+            style={typeFilter === 'takeout' ? { borderColor: 'var(--orange)', color: 'var(--orange)' } : undefined}
             onClick={() => setTypeFilter('takeout')}
           >🥡 Para Llevar</button>
         </div>
@@ -319,7 +319,7 @@ export default function DeliveryClient() {
                         )}
                         <div className="flex justify-between">
                           <span className="text-muted">Pago</span>
-                          <span style={{ fontWeight: 600, color: o.payment_method === 'nequi' ? 'var(--green)' : 'var(--amber)' }}>
+                          <span style={{ fontWeight: 600, color: o.payment_method === 'nequi' ? 'var(--orange)' : 'var(--amber)' }}>
                             {o.payment_method === 'nequi' ? '📱 Nequi' : '💵 Efectivo'}
                           </span>
                         </div>
@@ -487,7 +487,7 @@ function DeliveryCard({ order, drivers, onDetail, onAdvance, onAssignDriver }: {
         {isDelivery && order.delivery_address && (
           <div className="delivery-card__address text-sm" style={{ color: 'var(--amber)', marginTop: 4 }}>📍 {order.delivery_address}</div>
         )}
-        <div className="text-xs mt-4" style={{ color: order.payment_method === 'nequi' ? 'var(--green)' : 'var(--text-muted)' }}>
+        <div className="text-xs mt-4" style={{ color: order.payment_method === 'nequi' ? 'var(--orange)' : 'var(--text-muted)' }}>
           {order.payment_method === 'nequi' ? '📱 Nequi — verificar pago' : '💵 Efectivo'}
         </div>
         {isDelivery && (

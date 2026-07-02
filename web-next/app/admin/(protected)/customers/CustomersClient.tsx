@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -286,7 +286,7 @@ export default function CustomersClient() {
             ) : (
               <div>
                 <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 16 }}>
-                  <div className="stat-card" style={{ padding: 12 }}><div className="stat-label">Puntos</div><div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--green)' }}>{selected?.loyalty_points ?? 0}</div></div>
+                  <div className="stat-card" style={{ padding: 12 }}><div className="stat-label">Puntos</div><div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--orange)' }}>{selected?.loyalty_points ?? 0}</div></div>
                   <div className="stat-card" style={{ padding: 12 }}><div className="stat-label">Visitas</div><div className="stat-value" style={{ fontSize: '1.4rem' }}>{selected?.visits ?? 0}</div></div>
                   <div className="stat-card" style={{ padding: 12 }}><div className="stat-label">Gastado</div><div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--amber)' }}>{fmt.currency(selected?.total_spent ?? 0)}</div></div>
                   <div className="stat-card" style={{ padding: 12 }}><div className="stat-label">Última visita</div><div className="stat-value" style={{ fontSize: '1.4rem' }}>{daysSinceLast === null ? '—' : `${daysSinceLast}d`}</div></div>
@@ -323,7 +323,7 @@ export default function CustomersClient() {
                   loyalty.map((l) => (
                     <div key={l.id} className={`loyalty-item ${l.type}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '.85rem' }}>
                       <span>{fmt.date(l.created_at)}</span>
-                      <span style={{ fontWeight: 700, color: l.type === 'earned' ? 'var(--green)' : 'var(--amber)' }}>{l.type === 'earned' ? '+' : '-'}{l.points} pts</span>
+                      <span style={{ fontWeight: 700, color: l.type === 'earned' ? 'var(--orange)' : 'var(--amber)' }}>{l.type === 'earned' ? '+' : '-'}{l.points} pts</span>
                     </div>
                   ))
                 )}
