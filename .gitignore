@@ -11,4 +11,7 @@ node_modules/
 Thumbs.db
 
 # Editor
-.vscode/settings.json
+.vscode/
+
+.vercel
+.env*
