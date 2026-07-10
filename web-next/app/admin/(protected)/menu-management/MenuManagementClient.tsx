@@ -68,7 +68,8 @@ export default function MenuManagementClient() {
   }
 
   const loadModGroups = async () => {
-    const { data } = await supabase.from('modifier_groups').select('*, modifier_options(*)').order('display_order')
+    const { data, error } = await supabase.from('modifier_groups').select('*, modifier_options(*)').order('created_at')
+    if (error) { toast('Error al cargar modificadores: ' + error.message, 'error'); return }
     const groups = ((data as ModifierGroup[]) || []).map((g) => ({
       ...g,
       modifier_options: [...(g.modifier_options || [])].sort((a, b) => a.display_order - b.display_order),
