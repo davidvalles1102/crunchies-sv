@@ -507,7 +507,7 @@ export default function OrdersClient() {
             </select>
           </div>
         )}
-        <button className="btn btn-outline btn-sm" disabled={!!currentOrder} onClick={createNewOrder}>
+        <button id="newOrderBtn" className="btn btn-outline btn-sm" disabled={!!currentOrder} onClick={createNewOrder}>
           {currentOrder ? '✓ Orden cargada' : '+ Nueva Orden'}
         </button>
       </Topbar>

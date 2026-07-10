@@ -28,6 +28,7 @@ type FinanceItem = { item_name: string; item_price: number; quantity: number }
 function chartOpts() {
   return {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: { backgroundColor: '#261510', borderColor: '#3A1913', borderWidth: 1, titleColor: '#FFFFFF', bodyColor: '#BFA099' },
@@ -233,11 +234,11 @@ export default function FinanceClient() {
         <div className="charts-grid mt-20">
           <div className="card">
             <h3 className="mb-16">Ingresos vs Gastos por Día</h3>
-            <canvas ref={plCanvasRef} height={220}></canvas>
+            <div style={{ position: 'relative', height: 220 }}><canvas ref={plCanvasRef}></canvas></div>
           </div>
           <div className="card">
             <h3 className="mb-16">Gastos por Categoría</h3>
-            <canvas ref={pieCanvasRef} height={220}></canvas>
+            <div style={{ position: 'relative', height: 220 }}><canvas ref={pieCanvasRef}></canvas></div>
           </div>
         </div>
 

@@ -80,7 +80,7 @@ export default function ExpenseTrackerClient() {
       const since = new Date(Date.now() - rangeDays * 86400_000).toISOString().split('T')[0]
       const { data, error } = await supabase
         .from('expenses')
-        .select('*')
+        .select('*, profiles!registered_by(full_name)')
         .gte('expense_date', since)
         .order('expense_date', { ascending: false })
 
@@ -139,7 +139,7 @@ export default function ExpenseTrackerClient() {
     const since = new Date(Date.now() - rangeDays * 86400_000).toISOString().split('T')[0]
     const { data, error } = await supabase
       .from('expenses')
-      .select('*')
+      .select('*, profiles!registered_by(full_name)')
       .gte('expense_date', since)
       .order('expense_date', { ascending: false })
     if (!error) setExpenses((data as Expense[]) ?? [])
