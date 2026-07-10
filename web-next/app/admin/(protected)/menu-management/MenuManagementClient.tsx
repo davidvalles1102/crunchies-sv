@@ -203,16 +203,16 @@ export default function MenuManagementClient() {
       selection_type: newModGroupType,
       required: newModGroupRequired,
       max_select: newModGroupType === 'multiple' && newModGroupMax ? parseInt(newModGroupMax) : null,
-      display_order: modGroups.length,
     })
     if (error) { toast('Error al crear grupo', 'error'); return }
 
-    toast('Grupo creado')
     setNewModGroupName('')
     setNewModGroupType('single')
     setNewModGroupRequired(false)
     setNewModGroupMax('')
     await loadModGroups()
+    setModsModalOpen(false)
+    toast('Grupo creado')
   }
 
   const addModOption = async (e: React.FormEvent<HTMLFormElement>, groupId: string) => {
