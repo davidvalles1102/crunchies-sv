@@ -40,6 +40,9 @@ function chartOpts() {
   }
 }
 
+const SV_OFFSET_MS = 6 * 60 * 60 * 1000
+const svDate = (iso: string) => new Date(new Date(iso).getTime() - SV_OFFSET_MS).toISOString().split('T')[0]
+
 export default function FinanceClient() {
   useRequireRole(['admin', 'waiter'])
   const supabase = createClient()
@@ -59,7 +62,7 @@ export default function FinanceClient() {
   const renderPLChart = (ordersData: FinanceOrder[], expensesData: FinanceExpense[]) => {
     const revByDay: Record<string, number> = {}
     const expByDay: Record<string, number> = {}
-    ordersData.forEach((o) => { const d = o.created_at.slice(0, 10); revByDay[d] = (revByDay[d] || 0) + Number(o.total) })
+    ordersData.forEach((o) => { const d = svDate(o.created_at); revByDay[d] = (revByDay[d] || 0) + Number(o.total) })
     expensesData.forEach((e) => { const d = e.expense_date; expByDay[d] = (expByDay[d] || 0) + Number(e.amount) })
     const allDays = [...new Set([...Object.keys(revByDay), ...Object.keys(expByDay)])].sort()
 
@@ -101,16 +104,17 @@ export default function FinanceClient() {
   }
 
   const loadAll = async () => {
-    const since = new Date(Date.now() - days * 86400_000).toISOString().split('T')[0]
+    const svNow = new Date(Date.now() - SV_OFFSET_MS)
+    const since = new Date(svNow.getTime() - days * 86400_000).toISOString().split('T')[0]
 
     const [
       { data: ordersData, error: errO },
       { data: expensesData, error: errE },
       { data: itemsData },
     ] = await Promise.all([
-      supabase.from('orders').select('total, created_at').in('status', ['paid', 'delivered']).gte('created_at', since + 'T00:00:00'),
+      supabase.from('orders').select('total, created_at').in('status', ['paid', 'delivered']).gte('created_at', since + 'T06:00:00'),
       supabase.from('expenses').select('*').gte('expense_date', since).order('expense_date'),
-      supabase.from('order_items').select('item_name, item_price, quantity').gte('created_at', since + 'T00:00:00'),
+      supabase.from('order_items').select('item_name, item_price, quantity').gte('created_at', since + 'T06:00:00'),
     ])
 
     const expMissing = errE != null && errE.code === '42P01'
@@ -140,7 +144,7 @@ export default function FinanceClient() {
   const exportEDC = () => {
     const revByDay: Record<string, number> = {}
     const expByDay: Record<string, number> = {}
-    orders.forEach((o) => { const d = o.created_at.slice(0, 10); revByDay[d] = (revByDay[d] || 0) + Number(o.total) })
+    orders.forEach((o) => { const d = svDate(o.created_at); revByDay[d] = (revByDay[d] || 0) + Number(o.total) })
     expenses.forEach((e) => { const d = e.expense_date; expByDay[d] = (expByDay[d] || 0) + Number(e.amount) })
     const allDays = [...new Set([...Object.keys(revByDay), ...Object.keys(expByDay)])].sort()
     let balance = 0
@@ -175,7 +179,7 @@ export default function FinanceClient() {
 
   const edcRevByDay: Record<string, number> = {}
   const edcExpByDay: Record<string, number> = {}
-  orders.forEach((o) => { const d = o.created_at.slice(0, 10); edcRevByDay[d] = (edcRevByDay[d] || 0) + Number(o.total) })
+  orders.forEach((o) => { const d = svDate(o.created_at); edcRevByDay[d] = (edcRevByDay[d] || 0) + Number(o.total) })
   expenses.forEach((e) => { const d = e.expense_date; edcExpByDay[d] = (edcExpByDay[d] || 0) + Number(e.amount) })
   const edcDays = [...new Set([...Object.keys(edcRevByDay), ...Object.keys(edcExpByDay)])].sort()
   const edcRows = edcDays.reduce<{ date: string; rev: number; exp: number; net: number; balance: number }[]>((acc, d) => {
