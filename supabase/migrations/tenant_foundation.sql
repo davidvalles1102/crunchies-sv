@@ -129,6 +129,41 @@ alter table public.order_events
 alter table public.customer_notes
   add column if not exists tenant_id uuid;
 
+-- ------------------------------------------------------------
+-- 2b) DEFAULT = tenant raiz en cada columna tenant_id
+-- ------------------------------------------------------------
+-- CRITICO: el frontend actual (OrdersClient, MenuManagementClient,
+-- ExpenseTrackerClient, DeliveryClient, ReservationsClient, OrderClient,
+-- WaiterPortalClient, TableOrderClient) todavia NO manda tenant_id en sus
+-- inserts a estas tablas — solo lo hace en las tablas nuevas (cash_sessions,
+-- inventory_items). Sin este DEFAULT, en cuanto tenant_aware_rls.sql ponga
+-- tenant_id NOT NULL, CUALQUIER insert nuevo (una orden, un item de menu,
+-- un pago) fallaria en producción con "null value in column tenant_id
+-- violates not-null constraint" — es decir, el POS se rompe por completo.
+-- Con este DEFAULT, todo insert que no mande tenant_id explicitamente cae
+-- automaticamente en el tenant raiz (el comportamiento correcto mientras
+-- solo exista un negocio) y sigue funcionando exactamente igual que hoy.
+
+do $$
+declare
+  v_root_id uuid;
+  t record;
+begin
+  select id into v_root_id from public.tenants where slug = 'crunchies-root';
+
+  for t in
+    select * from (values
+      ('profiles'), ('categories'), ('menu_items'), ('modifier_groups'),
+      ('modifier_options'), ('menu_item_modifier_groups'), ('restaurant_tables'),
+      ('reservations'), ('orders'), ('order_items'), ('order_item_modifiers'),
+      ('payments'), ('loyalty_transactions'), ('expenses'), ('drivers'),
+      ('delivery_zones'), ('staff_members'), ('order_events'), ('customer_notes')
+    ) as x(table_name)
+  loop
+    execute format('alter table public.%I alter column tenant_id set default %L::uuid', t.table_name, v_root_id);
+  end loop;
+end $$;
+
 -- Inventory scaffolding for later phases.
 create table if not exists public.inventory_items (
   id              uuid default uuid_generate_v4() primary key,
