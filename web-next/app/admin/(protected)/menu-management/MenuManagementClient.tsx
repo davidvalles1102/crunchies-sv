@@ -13,6 +13,7 @@ type MgmtMenuItem = {
   name: string
   description: string | null
   price: number
+  cost: number
   image_url: string | null
   available: boolean
   is_featured: boolean
@@ -24,12 +25,13 @@ type ItemForm = {
   category_id: string
   description: string
   price: string
+  cost: string
   image_url: string
   available: boolean
   is_featured: boolean
 }
 
-const EMPTY_ITEM_FORM: ItemForm = { name: '', category_id: '', description: '', price: '', image_url: '', available: true, is_featured: false }
+const EMPTY_ITEM_FORM: ItemForm = { name: '', category_id: '', description: '', price: '', cost: '', image_url: '', available: true, is_featured: false }
 
 export default function MenuManagementClient() {
   useRequireRole(['admin'])
@@ -92,6 +94,7 @@ export default function MenuManagementClient() {
       category_id: item.category_id ?? '',
       description: item.description ?? '',
       price: String(item.price ?? ''),
+      cost: String(item.cost ?? ''),
       image_url: item.image_url ?? '',
       available: item.available,
       is_featured: item.is_featured,
@@ -119,11 +122,13 @@ export default function MenuManagementClient() {
   const saveItem = async () => {
     setItemFormError('')
     const price = parseFloat(itemForm.price)
+    const cost = parseFloat(itemForm.cost) || 0
     const payload = {
       name: itemForm.name.trim(),
       category_id: itemForm.category_id || null,
       description: itemForm.description.trim() || null,
       price,
+      cost,
       image_url: itemForm.image_url.trim() || null,
       available: itemForm.available,
       is_featured: itemForm.is_featured,
@@ -283,7 +288,14 @@ export default function MenuManagementClient() {
                 <div className="mgmt-card__body">
                   <div className="mgmt-card__name">{item.name}{item.is_featured ? ' ⭐' : ''}</div>
                   <div className="mgmt-card__cat">{item.categories?.name ?? '—'}</div>
-                  <div className="mgmt-card__price">${Number(item.price).toFixed(2)}</div>
+                  <div className="mgmt-card__price">
+                    ${Number(item.price).toFixed(2)}
+                    {item.cost > 0 && (
+                      <span className="text-xs text-muted" style={{ marginLeft: 8 }}>
+                        costo ${Number(item.cost).toFixed(2)} · margen {(((item.price - item.cost) / item.price) * 100).toFixed(0)}%
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="mgmt-card__actions">
                   <button className="btn btn-outline btn-sm" onClick={() => openItemModal(item)}>✏️ Editar</button>
@@ -331,6 +343,13 @@ export default function MenuManagementClient() {
                   <label className="form-label">Precio *</label>
                   <input type="number" className="form-control" step="0.01" min="0" required value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} />
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Costo (insumos)</label>
+                  <input type="number" className="form-control" step="0.01" min="0" placeholder="0.00" value={itemForm.cost} onChange={(e) => setItemForm({ ...itemForm, cost: e.target.value })} />
+                  <div className="text-xs text-muted mt-4">Usado en Finanzas para calcular la ganancia real por platillo.</div>
+                </div>
+              </div>
+              <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">URL de Imagen</label>
                   <input type="url" className="form-control" placeholder="https://..." value={itemForm.image_url} onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })} />
