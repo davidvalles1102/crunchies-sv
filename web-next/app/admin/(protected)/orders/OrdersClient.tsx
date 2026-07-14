@@ -75,7 +75,7 @@ export default function OrdersClient() {
   const [mobSheetOpen, setMobSheetOpen] = useState(false)
 
   const [payModalOpen, setPayModalOpen] = useState(false)
-  const [selectedPayMethod, setSelectedPayMethod] = useState<'cash' | 'card' | 'transfer'>('cash')
+  const [selectedPayMethod, setSelectedPayMethod] = useState<'cash' | 'card' | 'transfer' | 'credit'>('cash')
   const [cashReceived, setCashReceived] = useState('')
   const [payCustomerSearch, setPayCustomerSearch] = useState('')
   const [customerSuggestions, setCustomerSuggestions] = useState<{ id: string; full_name: string; loyalty_points: number }[]>([])
@@ -387,6 +387,10 @@ export default function OrdersClient() {
 
   const processPayment = async () => {
     if (!currentOrder) return
+    if (selectedPayMethod === 'credit' && !linkedCustomer) {
+      toast('Vincula un cliente para vender al fiado', 'warning')
+      return
+    }
     setPaying(true)
 
     const chargeTotal = effectiveTotal()
@@ -421,9 +425,27 @@ export default function OrdersClient() {
     }
     if (cashSessionId) paymentPayload.cash_session_id = cashSessionId
 
-    const { error: payErr } = await supabase.from('payments').insert(paymentPayload)
+    const { data: insertedPayment, error: payErr } = await supabase.from('payments').insert(paymentPayload).select('id').single()
 
     if (payErr) { toast('Error al procesar pago', 'error'); setPaying(false); return }
+
+    if (selectedPayMethod === 'credit' && linkedCustomer) {
+      const { error: creditErr } = await supabase.rpc('charge_customer_credit', {
+        p_tenant_id: tenant.tenant_id,
+        p_customer_id: linkedCustomer.id,
+        p_amount: chargeTotal,
+        p_order_id: currentOrder.id,
+      })
+      if (creditErr) {
+        await supabase.from('payments').delete().eq('id', insertedPayment.id)
+        const msg = creditErr.message.includes('credit_limit_exceeded')
+          ? 'Este cliente ya alcanzó su límite de crédito'
+          : 'Error al registrar el fiado'
+        toast(msg, 'error')
+        setPaying(false)
+        return
+      }
+    }
 
     await supabase.from('orders').update({ status: 'paid' }).eq('id', currentOrder.id)
     if (orderType === 'dine_in' && selectedTable) {
@@ -670,8 +692,14 @@ export default function OrdersClient() {
                 <button className={`pay-method${selectedPayMethod === 'cash' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('cash')}>💵 Efectivo</button>
                 <button className={`pay-method${selectedPayMethod === 'card' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('card')}>💳 Tarjeta</button>
                 <button className={`pay-method${selectedPayMethod === 'transfer' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('transfer')}>📲 Transferencia</button>
+                <button className={`pay-method${selectedPayMethod === 'credit' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('credit')}>🧾 Fiado</button>
               </div>
             </div>
+            {selectedPayMethod === 'credit' && !linkedCustomer && (
+              <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 8 }}>
+                Vincula un cliente abajo antes de vender al fiado.
+              </div>
+            )}
             {selectedPayMethod === 'cash' && (
               <div>
                 <div className="form-group mt-16">
@@ -710,7 +738,7 @@ export default function OrdersClient() {
           </div>
           <div className="modal-footer">
             <button className="btn btn-outline" onClick={() => setPayModalOpen(false)}>Cancelar</button>
-            <button className="btn btn-primary" disabled={paying} onClick={processPayment}>✓ Confirmar Pago</button>
+            <button className="btn btn-primary" disabled={paying || (selectedPayMethod === 'credit' && !linkedCustomer)} onClick={processPayment}>✓ Confirmar Pago</button>
           </div>
         </div>
       </div>

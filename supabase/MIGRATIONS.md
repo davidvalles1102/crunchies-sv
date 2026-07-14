@@ -46,6 +46,7 @@ solo el nombre.
 | 19 | **`migrations/inventory.sql`** | ✅ | **Fase multitenant 6** — `recipe_items`, RPC `record_inventory_movement()`, trigger de consumo automático en `order_items`, vista `low_stock_items` |
 | 20 | **`migrations/billing.sql`** | ✅ | **Fase multitenant 7** — `is_tenant_role()` ahora exige `tenant.status in ('active','trial')`, RPC `set_tenant_status()` para suspender/reactivar (solo `profiles.role='admin'`) |
 | 21 | **`migrations/fiscal.sql`** | ✅ | **Fase multitenant 8** — `tenant_settings.tax_rate` (default 13% IVA), fila explícita del tenant raíz en 0% para no cambiarle el cobro a Crunchies sin que nadie lo pidiera |
+| 22 | **`migrations/customer_credit.sql`** | ✅ | **Módulo "fiado"** — `customer_credit_accounts`/`customer_credit_transactions`, `payments.method` gana `'credit'`, RPCs `charge_customer_credit()` y `record_credit_payment()` |
 
 > ⚠️ Correr 15 y 16 solo después de que las migrations 1-14 ya estén aplicadas
 > (dependen de que todas las tablas operativas existan). Verificar con la

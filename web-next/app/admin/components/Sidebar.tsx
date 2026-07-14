@@ -14,6 +14,7 @@ const LINKS = [
   { href: '/admin/payments',         label: '💳 Pagos' },
   { href: '/admin/cash',             label: '💵 Caja' },
   { href: '/admin/inventory',        label: '📦 Inventario' },
+  { href: '/admin/credit',           label: '🧾 Fiado' },
   { href: '/admin/expense-tracker',  label: '💸 Gastos' },
   { href: '/admin/finance',          label: '💰 Finanzas' },
   { href: '/admin/menu-management',  label: '🍽️ Menú' },
