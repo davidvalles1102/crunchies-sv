@@ -12,6 +12,7 @@ const LINKS = [
   { href: '/admin/reservations',     label: '📅 Reservaciones' },
   { href: '/admin/delivery',         label: '🛵 Delivery' },
   { href: '/admin/payments',         label: '💳 Pagos' },
+  { href: '/admin/cash',             label: '💵 Caja' },
   { href: '/admin/expense-tracker',  label: '💸 Gastos' },
   { href: '/admin/finance',          label: '💰 Finanzas' },
   { href: '/admin/menu-management',  label: '🍽️ Menú' },

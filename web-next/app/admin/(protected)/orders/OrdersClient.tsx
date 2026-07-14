@@ -53,7 +53,7 @@ function mapItems(rawItems: RawOrderItem[] | null): TicketItem[] {
 
 export default function OrdersClient() {
   useRequireRole(['admin', 'waiter'])
-  const { profile } = useAdmin()
+  const { profile, tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
 
@@ -390,14 +390,31 @@ export default function OrdersClient() {
     const redeemedPts = pointsToRedeem
     const redeemedValue = redeemedPts * POINT_VALUE
 
-    const { error: payErr } = await supabase.from('payments').insert({
+    // Vincula el pago a la caja abierta si existe (tabla/columna nuevas de
+    // cash_sessions.sql). Si esa migration todavia no corrio en este entorno,
+    // la query falla silenciosamente y se omite la clave — no rompe el cobro.
+    let cashSessionId: string | null = null
+    if (selectedPayMethod === 'cash') {
+      const { data: openSession } = await supabase
+        .from('cash_sessions')
+        .select('id')
+        .eq('tenant_id', tenant.tenant_id)
+        .eq('status', 'open')
+        .maybeSingle<{ id: string }>()
+      cashSessionId = openSession?.id ?? null
+    }
+
+    const paymentPayload: Record<string, unknown> = {
       order_id: currentOrder.id,
       processed_by: profile.id,
       amount: chargeTotal,
       method: selectedPayMethod,
       receipt_number: receipt,
       change_amount: change,
-    })
+    }
+    if (cashSessionId) paymentPayload.cash_session_id = cashSessionId
+
+    const { error: payErr } = await supabase.from('payments').insert(paymentPayload)
 
     if (payErr) { toast('Error al procesar pago', 'error'); setPaying(false); return }
 
