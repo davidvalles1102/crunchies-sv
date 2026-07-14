@@ -42,6 +42,7 @@ export default async function OrderPage() {
         items={(items ?? []) as OrderMenuItem[]}
         zones={(zones ?? []) as DeliveryZone[]}
         taxRate={taxRate}
+        tenantId={tenantId}
       />
 
       <footer className="cust-footer">

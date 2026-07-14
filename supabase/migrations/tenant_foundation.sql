@@ -415,6 +415,56 @@ as $$
   );
 $$;
 
+-- ------------------------------------------------------------
+-- 5b) award_loyalty_points ahora propaga tenant_id
+-- ------------------------------------------------------------
+-- loyalty_points_fix.sql (migration #9, corre ANTES que este archivo) crea
+-- esta funcion sin tenant_id porque en ese punto la columna todavia no
+-- existe en `orders`/`loyalty_transactions`. Se redefine aqui — recien
+-- despues del backfill de la seccion 2/3 de este archivo es seguro
+-- referenciar new.tenant_id sin romper el trigger para pedidos que se
+-- paguen/entreguen mientras se aplican estas migrations.
+create or replace function public.award_loyalty_points()
+returns trigger language plpgsql security definer as $$
+declare
+  pts integer;
+  already_awarded boolean;
+begin
+  if new.customer_id is null then
+    return new;
+  end if;
+
+  if not (
+    new.status = 'paid'
+    or (new.order_type in ('delivery','takeout') and new.status = 'delivered')
+  ) then
+    return new;
+  end if;
+
+  if old.status = new.status then
+    return new;
+  end if;
+
+  select exists(select 1 from public.loyalty_transactions where order_id = new.id and type = 'earned')
+    into already_awarded;
+  if already_awarded then
+    return new;
+  end if;
+
+  pts := floor(new.total);
+  if pts <= 0 then
+    return new;
+  end if;
+
+  insert into public.loyalty_transactions (customer_id, order_id, points, type, tenant_id)
+  values (new.customer_id, new.id, pts, 'earned', new.tenant_id);
+
+  update public.profiles set loyalty_points = loyalty_points + pts where id = new.customer_id;
+
+  return new;
+end;
+$$;
+
 -- Las policies reales (rewrite de RLS existente + WITH CHECK de escritura)
 -- viven en tenant_aware_rls.sql — correr ese archivo justo despues de este.
 

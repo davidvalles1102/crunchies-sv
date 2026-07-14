@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRequireRole } from '../../AdminContext'
+import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 import type { Category, ModifierGroup } from '@/lib/types'
@@ -33,6 +33,7 @@ const EMPTY_ITEM_FORM: ItemForm = { name: '', category_id: '', description: '', 
 
 export default function MenuManagementClient() {
   useRequireRole(['admin'])
+  const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
 
@@ -127,6 +128,7 @@ export default function MenuManagementClient() {
       available: itemForm.available,
       is_featured: itemForm.is_featured,
       updated_at: new Date().toISOString(),
+      tenant_id: tenant.tenant_id,
     }
 
     if (!payload.name || Number.isNaN(price)) {
@@ -149,7 +151,7 @@ export default function MenuManagementClient() {
     await supabase.from('menu_item_modifier_groups').delete().eq('menu_item_id', itemId)
     if (selectedModGroupIds.size) {
       await supabase.from('menu_item_modifier_groups').insert(
-        [...selectedModGroupIds].map((gid) => ({ menu_item_id: itemId, modifier_group_id: gid }))
+        [...selectedModGroupIds].map((gid) => ({ menu_item_id: itemId, modifier_group_id: gid, tenant_id: tenant.tenant_id }))
       )
     }
 
@@ -178,7 +180,7 @@ export default function MenuManagementClient() {
     const name = newCatName.trim()
     const icon = newCatIcon.trim() || '🍽️'
     if (!name) return
-    const { error } = await supabase.from('categories').insert({ name, icon, display_order: categories.length + 1 })
+    const { error } = await supabase.from('categories').insert({ name, icon, display_order: categories.length + 1, tenant_id: tenant.tenant_id })
     if (error) { toast('Error', 'error'); return }
     toast('Categoría agregada')
     setNewCatName('')
@@ -204,6 +206,7 @@ export default function MenuManagementClient() {
       selection_type: newModGroupType,
       required: newModGroupRequired,
       max_select: newModGroupType === 'multiple' && newModGroupMax ? parseInt(newModGroupMax) : null,
+      tenant_id: tenant.tenant_id,
     })
     if (error) { toast('Error al crear grupo', 'error'); return }
 
@@ -224,7 +227,7 @@ export default function MenuManagementClient() {
     const delta = parseFloat(String(data.get('delta') ?? '')) || 0
     if (!name) return
 
-    const { error } = await supabase.from('modifier_options').insert({ group_id: groupId, name, price_delta: delta })
+    const { error } = await supabase.from('modifier_options').insert({ group_id: groupId, name, price_delta: delta, tenant_id: tenant.tenant_id })
     if (error) { toast('Error al agregar opción', 'error'); return }
     toast('Opción agregada')
     form.reset()

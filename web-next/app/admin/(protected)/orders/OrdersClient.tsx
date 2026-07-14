@@ -194,6 +194,7 @@ export default function OrdersClient() {
       delivery_status: orderType !== 'dine_in' ? 'pending' : null,
       delivery_fee: orderType === 'delivery' ? deliveryFee : 0,
       status: 'open',
+      tenant_id: tenant.tenant_id,
     }).select().single()
 
     if (error) { toast('Error al crear orden', 'error'); return }
@@ -225,11 +226,12 @@ export default function OrdersClient() {
         item_name: item.name,
         item_price: unitPrice,
         quantity: 1,
+        tenant_id: tenant.tenant_id,
       }).select().single()
 
       if (modifiers.length && data) {
         await supabase.from('order_item_modifiers').insert(
-          modifiers.map((m) => ({ order_item_id: data.id, option_name: m.option_name, price_delta: m.price_delta }))
+          modifiers.map((m) => ({ order_item_id: data.id, option_name: m.option_name, price_delta: m.price_delta, tenant_id: tenant.tenant_id }))
         )
       }
 
@@ -415,6 +417,7 @@ export default function OrdersClient() {
       method: selectedPayMethod,
       receipt_number: receipt,
       change_amount: change,
+      tenant_id: tenant.tenant_id,
     }
     if (cashSessionId) paymentPayload.cash_session_id = cashSessionId
 
@@ -432,12 +435,12 @@ export default function OrdersClient() {
     if (linkedCustomer) {
       let newBalance = linkedCustomer.points
       if (redeemedPts > 0) {
-        await supabase.from('loyalty_transactions').insert({ customer_id: linkedCustomer.id, order_id: currentOrder.id, points: redeemedPts, type: 'redeemed' })
+        await supabase.from('loyalty_transactions').insert({ customer_id: linkedCustomer.id, order_id: currentOrder.id, points: redeemedPts, type: 'redeemed', tenant_id: tenant.tenant_id })
         newBalance -= redeemedPts
       }
       earnedPts = Math.floor(chargeTotal)
       if (earnedPts > 0) {
-        await supabase.from('loyalty_transactions').insert({ customer_id: linkedCustomer.id, order_id: currentOrder.id, points: earnedPts, type: 'earned' })
+        await supabase.from('loyalty_transactions').insert({ customer_id: linkedCustomer.id, order_id: currentOrder.id, points: earnedPts, type: 'earned', tenant_id: tenant.tenant_id })
         newBalance += earnedPts
       }
       await supabase.from('profiles').update({ loyalty_points: Math.max(0, newBalance) }).eq('id', linkedCustomer.id)

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { getCustomerSession } from '@/lib/supabase/auth'
+import { resolveRootTenantId } from '@/lib/tenant'
 import { useToast } from '../components/ToastProvider'
 import { fmt } from '@/lib/format'
 import type { User } from '@supabase/supabase-js'
@@ -42,6 +43,7 @@ export default function ReservationsClient() {
 
   const [loadingAuth, setLoadingAuth] = useState(true)
   const [user, setUser] = useState<User | null>(null)
+  const [tenantId, setTenantId] = useState<string | null>(null)
   const [reservations, setReservations] = useState<Reservation[] | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [msg, setMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
@@ -65,11 +67,13 @@ export default function ReservationsClient() {
   }, [supabase])
 
   useEffect(() => {
+    resolveRootTenantId(supabase).then(setTenantId)
     getCustomerSession().then(async (session) => {
       setUser(session?.user ?? null)
       setLoadingAuth(false)
       if (session?.user) await loadMyReservations(session.user.id)
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadMyReservations])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,6 +89,7 @@ export default function ReservationsClient() {
       .gte('capacity', parseInt(party))
       .order('capacity')
       .limit(1)
+    if (tenantId) query = query.eq('tenant_id', tenantId)
     if (zone) query = query.eq('location', zone)
 
     const { data: tables } = await query
@@ -98,6 +103,7 @@ export default function ReservationsClient() {
       party_size: parseInt(party),
       notes: notes.trim() || null,
       status: 'pending',
+      tenant_id: tenantId,
     })
 
     setSubmitting(false)

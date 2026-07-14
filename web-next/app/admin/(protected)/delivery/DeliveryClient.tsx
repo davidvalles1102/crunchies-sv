@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
-import { useRequireRole } from '../../AdminContext'
+import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 import type { Driver, DeliveryZone, DeliveryOrder } from '@/lib/types'
@@ -36,6 +36,7 @@ const ADVANCE_MSGS: Record<string, string> = {
 
 export default function DeliveryClient() {
   useRequireRole(['admin', 'waiter'])
+  const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
 
@@ -121,7 +122,7 @@ export default function DeliveryClient() {
     const phone = newDriverPhone.trim()
     if (!full_name || !phone) return
 
-    const { error } = await supabase.from('drivers').insert({ full_name, phone })
+    const { error } = await supabase.from('drivers').insert({ full_name, phone, tenant_id: tenant.tenant_id })
     if (error) { toast('Error al agregar repartidor', 'error'); return }
 
     toast('Repartidor agregado')
@@ -161,7 +162,7 @@ export default function DeliveryClient() {
     const fee = parseFloat(newZoneFee)
     if (!name || Number.isNaN(fee)) return
 
-    const { error } = await supabase.from('delivery_zones').insert({ name, fee, display_order: zones.length })
+    const { error } = await supabase.from('delivery_zones').insert({ name, fee, display_order: zones.length, tenant_id: tenant.tenant_id })
     if (error) { toast('Error al agregar zona', 'error'); return }
 
     toast('Zona agregada')

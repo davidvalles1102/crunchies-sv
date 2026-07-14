@@ -28,11 +28,13 @@ export default function OrderClient({
   items,
   zones,
   taxRate = 0,
+  tenantId = null,
 }: {
   categories: Category[]
   items: OrderMenuItem[]
   zones: DeliveryZone[]
   taxRate?: number
+  tenantId?: string | null
 }) {
   const supabase = createClient()
   const toast = useToast()
@@ -145,6 +147,7 @@ export default function OrderClient({
         subtotal,
         tax,
         total: grandTotal,
+        tenant_id: tenantId,
       })
       .select()
       .single()
@@ -161,13 +164,14 @@ export default function OrderClient({
       item_name: i.name,
       item_price: i.price,
       quantity: i.qty,
+      tenant_id: tenantId,
     }))
     const { data: insertedItems } = await supabase.from('order_items').insert(itemsPayload).select()
 
-    const modifierRows: { order_item_id: string; option_name: string; price_delta: number }[] = []
+    const modifierRows: { order_item_id: string; option_name: string; price_delta: number; tenant_id: string | null }[] = []
     ;(insertedItems || []).forEach((row, idx) => {
       (cart[idx].modifiers || []).forEach((m) => {
-        modifierRows.push({ order_item_id: row.id, option_name: m.option_name, price_delta: m.price_delta })
+        modifierRows.push({ order_item_id: row.id, option_name: m.option_name, price_delta: m.price_delta, tenant_id: tenantId })
       })
     })
     if (modifierRows.length) await supabase.from('order_item_modifiers').insert(modifierRows)

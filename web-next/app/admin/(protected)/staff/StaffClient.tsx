@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
-import { useRequireRole } from '../../AdminContext'
+import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 
@@ -47,6 +47,7 @@ function genPin() {
 
 export default function StaffClient() {
   useRequireRole(['admin'])
+  const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
 
@@ -127,7 +128,7 @@ export default function StaffClient() {
     const name = newName.trim()
     if (!name || !newPin || newPin.length !== 6) { toast('Nombre y PIN de 6 dígitos requeridos', 'warning'); return }
     setCreating(true)
-    const { error } = await supabase.from('staff_members').insert({ full_name: name, role: newRole, pin: newPin })
+    const { error } = await supabase.from('staff_members').insert({ full_name: name, role: newRole, pin: newPin, tenant_id: tenant.tenant_id })
     if (error) {
       toast(error.message.includes('unique') ? 'Ese PIN ya existe, genera otro' : error.message, 'error')
     } else {

@@ -87,6 +87,7 @@ export default function TableOrderClient() {
   const [categories, setCategories] = useState<Category[]>([])
   const [menuItems, setMenuItems] = useState<PlainMenuItem[]>([])
   const [taxRate, setTaxRate] = useState(0)
+  const [tenantId, setTenantId] = useState<string | null>(null)
   const [activeCat, setActiveCat] = useState('all')
   const [search, setSearch] = useState('')
 
@@ -122,6 +123,7 @@ export default function TableOrderClient() {
       if (!tbl) { setErrorMsg('Mesa no encontrada. Escanea el código QR correcto.'); setPhase('error'); return }
 
       setTableInfo({ number: tbl.number, location: tbl.location })
+      setTenantId(tbl.tenant_id ?? null)
       if (tbl.status !== 'occupied') {
         await supabase.from('restaurant_tables').update({ status: 'occupied' }).eq('id', tableId)
       }
@@ -217,6 +219,7 @@ export default function TableOrderClient() {
         status: 'in_kitchen',
         notes: notes.trim() || null,
         subtotal, tax, total,
+        tenant_id: tenantId,
       })
       .select()
       .single()
@@ -235,14 +238,15 @@ export default function TableOrderClient() {
       item_name: c.name,
       item_price: c.price,
       quantity: c.qty,
+      tenant_id: tenantId,
     }))
 
     await supabase.from('order_items').insert(orderItemsPayload)
 
-    const modifierRows: { order_item_id: string; option_name: string; price_delta: number }[] = []
+    const modifierRows: { order_item_id: string; option_name: string; price_delta: number; tenant_id: string | null }[] = []
     orderItemsPayload.forEach((row, idx) => {
       ;(cart[idx].modifiers || []).forEach((m) => {
-        modifierRows.push({ order_item_id: row.id, option_name: m.option_name, price_delta: m.price_delta })
+        modifierRows.push({ order_item_id: row.id, option_name: m.option_name, price_delta: m.price_delta, tenant_id: tenantId })
       })
     })
     if (modifierRows.length) await supabase.from('order_item_modifiers').insert(modifierRows)

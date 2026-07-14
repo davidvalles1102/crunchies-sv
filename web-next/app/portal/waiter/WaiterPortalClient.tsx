@@ -96,6 +96,7 @@ export default function WaiterPortalClient() {
         subtotal,
         tax,
         total,
+        tenant_id: session?.tenant_id ?? null,
       }).select('id, table_id, status, subtotal, tax, total').single()
       if (error || !data) { setLoading(false); return }
       current = data as ActiveOrder
@@ -110,12 +111,13 @@ export default function WaiterPortalClient() {
       item_name: i.name,
       item_price: i.price,
       quantity: i.qty,
+      tenant_id: session?.tenant_id ?? null,
     })))
 
     setTicket([])
     setView('tables')
     setLoading(false)
-  }, [order, selectedTable, supabase, ticket, taxRate])
+  }, [order, selectedTable, session, supabase, ticket, taxRate])
 
   const markPaid = useCallback(async () => {
     if (!order) return
