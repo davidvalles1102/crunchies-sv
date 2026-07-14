@@ -96,6 +96,20 @@ export default function PlatformClient() {
     setCreating(false)
   }
 
+  async function toggleSuspend(t: Tenant) {
+    const nextStatus = t.status === 'suspended' ? 'active' : 'suspended'
+    const label = nextStatus === 'suspended' ? 'suspender' : 'reactivar'
+    if (!confirm(`¿Seguro que quieres ${label} "${t.name}"?`)) return
+
+    const { error } = await supabase.rpc('set_tenant_status', { p_tenant_id: t.id, p_status: nextStatus })
+    if (error) {
+      toast('Error al cambiar el estado', 'error')
+    } else {
+      toast(nextStatus === 'suspended' ? `${t.name} suspendido` : `${t.name} reactivado`)
+      await loadTenants()
+    }
+  }
+
   return (
     <>
       <Topbar title="Plataforma — Negocios" />
@@ -109,6 +123,7 @@ export default function PlatformClient() {
           ) : (
             tenants.map((t) => {
               const cfg = STATUS_CFG[t.status]
+              const isSuspended = t.status === 'suspended'
               return (
                 <div key={t.id} className="staff-card">
                   <div className="staff-card__info">
@@ -118,6 +133,16 @@ export default function PlatformClient() {
                       <span style={{ marginLeft: 8 }}>/{t.slug} · plan {t.plan} · creado {fmt.datetime(t.created_at)}</span>
                     </div>
                   </div>
+                  {t.status !== 'archived' && (
+                    <div className="staff-card__actions">
+                      <button
+                        className={`btn btn-sm ${isSuspended ? 'btn-outline' : 'btn-danger'}`}
+                        onClick={() => toggleSuspend(t)}
+                      >
+                        {isSuspended ? 'Reactivar' : 'Suspender'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             })

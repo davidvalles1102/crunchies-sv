@@ -40,6 +40,7 @@ La DB de producción tiene tablas distintas al `schema.sql` original.
 | 17 | **`tenant_onboarding.sql`** | ✅ | **Fase multitenant 4** — RPC `create_tenant()` (SECURITY DEFINER) para dar de alta un negocio nuevo sin tocar SQL; solo `profiles.role='admin'` puede llamarla |
 | 18 | **`cash_sessions.sql`** | ✅ | **Fase multitenant 5** — `cash_sessions`/`cash_session_movements`, columna `payments.cash_session_id`, RPCs `compute_cash_session_expected()` y `close_cash_session()` |
 | 19 | **`inventory.sql`** | ✅ | **Fase multitenant 6** — `recipe_items`, RPC `record_inventory_movement()`, trigger de consumo automático en `order_items`, vista `low_stock_items` |
+| 20 | **`billing.sql`** | ✅ | **Fase multitenant 7** — `is_tenant_role()` ahora exige `tenant.status in ('active','trial')`, RPC `set_tenant_status()` para suspender/reactivar (solo `profiles.role='admin'`) |
 
 > ⚠️ Correr 15 y 16 solo después de que las migrations 1-14 ya estén aplicadas
 > (dependen de que todas las tablas operativas existan). Verificar con la

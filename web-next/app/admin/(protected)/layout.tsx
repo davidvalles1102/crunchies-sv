@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getSession, getProfile, getTenantForUser } from '@/lib/supabase/auth'
 import { AdminContext, STAFF_ROLES, type AdminContextValue } from '../AdminContext'
 import Sidebar from '../components/Sidebar'
+import TenantStatusBanner from '../components/TenantStatusBanner'
 import { setActiveTenant } from '@/lib/tenant'
 
 export default function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
@@ -36,7 +37,10 @@ export default function ProtectedAdminLayout({ children }: { children: React.Rea
     <AdminContext.Provider value={ctx}>
       <div className="admin-body">
         <Sidebar />
-        <div className="admin-main">{children}</div>
+        <div className="admin-main">
+          <TenantStatusBanner />
+          {children}
+        </div>
       </div>
     </AdminContext.Provider>
   )
