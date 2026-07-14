@@ -19,29 +19,33 @@ La DB de producción tiene tablas distintas al `schema.sql` original.
 
 ## Orden de ejecución para producción (a partir de estado actual)
 
-| # | Archivo | Idempotente | Descripción |
-|---|---------|-------------|-------------|
+⚠️ Los archivos NO están todos en la misma carpeta — la columna "Ruta" es
+la ruta real desde `supabase/`. Ábrelos por esa ruta exacta, no busques
+solo el nombre.
+
+| # | Ruta (desde `supabase/`) | Idempotente | Descripción |
+|---|---------------------------|-------------|-------------|
 | 1 | **`create_missing_tables.sql`** | ✅ | **EJECUTAR PRIMERO** — Crea las 10 tablas que faltan con RLS |
 | 2 | **`fix_delivery_status_constraint.sql`** | ✅ | Columnas delivery en orders + CHECK constraint correcto |
-| 3 | `add_payment_method.sql` | ✅ | Columna payment_method en orders (cash/nequi) |
-| 4 | `delivery_management_schema.sql` | ✅ | Columnas driver_id, delivery_zone_id, delivery_fee en orders |
-| 5 | `anon_ordering_rls.sql` | ✅ | RLS para pedidos anónimos via QR (sin cuenta de cliente) |
-| 6 | `fix_tables_and_rls.sql` | ✅ | RLS para clientes autenticados pidiendo desde QR |
-| 7 | `customer_notes_rls.sql` | ✅ | Permisos para que clientes puedan escribir notas en sus órdenes |
-| 8 | `reorganize_tables.sql` | ✅ | Limpieza de mesas ocupadas sin orden activa |
-| 9 | `loyalty_points_fix.sql` | ✅ | Trigger para otorgar puntos automáticamente |
-| 10 | `enable_realtime.sql` | ✅ | Habilitar Realtime en orders y order_items |
-| 11 | `insert_menu_items_nuevos.sql` | ✅ | Items iniciales del menú en `menu_items` |
-| 12 | `update_menu.sql` / `update_menu_images.sql` | ✅ | Actualizaciones de menú e imágenes |
-| 13 | `update_prices_sv.sql` | ✅ | Ajuste de precios |
-| 14 | `staff_pins_schema.sql` | ✅ | Sistema de portales con PIN (Fase 2) |
-| 15 | **`tenant_foundation.sql`** | ✅ | **Fase multitenant A/B** — crea `tenants`/`tenant_members`/`tenant_settings`/`tenant_plan_subscriptions`, agrega `tenant_id` a las tablas operativas + inventario, backfill al tenant raíz `crunchies-root` |
-| 16 | **`tenant_aware_rls.sql`** | ✅ | **Fase multitenant C** — reescribe TODA policy RLS existente en las tablas operativas para exigir pertenencia de tenant (no solo rol), vuelve `tenant_id` `NOT NULL`. Dropea policies dinámicamente (no por nombre) porque los nombres reales ya divergen de los de este documento — ver comentario en el archivo |
-| 17 | **`tenant_onboarding.sql`** | ✅ | **Fase multitenant 4** — RPC `create_tenant()` (SECURITY DEFINER) para dar de alta un negocio nuevo sin tocar SQL; solo `profiles.role='admin'` puede llamarla |
-| 18 | **`cash_sessions.sql`** | ✅ | **Fase multitenant 5** — `cash_sessions`/`cash_session_movements`, columna `payments.cash_session_id`, RPCs `compute_cash_session_expected()` y `close_cash_session()` |
-| 19 | **`inventory.sql`** | ✅ | **Fase multitenant 6** — `recipe_items`, RPC `record_inventory_movement()`, trigger de consumo automático en `order_items`, vista `low_stock_items` |
-| 20 | **`billing.sql`** | ✅ | **Fase multitenant 7** — `is_tenant_role()` ahora exige `tenant.status in ('active','trial')`, RPC `set_tenant_status()` para suspender/reactivar (solo `profiles.role='admin'`) |
-| 21 | **`fiscal.sql`** | ✅ | **Fase multitenant 8** — `tenant_settings.tax_rate` (default 13% IVA), fila explícita del tenant raíz en 0% para no cambiarle el cobro a Crunchies sin que nadie lo pidiera |
+| 3 | `migrations/add_payment_method.sql` | ✅ | Columna payment_method en orders (cash/nequi) |
+| 4 | `schema/delivery_management_schema.sql` | ✅ | Columnas driver_id, delivery_zone_id, delivery_fee en orders |
+| 5 | `migrations/anon_ordering_rls.sql` | ✅ | RLS para pedidos anónimos via QR (sin cuenta de cliente) |
+| 6 | `migrations/fix_tables_and_rls.sql` | ✅ | RLS para clientes autenticados pidiendo desde QR |
+| 7 | `migrations/customer_notes_rls.sql` | ✅ | Permisos para que clientes puedan escribir notas en sus órdenes |
+| 8 | `migrations/reorganize_tables.sql` | ✅ | Limpieza de mesas ocupadas sin orden activa |
+| 9 | `migrations/loyalty_points_fix.sql` | ✅ | Trigger para otorgar puntos automáticamente |
+| 10 | `migrations/enable_realtime.sql` | ✅ | Habilitar Realtime en orders y order_items |
+| 11 | `menu/archive/insert_menu_items_nuevos.sql` | ✅ | Items iniciales del menú en `menu_items` |
+| 12 | `menu/archive/update_menu.sql` / `menu/archive/update_menu_images.sql` | ✅ | Actualizaciones de menú e imágenes |
+| 13 | `menu/archive/update_prices_sv.sql` | ✅ | Ajuste de precios |
+| 14 | **`staff_pins_schema.sql`** | ✅ | Sistema de portales con PIN (Fase 2) |
+| 15 | **`migrations/tenant_foundation.sql`** | ✅ | **Fase multitenant A/B** — crea `tenants`/`tenant_members`/`tenant_settings`/`tenant_plan_subscriptions`, agrega `tenant_id` a las tablas operativas + inventario, backfill al tenant raíz `crunchies-root`, DEFAULT de `tenant_id` al tenant raíz en las tablas preexistentes |
+| 16 | **`migrations/tenant_aware_rls.sql`** | ✅ | **Fase multitenant C** — reescribe TODA policy RLS existente en las tablas operativas para exigir pertenencia de tenant (no solo rol), vuelve `tenant_id` `NOT NULL`. Dropea policies dinámicamente (no por nombre) porque los nombres reales ya divergen de los de este documento — ver comentario en el archivo |
+| 17 | **`migrations/tenant_onboarding.sql`** | ✅ | **Fase multitenant 4** — RPC `create_tenant()` (SECURITY DEFINER) para dar de alta un negocio nuevo sin tocar SQL; solo `profiles.role='admin'` puede llamarla |
+| 18 | **`migrations/cash_sessions.sql`** | ✅ | **Fase multitenant 5** — `cash_sessions`/`cash_session_movements`, columna `payments.cash_session_id`, RPCs `compute_cash_session_expected()` y `close_cash_session()` |
+| 19 | **`migrations/inventory.sql`** | ✅ | **Fase multitenant 6** — `recipe_items`, RPC `record_inventory_movement()`, trigger de consumo automático en `order_items`, vista `low_stock_items` |
+| 20 | **`migrations/billing.sql`** | ✅ | **Fase multitenant 7** — `is_tenant_role()` ahora exige `tenant.status in ('active','trial')`, RPC `set_tenant_status()` para suspender/reactivar (solo `profiles.role='admin'`) |
+| 21 | **`migrations/fiscal.sql`** | ✅ | **Fase multitenant 8** — `tenant_settings.tax_rate` (default 13% IVA), fila explícita del tenant raíz en 0% para no cambiarle el cobro a Crunchies sin que nadie lo pidiera |
 
 > ⚠️ Correr 15 y 16 solo después de que las migrations 1-14 ya estén aplicadas
 > (dependen de que todas las tablas operativas existan). Verificar con la
