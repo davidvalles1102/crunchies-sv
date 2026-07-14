@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { useRequireRole } from '../../AdminContext'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 import type { Reservation, RestaurantTable } from '@/lib/types'
@@ -129,6 +130,8 @@ export default function ReservationsClient() {
     return () => { channel.unsubscribe() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useLiveRefetch(loadReservations, { pollMs: 20000 })
 
   const count = (s: string) => allReservations.filter((r) => r.status === s).length
   const filtered = filterStatus ? allReservations.filter((r) => r.status === filterStatus) : allReservations
