@@ -9,6 +9,7 @@ import type { Category, OrderMenuItem, ModifierGroup, RestaurantTable } from '@/
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import ModifierModal from '../../../order/ModifierModal'
 import { buildReceiptPDF } from './receipt-pdf'
 import type { TicketItem, CurrentOrder, ReceiptData } from './types'
@@ -135,6 +136,21 @@ export default function OrdersClient() {
     return () => { channel.unsubscribe() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrder?.id])
+
+  // Respaldo si el socket de Realtime muere en segundo plano (movil): sin
+  // esto, el mesero nunca se entera de que la orden esta lista si el
+  // evento postgres_changes de arriba no llego.
+  useLiveRefetch(async () => {
+    const orderId = currentOrder?.id
+    if (!orderId) return
+    const { data } = await supabase.from('orders').select('status, delivery_status').eq('id', orderId).maybeSingle<{ status: string; delivery_status: string | null }>()
+    if (!data) return
+    setCurrentOrder((prev) => {
+      if (!prev || prev.id !== orderId || prev.status === data.status) return prev
+      if (data.status === 'ready') toast('✅ ¡Orden lista! Llevar a la mesa', 'success')
+      return { ...prev, status: data.status, delivery_status: data.delivery_status ?? prev.delivery_status }
+    })
+  }, { pollMs: 15000 })
 
   const switchOrderType = (type: OrderType) => {
     setOrderType(type)

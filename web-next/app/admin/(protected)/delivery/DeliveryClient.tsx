@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
+import { useWakeLock } from '@/lib/useWakeLock'
+import { playNewOrderBeep } from '@/lib/notifySound'
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
@@ -215,6 +218,7 @@ export default function DeliveryClient() {
 
         if (payload.eventType === 'INSERT') {
           toast(t === 'delivery' ? '🛵 Nueva orden a domicilio' : '🥡 Nueva orden para llevar', 'info')
+          playNewOrderBeep()
         }
         await loadOrders()
       })
@@ -225,6 +229,9 @@ export default function DeliveryClient() {
     return () => { channel.unsubscribe() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useLiveRefetch(loadOrders, { pollMs: 15000 })
+  useWakeLock(true)
 
   const filtered = typeFilter === 'all' ? allOrders : allOrders.filter((o) => o.order_type === typeFilter)
 

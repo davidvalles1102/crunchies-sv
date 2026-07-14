@@ -1,10 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { modifiersSummary } from '@/lib/modifiers'
 import { fmt } from '@/lib/format'
 import { getPinSession, logoutPin, type PinSession } from '@/lib/pin-auth'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
+import { useWakeLock } from '@/lib/useWakeLock'
+import { playNewOrderBeep } from '@/lib/notifySound'
 import PinPad from '../PinPad'
 import type { KitchenOrder } from '@/lib/types'
 
@@ -18,6 +21,7 @@ export default function KitchenPortalClient() {
   const [readyOrders, setReadyOrders] = useState<KitchenOrder[]>([])
   const [startTimes, setStartTimes] = useState<Record<string, number>>({})
   const [nowTick, setNowTick] = useState(() => Date.now())
+  const knownOrderIds = useRef<Set<string> | null>(null)
 
   const loadOrders = useCallback(async () => {
     const { data } = await supabase
@@ -39,9 +43,22 @@ export default function KitchenPortalClient() {
       })
       return changed ? next : prev
     })
+
+    // Suena una alerta si aparece una orden en_kitchen que no estaba antes.
+    // knownOrderIds arranca en null para no sonar con la carga inicial.
+    const currentIds = new Set(all.filter((o) => o.status === 'in_kitchen').map((o) => o.id))
+    if (knownOrderIds.current) {
+      const isNew = [...currentIds].some((id) => !knownOrderIds.current!.has(id))
+      if (isNew) playNewOrderBeep()
+    }
+    knownOrderIds.current = currentIds
+
     setInKitchen(all.filter((o) => o.status === 'in_kitchen'))
     setReadyOrders(all.filter((o) => o.status === 'ready'))
   }, [supabase])
+
+  useLiveRefetch(() => { if (session) loadOrders() }, { pollMs: 15000 })
+  useWakeLock(!!session)
 
   const markReady = useCallback(async (order: KitchenOrder) => {
     const updates: Record<string, unknown> = { status: 'ready', updated_at: new Date().toISOString() }

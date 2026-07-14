@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt, calcTotals } from '@/lib/format'
 import { getPinSession, logoutPin, type PinSession } from '@/lib/pin-auth'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
+import { useWakeLock } from '@/lib/useWakeLock'
 import PinPad from '../PinPad'
 import type { Category, OrderMenuItem, RestaurantTable } from '@/lib/types'
 
@@ -57,6 +59,12 @@ export default function WaiterPortalClient() {
     const timer = setTimeout(() => { void loadBase() }, 0)
     return () => clearTimeout(timer)
   }, [loadBase, session])
+
+  // Sin esto, la lista de mesas (ocupada/disponible) solo se actualiza al
+  // volver a entrar al portal — un mesero necesita ver cambios de otros
+  // meseros/cocina sin recargar la pagina a mano.
+  useLiveRefetch(() => { if (session) loadBase() }, { pollMs: 15000 })
+  useWakeLock(!!session)
 
   const selectTable = useCallback(async (table: RestaurantTable) => {
     setSelectedTable(table)

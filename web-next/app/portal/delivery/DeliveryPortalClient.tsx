@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
 import { getPinSession, logoutPin, logEvent, type PinSession } from '@/lib/pin-auth'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
+import { useWakeLock } from '@/lib/useWakeLock'
 import PinPad from '../PinPad'
 
 type DeliveryItem = { id: string; item_name: string; quantity: number; order_item_modifiers?: { option_name: string; price_delta: number }[] }
@@ -120,6 +122,9 @@ export default function DeliveryPortalClient() {
 
     return () => { alive = false; channel.unsubscribe() }
   }, [refresh, session, supabase])
+
+  useLiveRefetch(() => { if (session) refresh() }, { pollMs: 15000 })
+  useWakeLock(!!session)
 
   if (!session) {
     return <PinPad portalName="Delivery" icon="🛵" expectedRole="delivery" onSuccess={setSession} />
