@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 
 Chart.register(LineController, DoughnutController, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend, Filler)
 import { fmt } from '@/lib/format'
-import { useRequireRole } from '../../AdminContext'
+import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import LiveClock from '../../components/LiveClock'
 
@@ -55,6 +55,7 @@ function chartOptions() {
 
 export default function DashboardClient() {
   useRequireRole(['admin', 'waiter'])
+  const { tenant } = useAdmin()
   const supabase = createClient()
 
   const [loading, setLoading] = useState(true)
@@ -197,6 +198,9 @@ export default function DashboardClient() {
       </Topbar>
 
       <div className="admin-content">
+        <div className="text-muted text-xs mb-12" style={{ letterSpacing: '.05em', textTransform: 'uppercase' }}>
+          Negocio activo: <strong style={{ color: 'var(--text)' }}>{tenant.name}</strong>
+        </div>
         {error && (
           <div className="alert alert-error mb-16" role="alert">
             Error al cargar datos del dashboard. Verifica tu conexión.

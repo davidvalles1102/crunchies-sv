@@ -4,10 +4,12 @@ import { createContext, useContext, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Session } from '@supabase/supabase-js'
 import type { Profile } from '@/lib/types'
+import type { ActiveTenant } from '@/lib/tenant'
 
 export type AdminContextValue = {
   session: Session
   profile: Profile
+  tenant: ActiveTenant
 }
 
 export const AdminContext = createContext<AdminContextValue | null>(null)

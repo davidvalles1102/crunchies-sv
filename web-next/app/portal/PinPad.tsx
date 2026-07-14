@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useState } from 'react'
 import { loginWithPin, type PinSession } from '@/lib/pin-auth'
 
 type Props = {
@@ -17,12 +17,7 @@ export default function PinPad({ portalName, icon, expectedRole, onSuccess }: Pr
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (digits.length === 6 && !loading) submit(digits)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [digits])
-
-  async function submit(pin: string) {
+  const submit = useCallback(async (pin: string) => {
     setLoading(true)
     setError('')
     const { session, error } = await loginWithPin(pin)
@@ -33,13 +28,17 @@ export default function PinPad({ portalName, icon, expectedRole, onSuccess }: Pr
       return
     }
     onSuccess(session)
-  }
+  }, [expectedRole, onSuccess])
 
   function pressKey(k: string) {
     if (loading) return
     if (k === '⌫') { setDigits((d) => d.slice(0, -1)); setError(''); return }
     if (k === '') return
-    if (digits.length < 6) setDigits((d) => d + k)
+    if (digits.length < 6) {
+      const next = digits + k
+      setDigits(next)
+      if (next.length === 6) void submit(next)
+    }
   }
 
   return (

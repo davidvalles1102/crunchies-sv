@@ -24,6 +24,12 @@ const ROLE_CREDENTIALS: Record<string, { email: string; password: string }> = {
   waiter:   { email: process.env.PORTAL_WAITER_EMAIL!,   password: process.env.PORTAL_WAITER_PASSWORD! },
 }
 
+const ROOT_TENANT = {
+  tenantId: 'crunchies-root',
+  tenantSlug: 'crunchies-root',
+  tenantName: 'Crunchies Mi Rancho',
+}
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
 
@@ -81,6 +87,9 @@ export async function POST(req: NextRequest) {
     staffId:      s.staff_id,
     fullName:     s.full_name,
     role:         s.role,
+    tenantId:     ROOT_TENANT.tenantId,
+    tenantSlug:   ROOT_TENANT.tenantSlug,
+    tenantName:   ROOT_TENANT.tenantName,
     accessToken:  authData.session.access_token,
     refreshToken: authData.session.refresh_token,
   })
