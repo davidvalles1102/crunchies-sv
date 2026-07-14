@@ -35,6 +35,13 @@ La DB de producción tiene tablas distintas al `schema.sql` original.
 | 12 | `update_menu.sql` / `update_menu_images.sql` | ✅ | Actualizaciones de menú e imágenes |
 | 13 | `update_prices_sv.sql` | ✅ | Ajuste de precios |
 | 14 | `staff_pins_schema.sql` | ✅ | Sistema de portales con PIN (Fase 2) |
+| 15 | **`tenant_foundation.sql`** | ✅ | **Fase multitenant A/B** — crea `tenants`/`tenant_members`/`tenant_settings`/`tenant_plan_subscriptions`, agrega `tenant_id` a las tablas operativas + inventario, backfill al tenant raíz `crunchies-root` |
+| 16 | **`tenant_aware_rls.sql`** | ✅ | **Fase multitenant C** — reescribe TODA policy RLS existente en las tablas operativas para exigir pertenencia de tenant (no solo rol), vuelve `tenant_id` `NOT NULL`. Dropea policies dinámicamente (no por nombre) porque los nombres reales ya divergen de los de este documento — ver comentario en el archivo |
+
+> ⚠️ Correr 15 y 16 solo después de que las migrations 1-14 ya estén aplicadas
+> (dependen de que todas las tablas operativas existan). Verificar con la
+> query de verificación al final de `tenant_aware_rls.sql` que cada tabla
+> tenga las policies esperadas antes de dar por cerrada la migración.
 
 ## Archivos obsoletos (NO ejecutar)
 

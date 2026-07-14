@@ -1,13 +1,15 @@
 -- ============================================================
---  Multitenant Schema Draft
---  Purpose: blueprint for tenant-aware SaaS migration
---  Status: DRAFT ONLY - do not run against production yet
+--  Tenant Foundation — Fase A/B del plan multitenant
+--  Ejecutar DESPUES de las migrations 1-14 de MIGRATIONS.md
+--  (requiere que todas las tablas operativas ya existan)
+--  Ejecutar ANTES de tenant_aware_rls.sql
 -- ============================================================
 
--- This file is intentionally conservative:
--- - idempotent where possible
--- - preserves the single-tenant data model as the "root tenant"
--- - adds tenant scaffolding before tightening RLS
+-- Idempotente:
+-- - preserva el modelo single-tenant actual como "tenant raiz"
+-- - agrega tenant_id a las tablas operativas y hace backfill al tenant raiz
+-- - agrega inventario base para fases posteriores
+-- - la reescritura real de RLS vive en tenant_aware_rls.sql
 
 create extension if not exists "uuid-ossp";
 
@@ -21,7 +23,7 @@ create table if not exists public.tenants (
   name         text not null,
   status       text not null default 'active' check (status in ('active', 'suspended', 'trial', 'archived')),
   plan         text not null default 'starter',
-  timezone     text not null default 'America/Mexico_City',
+  timezone     text not null default 'America/El_Salvador',
   currency     text not null default 'USD',
   created_at   timestamptz not null default now()
 );
@@ -63,7 +65,7 @@ create table if not exists public.tenant_plan_subscriptions (
 
 -- Root tenant for the current restaurant data.
 insert into public.tenants (slug, name, status, plan, timezone, currency)
-values ('crunchies-root', 'Crunchies Mi Rancho', 'active', 'starter', 'America/Mexico_City', 'USD')
+values ('crunchies-root', 'Crunchies Mi Rancho', 'active', 'starter', 'America/El_Salvador', 'USD')
 on conflict (slug) do nothing;
 
 -- ------------------------------------------------------------
@@ -122,6 +124,9 @@ alter table public.staff_members
   add column if not exists tenant_id uuid;
 
 alter table public.order_events
+  add column if not exists tenant_id uuid;
+
+alter table public.customer_notes
   add column if not exists tenant_id uuid;
 
 -- Inventory scaffolding for later phases.
@@ -277,80 +282,70 @@ from public.tenants t
 where t.slug = 'crunchies-root'
   and m.tenant_id is null;
 
--- Default tenant membership for currently seeded admin profile(s) is left to manual assignment
--- because auth.users and profiles may not be synchronized in every environment.
+update public.customer_notes n
+set tenant_id = t.id
+from public.tenants t
+where t.slug = 'crunchies-root'
+  and n.tenant_id is null;
+
+-- Membresia de tenant para los perfiles de staff ya existentes (admin/waiter/kitchen).
+-- Los perfiles 'customer' no reciben membership: son globales, no pertenecen a un tenant.
+insert into public.tenant_members (tenant_id, user_id, role, active)
+select t.id, p.id, p.role, true
+from public.profiles p
+cross join (select id from public.tenants where slug = 'crunchies-root') t
+where p.role in ('admin', 'waiter', 'kitchen')
+on conflict (tenant_id, user_id) do nothing;
 
 -- ------------------------------------------------------------
 -- 4) Foreign key helpers
 -- ------------------------------------------------------------
 
-alter table public.profiles
-  add constraint profiles_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.categories
-  add constraint categories_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.menu_items
-  add constraint menu_items_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.modifier_groups
-  add constraint modifier_groups_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.modifier_options
-  add constraint modifier_options_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.menu_item_modifier_groups
-  add constraint menu_item_modifier_groups_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.restaurant_tables
-  add constraint restaurant_tables_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.reservations
-  add constraint reservations_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.orders
-  add constraint orders_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.order_items
-  add constraint order_items_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.order_item_modifiers
-  add constraint order_item_modifiers_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.payments
-  add constraint payments_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.loyalty_transactions
-  add constraint loyalty_transactions_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.expenses
-  add constraint expenses_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.drivers
-  add constraint drivers_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.delivery_zones
-  add constraint delivery_zones_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.staff_members
-  add constraint staff_members_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.order_events
-  add constraint order_events_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.inventory_items
-  add constraint inventory_items_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
-
-alter table public.inventory_movements
-  add constraint inventory_movements_tenant_fkey foreign key (tenant_id) references public.tenants(id) on delete cascade;
+-- Postgres no soporta "ADD CONSTRAINT IF NOT EXISTS": se envuelve cada uno
+-- en un DO block para que el archivo sea re-ejecutable sin error.
+do $$
+declare
+  t record;
+begin
+  for t in
+    select * from (values
+      ('profiles', 'profiles_tenant_fkey'),
+      ('categories', 'categories_tenant_fkey'),
+      ('menu_items', 'menu_items_tenant_fkey'),
+      ('modifier_groups', 'modifier_groups_tenant_fkey'),
+      ('modifier_options', 'modifier_options_tenant_fkey'),
+      ('menu_item_modifier_groups', 'menu_item_modifier_groups_tenant_fkey'),
+      ('restaurant_tables', 'restaurant_tables_tenant_fkey'),
+      ('reservations', 'reservations_tenant_fkey'),
+      ('orders', 'orders_tenant_fkey'),
+      ('order_items', 'order_items_tenant_fkey'),
+      ('order_item_modifiers', 'order_item_modifiers_tenant_fkey'),
+      ('payments', 'payments_tenant_fkey'),
+      ('loyalty_transactions', 'loyalty_transactions_tenant_fkey'),
+      ('expenses', 'expenses_tenant_fkey'),
+      ('drivers', 'drivers_tenant_fkey'),
+      ('delivery_zones', 'delivery_zones_tenant_fkey'),
+      ('staff_members', 'staff_members_tenant_fkey'),
+      ('order_events', 'order_events_tenant_fkey'),
+      ('customer_notes', 'customer_notes_tenant_fkey'),
+      ('inventory_items', 'inventory_items_tenant_fkey'),
+      ('inventory_movements', 'inventory_movements_tenant_fkey')
+    ) as x(table_name, constraint_name)
+  loop
+    if not exists (
+      select 1 from pg_constraint where conname = t.constraint_name
+    ) then
+      execute format(
+        'alter table public.%I add constraint %I foreign key (tenant_id) references public.tenants(id) on delete cascade',
+        t.table_name, t.constraint_name
+      );
+    end if;
+  end loop;
+end $$;
 
 -- ------------------------------------------------------------
--- 5) Multitenant RLS strategy
+-- 5) Helper functions para RLS tenant-aware (usadas en tenant_aware_rls.sql)
 -- ------------------------------------------------------------
-
--- NOTE:
--- Existing policies must be refactored to include tenant membership checks.
--- This file documents the direction and provides the core helper function.
 
 create or replace function public.is_tenant_member(p_tenant_id uuid)
 returns boolean
@@ -385,15 +380,8 @@ as $$
   );
 $$;
 
--- Example policies to be applied after all tenant_id values are present.
--- They are left commented to avoid breaking current environments prematurely.
-
--- create policy "orders_tenant_read" on public.orders for select
---   using (public.is_tenant_member(tenant_id));
---
--- create policy "orders_tenant_write" on public.orders for insert, update
---   using (public.is_tenant_role(tenant_id, array['owner','admin','waiter','kitchen']))
---   with check (public.is_tenant_role(tenant_id, array['owner','admin','waiter','kitchen']));
+-- Las policies reales (rewrite de RLS existente + WITH CHECK de escritura)
+-- viven en tenant_aware_rls.sql — correr ese archivo justo despues de este.
 
 -- ------------------------------------------------------------
 -- 6) Verification queries
