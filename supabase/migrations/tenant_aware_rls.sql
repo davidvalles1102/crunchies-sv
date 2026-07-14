@@ -174,7 +174,7 @@ create policy "orders_customer_insert" on public.orders for insert
   to authenticated
   with check (
     (customer_id = auth.uid() or customer_id is null)
-    and exists (select 1 from public.tenants t where t.id = tenant_id and t.status = 'active')
+    and public.is_tenant_active(tenant_id)
   );
 
 -- Pedidos anonimos via QR (sin cuenta de cliente): el tenant_id lo fija el
@@ -183,7 +183,7 @@ create policy "orders_anon_insert" on public.orders for insert
   to anon
   with check (
     customer_id is null
-    and exists (select 1 from public.tenants t where t.id = tenant_id and t.status = 'active')
+    and public.is_tenant_active(tenant_id)
   );
 
 create policy "orders_anon_read" on public.orders for select

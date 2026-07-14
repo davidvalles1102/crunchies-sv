@@ -30,7 +30,8 @@ create table if not exists public.customer_credit_transactions (
   id            uuid default uuid_generate_v4() primary key,
   tenant_id     uuid not null references public.tenants on delete cascade,
   customer_id   uuid not null references public.profiles on delete cascade,
-  order_id      uuid references public.orders on delete set null,
+  -- orders.id es text en produccion (heredado de un catalogo previo, no uuid)
+  order_id      text references public.orders on delete set null,
   movement_type text not null check (movement_type in ('charge', 'payment', 'adjustment')),
   amount        numeric(10,2) not null check (amount > 0),
   notes         text,

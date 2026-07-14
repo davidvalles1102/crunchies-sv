@@ -3,6 +3,20 @@
 Ejecutar en Supabase → SQL Editor → New Query, en este orden exacto.
 Los archivos con `IF NOT EXISTS` / `DROP IF EXISTS` son idempotentes (seguros de re-ejecutar).
 
+## 🚨 URGENTE — correr `URGENT_enable_rls_legacy_tables.sql` YA, sin importar en qué paso vas
+
+Se encontró probando las migrations contra una copia de prueba real (no
+contra producción): `profiles`, `categories`, `orders` y `order_items`
+**nunca tuvieron Row Level Security habilitado**. El único archivo que lo
+hacía es `schema/schema.sql`, marcado como obsoleto/no-ejecutar desde
+siempre en este documento. Todas las policies que existen hoy sobre esas
+4 tablas (`orders_staff`, `orders_customer_own`, `profile_select_own`,
+etc.) están completamente inertes — cualquier usuario autenticado puede
+leer o escribir cualquier fila sin restricción real. Esto es independiente
+del trabajo multitenant y aplica a la arquitectura actual de un solo
+negocio. Corre `migrations/URGENT_enable_rls_legacy_tables.sql` **ahora**,
+sin importar en qué paso de la tabla de abajo estés.
+
 ## Estado actual de la DB (2026-06-28)
 
 La DB de producción tiene tablas distintas al `schema.sql` original.

@@ -415,6 +415,28 @@ as $$
   );
 $$;
 
+-- SECURITY DEFINER es obligatorio aqui: anon no tiene ninguna policy de
+-- lectura sobre `tenants` (tenants_member_read/tenants_platform_admin_read
+-- exigen membership o profiles.role='admin', que un visitante anonimo
+-- nunca tiene). Un `exists (select ... from tenants ...)` normal dentro de
+-- un WITH CHECK corre con los privilegios del rol que hace el INSERT — es
+-- decir, para anon esa subquery siempre veria 0 filas y el check fallaria
+-- SIEMPRE, incluso con un tenant activo real. Con SECURITY DEFINER esta
+-- funcion bypasea esa RLS solo para esta pregunta puntual (¿existe y esta
+-- activo?), igual que is_tenant_member/is_tenant_role bypasean RLS de
+-- tenant_members para poder evaluarla desde cualquier rol.
+create or replace function public.is_tenant_active(p_tenant_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.tenants t where t.id = p_tenant_id and t.status in ('active', 'trial')
+  );
+$$;
+
 -- ------------------------------------------------------------
 -- 5b) award_loyalty_points ahora propaga tenant_id
 -- ------------------------------------------------------------
