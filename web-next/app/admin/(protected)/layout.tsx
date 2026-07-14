@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSession, getProfile } from '@/lib/supabase/auth'
+import { getSession, getProfile, getTenantForUser } from '@/lib/supabase/auth'
 import { AdminContext, STAFF_ROLES, type AdminContextValue } from '../AdminContext'
 import Sidebar from '../components/Sidebar'
-import { getActiveTenant } from '@/lib/tenant'
+import { setActiveTenant } from '@/lib/tenant'
 
 export default function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -24,7 +24,9 @@ export default function ProtectedAdminLayout({ children }: { children: React.Rea
         return
       }
 
-      setCtx({ session, profile, tenant: getActiveTenant() })
+      const tenant = await getTenantForUser(session.user.id)
+      setActiveTenant(tenant)
+      setCtx({ session, profile, tenant })
     })()
   }, [router])
 

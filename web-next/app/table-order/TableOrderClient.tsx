@@ -125,10 +125,16 @@ export default function TableOrderClient() {
         await supabase.from('restaurant_tables').update({ status: 'occupied' }).eq('id', tableId)
       }
 
-      const [{ data: cats }, { data: items }] = await Promise.all([
-        supabase.from('categories').select('*').eq('active', true).order('display_order'),
-        supabase.from('menu_items').select('*').eq('available', true).order('name'),
-      ])
+      // El tenant se resuelve desde la mesa escaneada (no desde un default
+      // global): dos negocios comparten la misma DB pero cada QR apunta a
+      // una mesa de un tenant especifico.
+      let catsQuery = supabase.from('categories').select('*').eq('active', true).order('display_order')
+      let itemsQuery = supabase.from('menu_items').select('*').eq('available', true).order('name')
+      if (tbl.tenant_id) {
+        catsQuery = catsQuery.eq('tenant_id', tbl.tenant_id)
+        itemsQuery = itemsQuery.eq('tenant_id', tbl.tenant_id)
+      }
+      const [{ data: cats }, { data: items }] = await Promise.all([catsQuery, itemsQuery])
       setCategories((cats as Category[]) ?? [])
       setMenuItems((items as PlainMenuItem[]) ?? [])
 
