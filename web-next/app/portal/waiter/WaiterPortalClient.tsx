@@ -33,6 +33,7 @@ export default function WaiterPortalClient() {
   const [view, setView] = useState<'tables' | 'order' | 'pay'>('tables')
   const [activeCat, setActiveCat] = useState('all')
   const [loading, setLoading] = useState(false)
+  const [taxRate, setTaxRate] = useState(0)
 
   const loadBase = useCallback(async () => {
     const [{ data: tablesData }, { data: cats }, { data: items }] = await Promise.all([
@@ -43,7 +44,13 @@ export default function WaiterPortalClient() {
     setTables((tablesData as RestaurantTable[]) || [])
     setCategories((cats as Category[]) || [])
     setMenuItems((items as OrderMenuItem[]) || [])
-  }, [supabase])
+
+    if (session?.tenant_id) {
+      const { data: settings } = await supabase.from('tenant_settings').select('tax_enabled, tax_rate')
+        .eq('tenant_id', session.tenant_id).maybeSingle<{ tax_enabled: boolean; tax_rate: number }>()
+      setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
+    }
+  }, [supabase, session])
 
   useEffect(() => {
     if (!session) return undefined
@@ -78,7 +85,7 @@ export default function WaiterPortalClient() {
     if (!selectedTable || ticket.length === 0) return
     setLoading(true)
     const subtotal = ticket.reduce((s, i) => s + i.price * i.qty, 0)
-    const { tax, total } = calcTotals(subtotal)
+    const { tax, total } = calcTotals(subtotal, taxRate)
 
     let current = order
     if (!current) {
@@ -108,7 +115,7 @@ export default function WaiterPortalClient() {
     setTicket([])
     setView('tables')
     setLoading(false)
-  }, [order, selectedTable, supabase, ticket])
+  }, [order, selectedTable, supabase, ticket, taxRate])
 
   const markPaid = useCallback(async () => {
     if (!order) return
@@ -127,7 +134,7 @@ export default function WaiterPortalClient() {
 
   const filtered = menuItems.filter((i) => activeCat === 'all' || i.category_id === activeCat)
   const ticketSubtotal = ticket.reduce((s, i) => s + i.price * i.qty, 0)
-  const { total } = calcTotals(ticketSubtotal)
+  const { total } = calcTotals(ticketSubtotal, taxRate)
 
   return (
     <div className="portal-body">

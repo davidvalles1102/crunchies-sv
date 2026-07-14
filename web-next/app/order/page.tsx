@@ -21,6 +21,13 @@ export default async function OrderPage() {
     zonesQuery = zonesQuery.eq('tenant_id', tenantId)
   }
 
+  let taxRate = 0
+  if (tenantId) {
+    const { data: settings } = await supabase.from('tenant_settings').select('tax_enabled, tax_rate')
+      .eq('tenant_id', tenantId).maybeSingle<{ tax_enabled: boolean; tax_rate: number }>()
+    taxRate = settings?.tax_enabled ? Number(settings.tax_rate) : 0
+  }
+
   const [{ data: categories }, { data: items }, { data: zones }] = await Promise.all([categoriesQuery, itemsQuery, zonesQuery])
 
   return (
@@ -34,6 +41,7 @@ export default async function OrderPage() {
         categories={(categories ?? []) as Category[]}
         items={(items ?? []) as OrderMenuItem[]}
         zones={(zones ?? []) as DeliveryZone[]}
+        taxRate={taxRate}
       />
 
       <footer className="cust-footer">

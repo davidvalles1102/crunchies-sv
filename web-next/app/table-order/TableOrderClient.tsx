@@ -86,6 +86,7 @@ export default function TableOrderClient() {
 
   const [categories, setCategories] = useState<Category[]>([])
   const [menuItems, setMenuItems] = useState<PlainMenuItem[]>([])
+  const [taxRate, setTaxRate] = useState(0)
   const [activeCat, setActiveCat] = useState('all')
   const [search, setSearch] = useState('')
 
@@ -137,6 +138,12 @@ export default function TableOrderClient() {
       const [{ data: cats }, { data: items }] = await Promise.all([catsQuery, itemsQuery])
       setCategories((cats as Category[]) ?? [])
       setMenuItems((items as PlainMenuItem[]) ?? [])
+
+      if (tbl.tenant_id) {
+        const { data: settings } = await supabase.from('tenant_settings').select('tax_enabled, tax_rate')
+          .eq('tenant_id', tbl.tenant_id).maybeSingle<{ tax_enabled: boolean; tax_rate: number }>()
+        setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
+      }
 
       setPhase('ready')
     })()
@@ -194,7 +201,7 @@ export default function TableOrderClient() {
   }
 
   const cartCount = cart.reduce((s, c) => s + c.qty, 0)
-  const { subtotal, tax, total } = calcTotals(cart.reduce((s, c) => s + c.price * c.qty, 0))
+  const { subtotal, tax, total } = calcTotals(cart.reduce((s, c) => s + c.price * c.qty, 0), taxRate)
 
   const submitOrder = async () => {
     if (!cart.length || !tableId) return

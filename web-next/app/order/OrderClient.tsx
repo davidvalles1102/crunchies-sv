@@ -27,10 +27,12 @@ export default function OrderClient({
   categories,
   items,
   zones,
+  taxRate = 0,
 }: {
   categories: Category[]
   items: OrderMenuItem[]
   zones: DeliveryZone[]
+  taxRate?: number
 }) {
   const supabase = createClient()
   const toast = useToast()
@@ -78,7 +80,7 @@ export default function OrderClient({
   }, [items, activeCat, search])
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
-  const { tax, total } = calcTotals(subtotal)
+  const { tax, total } = calcTotals(subtotal, taxRate)
   const grandTotal = total + deliveryFee
 
   const addToCart = (item: { id: string; name: string; price: number }, modifiers: Selection[] = []) => {
