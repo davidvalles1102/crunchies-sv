@@ -88,6 +88,7 @@ export default function OrdersClient() {
   const [waModalOpen, setWaModalOpen] = useState(false)
   const [waPhone, setWaPhone] = useState('')
   const [deliveryFee, setDeliveryFee] = useState(0)
+  const [taxRate, setTaxRate] = useState(0)
 
   const selectedTable = tables.find((t) => t.id === selectedTableId) ?? null
 
@@ -98,16 +99,19 @@ export default function OrdersClient() {
 
   useEffect(() => {
     ;(async () => {
-      const [{ data: tablesData }, [{ data: cats }, { data: items }]] = await Promise.all([
+      const [{ data: tablesData }, [{ data: cats }, { data: items }], { data: settings }] = await Promise.all([
         supabase.from('restaurant_tables').select('*').order('number'),
         Promise.all([
           supabase.from('categories').select('*').eq('active', true).order('display_order'),
           supabase.from('menu_items').select('*').eq('available', true),
         ]),
+        supabase.from('tenant_settings').select('tax_enabled, tax_rate').eq('tenant_id', tenant.tenant_id)
+          .maybeSingle<{ tax_enabled: boolean; tax_rate: number }>(),
       ])
       setTables((tablesData as RestaurantTable[]) || [])
       setCategories((cats as Category[]) || [])
       setMenuItems((items as OrderMenuItem[]) || [])
+      setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -233,7 +237,7 @@ export default function OrdersClient() {
     }
 
     const subtotal = newItems.reduce((s, i) => s + i.price * i.qty, 0)
-    const { tax, total: itemsTotal } = calcTotals(subtotal)
+    const { tax, total: itemsTotal } = calcTotals(subtotal, taxRate)
     const fee = orderType === 'delivery' ? deliveryFee : 0
     const total = itemsTotal + fee
     const reopenKitchen = currentOrder.status === 'ready' || currentOrder.status === 'delivered'
@@ -265,7 +269,7 @@ export default function OrdersClient() {
     }
 
     const subtotal = newItems.reduce((s, i) => s + i.price * i.qty, 0)
-    const { tax, total: itemsTotal } = calcTotals(subtotal)
+    const { tax, total: itemsTotal } = calcTotals(subtotal, taxRate)
     const fee = orderType === 'delivery' ? deliveryFee : 0
     const total = itemsTotal + fee
     const reopenKitchen = delta > 0 && (currentOrder.status === 'ready' || currentOrder.status === 'delivered')

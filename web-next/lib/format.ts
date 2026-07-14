@@ -1,11 +1,14 @@
-export const TAX_RATE = 0 // IVA deshabilitado
+export const TAX_RATE = 0 // default cuando no se pasa una tasa explícita — ver tenant_settings.tax_rate
 
 function round2(n: number) {
   return Math.round(n * 100) / 100
 }
 
-export function calcTotals(subtotal: number) {
-  const tax = round2(subtotal * TAX_RATE)
+// taxRate es la tasa efectiva del tenant (tenant_settings.tax_enabled ? tax_rate : 0).
+// Se mantiene el default en 0 para no cambiar el comportamiento de ningún
+// call site que todavía no pasa la tasa explícitamente.
+export function calcTotals(subtotal: number, taxRate: number = TAX_RATE) {
+  const tax = round2(subtotal * taxRate)
   const total = round2(subtotal + tax)
   return { subtotal: round2(subtotal), tax, total }
 }

@@ -18,6 +18,7 @@ const LINKS = [
   { href: '/admin/finance',          label: '💰 Finanzas' },
   { href: '/admin/menu-management',  label: '🍽️ Menú' },
   { href: '/admin/reports',          label: '📈 Reportes' },
+  { href: '/admin/fiscal-export',    label: '📤 Exportar contable' },
   { href: '/admin/customers',        label: '👥 Clientes' },
   { href: '/admin/tables',           label: '🪑 Mesas' },
   { href: '/admin/staff',            label: '🔐 Staff & Portales' },
