@@ -118,7 +118,7 @@ export default function WaiterPortalClient() {
     if (!session) return
     loadTableStatus()
     if (selectedTable && selectedTable.status === 'occupied') loadActiveOrders(selectedTable.id)
-  }, { pollMs: 15000 })
+  }, { pollMs: 5000 })
   useWakeLock(!!session)
 
   async function loadAll() {
