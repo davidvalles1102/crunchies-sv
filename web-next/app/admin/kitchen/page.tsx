@@ -5,5 +5,9 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Cocina' }
 
 export default function KitchenPage() {
-  return <KitchenClient />
+  return (
+    <main id="main-content">
+      <KitchenClient />
+    </main>
+  )
 }

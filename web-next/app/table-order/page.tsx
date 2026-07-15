@@ -6,8 +6,10 @@ export const metadata: Metadata = { title: 'Ordenar en Mesa' }
 
 export default function TableOrderPage() {
   return (
-    <Suspense fallback={null}>
-      <TableOrderClient />
-    </Suspense>
+    <main id="main-content">
+      <Suspense fallback={null}>
+        <TableOrderClient />
+      </Suspense>
+    </main>
   )
 }
