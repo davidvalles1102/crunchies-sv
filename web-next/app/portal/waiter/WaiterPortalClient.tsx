@@ -71,7 +71,7 @@ export default function WaiterPortalClient() {
   const [tableOrders, setTableOrders] = useState<ActiveOrder[]>([])
   const [orderNotes, setOrderNotes] = useState('')
   const [modModal, setModModal] = useState<{
-    item: { id: string; name: string; price: number }; groups: ModifierGroup[]
+    item: { id: string; name: string; price: number; cost?: number }; groups: ModifierGroup[]
   } | null>(null)
 
   const [payMethod, setPayMethod] = useState<'cash' | 'card' | 'transfer'>('cash')
@@ -121,59 +121,71 @@ export default function WaiterPortalClient() {
   }, { pollMs: 15000 })
   useWakeLock(!!session)
 
+  // Estas 4 funciones las llaman tanto el mount inicial como los canales de
+  // Realtime y el poll de respaldo — un blip de red (celular sin señal un
+  // instante) no debe tirar un error sin manejar y romper la pantalla, solo
+  // se reintenta con el siguiente evento/poll.
   async function loadAll() {
-    const [{ data: tablesData }, { data: cats }, { data: items }] = await Promise.all([
-      supabase.from('restaurant_tables').select('*').order('number'),
-      supabase.from('categories').select('*').eq('active', true).order('display_order'),
-      supabase.from('menu_items').select('*').eq('available', true),
-    ])
-    setTables((tablesData as RestaurantTable[]) || [])
-    setCategories((cats as Category[]) || [])
-    setMenuItems((items as OrderMenuItem[]) || [])
-    await loadTableStatus()
+    try {
+      const [{ data: tablesData }, { data: cats }, { data: items }] = await Promise.all([
+        supabase.from('restaurant_tables').select('*').order('number'),
+        supabase.from('categories').select('*').eq('active', true).order('display_order'),
+        supabase.from('menu_items').select('*').eq('available', true),
+      ])
+      setTables((tablesData as RestaurantTable[]) || [])
+      setCategories((cats as Category[]) || [])
+      setMenuItems((items as OrderMenuItem[]) || [])
+      await loadTableStatus()
 
-    if (session?.tenant_id) {
-      const { data: settings } = await supabase.from('tenant_settings').select('tax_enabled, tax_rate')
-        .eq('tenant_id', session.tenant_id).maybeSingle<{ tax_enabled: boolean; tax_rate: number }>()
-      setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
-    }
+      if (session?.tenant_id) {
+        const { data: settings } = await supabase.from('tenant_settings').select('tax_enabled, tax_rate')
+          .eq('tenant_id', session.tenant_id).maybeSingle<{ tax_enabled: boolean; tax_rate: number }>()
+        setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
+      }
+    } catch { /* red inestable — el proximo poll/evento reintenta */ }
   }
 
   async function loadTables() {
-    const { data } = await supabase.from('restaurant_tables').select('*').order('number')
-    setTables((data as RestaurantTable[]) || [])
+    try {
+      const { data } = await supabase.from('restaurant_tables').select('*').order('number')
+      setTables((data as RestaurantTable[]) || [])
+    } catch { /* red inestable — el proximo poll/evento reintenta */ }
   }
 
   async function loadTableStatus() {
-    const { data } = await supabase
-      .from('orders').select('table_id, status')
-      .in('status', ['open', 'in_kitchen', 'ready'])
-      .not('table_id', 'is', null)
-    const map: TableStatus = {}
-    const alerts = new Set<string>()
-    ;(data || []).forEach((o: { table_id: string | null; status: string }) => {
-      if (!o.table_id) return
-      if (!map[o.table_id] || o.status === 'ready') map[o.table_id] = o.status as 'in_kitchen' | 'ready'
-      if (o.status === 'ready') alerts.add(o.table_id)
-    })
-    setTableStatus(map)
-    setReadyAlert(alerts)
+    try {
+      const { data } = await supabase
+        .from('orders').select('table_id, status')
+        .in('status', ['open', 'in_kitchen', 'ready'])
+        .not('table_id', 'is', null)
+      const map: TableStatus = {}
+      const alerts = new Set<string>()
+      ;(data || []).forEach((o: { table_id: string | null; status: string }) => {
+        if (!o.table_id) return
+        if (!map[o.table_id] || o.status === 'ready') map[o.table_id] = o.status as 'in_kitchen' | 'ready'
+        if (o.status === 'ready') alerts.add(o.table_id)
+      })
+      setTableStatus(map)
+      setReadyAlert(alerts)
+    } catch { /* red inestable — el proximo poll/evento reintenta */ }
   }
 
   // Carga TODAS las comandas activas de la mesa en orden cronológico
   async function loadActiveOrders(tableId: string) {
-    const { data } = await supabase
-      .from('orders')
-      .select('*, order_items(*, order_item_modifiers(*))')
-      .eq('table_id', tableId)
-      .in('status', ['open', 'in_kitchen', 'ready', 'delivered'])
-      .order('created_at', { ascending: true })
-    const orders: ActiveOrder[] = (data || []).map((o) => ({
-      id: o.id, table_id: tableId, status: o.status,
-      items: mapItems(o.order_items), subtotal: o.subtotal ?? 0, tax: o.tax ?? 0, total: o.total ?? 0,
-    }))
-    setTableOrders(orders)
-    setCurrentOrder(orders.find((o) => o.status === 'open') ?? null)
+    try {
+      const { data } = await supabase
+        .from('orders')
+        .select('*, order_items(*, order_item_modifiers(*))')
+        .eq('table_id', tableId)
+        .in('status', ['open', 'in_kitchen', 'ready', 'delivered'])
+        .order('created_at', { ascending: true })
+      const orders: ActiveOrder[] = (data || []).map((o) => ({
+        id: o.id, table_id: tableId, status: o.status,
+        items: mapItems(o.order_items), subtotal: o.subtotal ?? 0, tax: o.tax ?? 0, total: o.total ?? 0,
+      }))
+      setTableOrders(orders)
+      setCurrentOrder(orders.find((o) => o.status === 'open') ?? null)
+    } catch { /* red inestable — el proximo poll/evento reintenta */ }
   }
 
   async function selectTable(table: RestaurantTable) {
@@ -192,7 +204,7 @@ export default function WaiterPortalClient() {
     setView('order')
   }
 
-  async function addItem(item: { id: string; name: string; price: number }, modifiers: Selection[] = []) {
+  async function addItem(item: { id: string; name: string; price: number; cost?: number }, modifiers: Selection[] = []) {
     if (!selectedTable) return
     const lineKey = buildLineKey(item.id, modifiers)
     const unitPrice = item.price + modifiersExtraPrice(modifiers)
@@ -226,6 +238,7 @@ export default function WaiterPortalClient() {
       const { data, error } = await supabase.from('order_items').insert({
         order_id: order.id, menu_item_id: item.id,
         item_name: item.name, item_price: unitPrice, quantity: 1,
+        cost: item.cost ?? 0, // snapshot al momento de la venta, ver OrdersClient.tsx
         tenant_id: session?.tenant_id ?? null,
       }).select().single()
       if (error || !data) { toast(error?.message ?? 'Error al agregar el ítem', 'error'); return }
@@ -346,7 +359,7 @@ export default function WaiterPortalClient() {
   }
 
   async function handleItemClick(item: OrderMenuItem) {
-    const cartItem = { id: item.id, name: item.name, price: Number(item.price) }
+    const cartItem = { id: item.id, name: item.name, price: Number(item.price), cost: Number(item.cost ?? 0) }
     const groups = await getItemModifierGroups(item.id)
     if (groups.length) setModModal({ item: cartItem, groups })
     else await addItem(cartItem)
@@ -361,7 +374,14 @@ export default function WaiterPortalClient() {
   const grandTotal = tableOrders.reduce((s, o) => s + o.total, 0)
   const grandSubtotal = tableOrders.reduce((s, o) => s + o.subtotal, 0)
   const change = Math.max(0, (parseFloat(cashIn) || 0) - grandTotal)
-  const hasPayableItems = tableOrders.some((o) => o.items.length > 0)
+  // Cobrar cierra TODAS las comandas de la mesa a la vez (processPayment marca
+  // todo como 'paid' y libera la mesa) — si alguna sigue open/in_kitchen/ready,
+  // cobrar la cerraría con comida sin entregar. Bloqueado hasta que todas
+  // esten 'delivered'; el mesero ve exactamente cuales faltan (ver banners
+  // de comanda arriba) en vez de que el boton simplemente desaparezca.
+  const pendingOrders = tableOrders.filter((o) => o.status !== 'delivered' && o.items.length > 0)
+  const hasPayableItems = tableOrders.some((o) => o.items.length > 0) && pendingOrders.length === 0
+  const blockedByPending = pendingOrders.length > 0
 
   if (!session) return <PinPad portalName="Mesero" icon="🪑" expectedRole="waiter" onSuccess={setSession} />
 
@@ -464,6 +484,11 @@ export default function WaiterPortalClient() {
             <span className="portal-header__staff">👤 {session.full_name}</span>
             {hasPayableItems && (
               <button className="btn btn-outline btn-sm" onClick={() => setView('pay')}>💳 Cobrar</button>
+            )}
+            {blockedByPending && (
+              <span className="badge badge-amber text-xs" title="Hay comandas sin entregar todavía">
+                🕐 Cobro bloqueado
+              </span>
             )}
           </div>
         </header>
@@ -612,9 +637,15 @@ export default function WaiterPortalClient() {
                   <button className="btn btn-amber btn-full btn-sm" onClick={sendToKitchen}>
                     👨‍🍳 Enviar a Cocina
                   </button>
-                  <button className="btn btn-primary btn-full btn-sm" onClick={() => setView('pay')}>
-                    💳 Cobrar {fmt.currency(grandTotal)}
-                  </button>
+                  {hasPayableItems ? (
+                    <button className="btn btn-primary btn-full btn-sm" onClick={() => setView('pay')}>
+                      💳 Cobrar {fmt.currency(grandTotal)}
+                    </button>
+                  ) : blockedByPending ? (
+                    <p className="text-xs" style={{ textAlign: 'center', color: 'var(--amber)' }}>
+                      🕐 No se puede cobrar: {pendingOrders.length} comanda{pendingOrders.length !== 1 ? 's' : ''} sin entregar todavía.
+                    </p>
+                  ) : null}
                 </div>
               </>
             ) : hasPayableItems ? (
@@ -622,6 +653,12 @@ export default function WaiterPortalClient() {
                 <button className="btn btn-primary btn-full btn-sm" onClick={() => setView('pay')}>
                   💳 Cobrar {fmt.currency(grandTotal)}
                 </button>
+              </div>
+            ) : blockedByPending ? (
+              <div className="waiter-ticket-actions">
+                <p className="text-xs" style={{ textAlign: 'center', color: 'var(--amber)' }}>
+                  🕐 No se puede cobrar: {pendingOrders.length} comanda{pendingOrders.length !== 1 ? 's' : ''} sin entregar todavía. Confirma la entrega arriba primero.
+                </p>
               </div>
             ) : null}
           </div>

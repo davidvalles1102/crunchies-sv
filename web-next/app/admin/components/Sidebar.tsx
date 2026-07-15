@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -32,6 +33,16 @@ export default function Sidebar() {
   const router = useRouter()
   const supabase = createClient()
   const { session, profile, tenant } = useAdmin()
+  const [creditEnabled, setCreditEnabled] = useState(false)
+
+  useEffect(() => {
+    ;(async () => {
+      const { data } = await supabase.from('tenant_settings').select('credit_enabled')
+        .eq('tenant_id', tenant.tenant_id).maybeSingle<{ credit_enabled: boolean }>()
+      setCreditEnabled(!!data?.credit_enabled)
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenant.tenant_id])
 
   const logout = async () => {
     await supabase.auth.signOut()
@@ -39,6 +50,8 @@ export default function Sidebar() {
   }
 
   const closeSidebar = () => document.getElementById('sidebar')?.classList.remove('open')
+
+  const links = LINKS.filter((l) => l.href !== '/admin/credit' || creditEnabled)
 
   return (
     <>
@@ -50,7 +63,7 @@ export default function Sidebar() {
           <div style={{ marginTop: 2 }}>{tenant.slug}</div>
         </div>
         <nav className="sidebar__nav">
-          {LINKS.map((l) => (
+          {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}

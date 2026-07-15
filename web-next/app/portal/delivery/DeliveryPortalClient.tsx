@@ -8,6 +8,8 @@ import { logoutPin, logEvent, type PinSession } from '@/lib/pin-auth'
 import { usePinSession } from '@/lib/usePinSession'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import { useWakeLock } from '@/lib/useWakeLock'
+import { useToast } from '../../components/ToastProvider'
+import { svToday, svDayStartUTC } from '@/lib/svDate'
 import PinPad from '../PinPad'
 
 type DeliveryItem = { id: string; item_name: string; quantity: number; order_item_modifiers?: { option_name: string; price_delta: number }[] }
@@ -31,46 +33,50 @@ type StaffDriver = { id: string; full_name: string; isBusy: boolean }
 
 export default function DeliveryPortalClient() {
   const supabase = createClient()
+  const toast = useToast()
   const [session, setSession] = usePinSession('delivery')
   const [orders, setOrders] = useState<Order[]>([])
   const [staffDrivers, setStaffDrivers] = useState<StaffDriver[]>([])
   const [loading, setLoading] = useState(false)
 
   const load = useCallback(async () => {
-    const now = Date.now()
-    const today = new Date(now).toISOString().split('T')[0]
-    const { data } = await supabase
-      .from('orders')
-      .select('*, order_items(*, order_item_modifiers(*))')
-      .eq('order_type', 'delivery')
-      .in('delivery_status', ['ready', 'on_the_way'])
-      .gte('created_at', `${today}T00:00:00`)
-      .order('created_at')
+    try {
+      const now = Date.now()
+      const { data } = await supabase
+        .from('orders')
+        .select('*, order_items(*, order_item_modifiers(*))')
+        .eq('order_type', 'delivery')
+        .in('delivery_status', ['ready', 'on_the_way'])
+        .gte('created_at', svDayStartUTC(svToday()))
+        .order('created_at')
 
-    setOrders(
-      ((data || []) as Omit<Order, 'elapsedReady'>[]).map((o) => ({
-        ...o,
-        subtotal: (o as { subtotal?: number }).subtotal ?? o.total,
-        delivery_fee: (o as { delivery_fee?: number }).delivery_fee ?? 0,
-        pickup_staff_id: (o as { pickup_staff_id?: string | null }).pickup_staff_id ?? null,
-        elapsedReady: Math.floor((now - new Date(o.created_at).getTime()) / 60000),
-      }))
-    )
+      setOrders(
+        ((data || []) as Omit<Order, 'elapsedReady'>[]).map((o) => ({
+          ...o,
+          subtotal: (o as { subtotal?: number }).subtotal ?? o.total,
+          delivery_fee: (o as { delivery_fee?: number }).delivery_fee ?? 0,
+          pickup_staff_id: (o as { pickup_staff_id?: string | null }).pickup_staff_id ?? null,
+          elapsedReady: Math.floor((now - new Date(o.created_at).getTime()) / 60000),
+        }))
+      )
+    } catch { /* red inestable — el proximo poll/evento reintenta */ }
   }, [supabase])
 
   const loadStaffStatus = useCallback(async () => {
-    const [{ data: staff }, { data: active }] = await Promise.all([
-      supabase.from('staff_members').select('id, full_name').eq('role', 'delivery').eq('active', true),
-      supabase.from('orders').select('pickup_staff_id').eq('delivery_status', 'on_the_way').not('pickup_staff_id', 'is', null),
-    ])
-    const busyIds = new Set(((active || []) as { pickup_staff_id: string }[]).map((o) => o.pickup_staff_id))
-    setStaffDrivers(
-      ((staff || []) as { id: string; full_name: string }[]).map((s) => ({
-        id: s.id,
-        full_name: s.full_name,
-        isBusy: busyIds.has(s.id),
-      }))
-    )
+    try {
+      const [{ data: staff }, { data: active }] = await Promise.all([
+        supabase.from('staff_members').select('id, full_name').eq('role', 'delivery').eq('active', true),
+        supabase.from('orders').select('pickup_staff_id').eq('delivery_status', 'on_the_way').not('pickup_staff_id', 'is', null),
+      ])
+      const busyIds = new Set(((active || []) as { pickup_staff_id: string }[]).map((o) => o.pickup_staff_id))
+      setStaffDrivers(
+        ((staff || []) as { id: string; full_name: string }[]).map((s) => ({
+          id: s.id,
+          full_name: s.full_name,
+          isBusy: busyIds.has(s.id),
+        }))
+      )
+    } catch { /* red inestable — el proximo poll/evento reintenta */ }
   }, [supabase])
 
   const refresh = useCallback(async () => {
@@ -80,28 +86,43 @@ export default function DeliveryPortalClient() {
   const markReceived = useCallback(async (order: Order) => {
     if (order.pickup_staff_id && order.pickup_staff_id !== session?.staff_id) return
     setLoading(true)
-    await supabase
-      .from('orders')
-      .update({
-        delivery_status: 'on_the_way',
-        status: 'delivered',
-        pickup_staff_id: session?.staff_id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', order.id)
-    if (session) logEvent(order.id, 'delivery_received', session.staff_id, { delivery_name: order.delivery_name })
-    await refresh()
+    try {
+      // .is('pickup_staff_id', null) hace el claim atomico: si dos drivers
+      // tocan "Recibi el pedido" casi al mismo tiempo sobre la misma orden
+      // "disponible", sin esta condicion el segundo UPDATE pisa en silencio
+      // el pickup_staff_id del primero (nadie se entera hasta el proximo
+      // refresh). Con la condicion, solo uno de los dos afecta una fila.
+      const { data, error } = await supabase
+        .from('orders')
+        .update({
+          delivery_status: 'on_the_way',
+          status: 'delivered',
+          pickup_staff_id: session?.staff_id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', order.id)
+        .is('pickup_staff_id', null)
+        .select('id')
+      if (!error && (!data || data.length === 0)) {
+        toast('Otro repartidor ya tomó este pedido', 'warning')
+      } else if (!error) {
+        if (session) logEvent(order.id, 'delivery_received', session.staff_id, { delivery_name: order.delivery_name })
+      }
+      await refresh()
+    } catch { /* red inestable — el repartidor puede reintentar tocando el boton */ }
     setLoading(false)
-  }, [refresh, session, supabase])
+  }, [refresh, session, supabase, toast])
 
   const markDelivered = useCallback(async (order: Order) => {
     setLoading(true)
-    await supabase
-      .from('orders')
-      .update({ delivery_status: 'delivered', status: 'delivered', updated_at: new Date().toISOString() })
-      .eq('id', order.id)
-    if (session) logEvent(order.id, 'delivery_delivered', session.staff_id, { delivery_name: order.delivery_name, total: order.total })
-    await refresh()
+    try {
+      await supabase
+        .from('orders')
+        .update({ delivery_status: 'delivered', status: 'delivered', updated_at: new Date().toISOString() })
+        .eq('id', order.id)
+      if (session) logEvent(order.id, 'delivery_delivered', session.staff_id, { delivery_name: order.delivery_name, total: order.total })
+      await refresh()
+    } catch { /* red inestable — el repartidor puede reintentar tocando el boton */ }
     setLoading(false)
   }, [refresh, session, supabase])
 

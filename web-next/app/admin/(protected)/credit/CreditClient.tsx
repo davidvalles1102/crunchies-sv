@@ -40,14 +40,20 @@ export default function CreditClient() {
 
   const [limitInput, setLimitInput] = useState('')
   const [savingLimit, setSavingLimit] = useState(false)
+  const [creditEnabled, setCreditEnabled] = useState(false)
 
   const load = useCallback(async () => {
-    const { data } = await supabase
-      .from('customer_credit_accounts')
-      .select('*, profiles(full_name, phone)')
-      .eq('tenant_id', tenant.tenant_id)
-      .order('balance', { ascending: false })
+    const [{ data }, { data: settings }] = await Promise.all([
+      supabase
+        .from('customer_credit_accounts')
+        .select('*, profiles(full_name, phone)')
+        .eq('tenant_id', tenant.tenant_id)
+        .order('balance', { ascending: false }),
+      supabase.from('tenant_settings').select('credit_enabled')
+        .eq('tenant_id', tenant.tenant_id).maybeSingle<{ credit_enabled: boolean }>(),
+    ])
     setAccounts((data as unknown as CreditAccount[]) ?? [])
+    setCreditEnabled(!!settings?.credit_enabled)
     setLoading(false)
   }, [supabase, tenant.tenant_id])
 
@@ -78,7 +84,7 @@ export default function CreditClient() {
     if (isNaN(amount) || amount <= 0) { toast('Monto inválido', 'warning'); return }
 
     setRecording(true)
-    const { error } = await supabase.rpc('record_credit_payment', {
+    const { data, error } = await supabase.rpc('record_credit_payment', {
       p_tenant_id: tenant.tenant_id,
       p_customer_id: selected.customer_id,
       p_amount: amount,
@@ -91,7 +97,12 @@ export default function CreditClient() {
       setPaymentAmount('')
       setPaymentNotes('')
       await load()
-      await openAccount({ ...selected, balance: Math.max(0, selected.balance - amount) })
+      // Usa el balance real que devuelve la RPC, no un calculo local — si
+      // hubo otro cargo/abono entre que se abrio esta cuenta y este submit
+      // (otro mesero cobrando al mismo cliente), restar `amount` a mano
+      // aqui daria un balance distinto al que de verdad quedo en la DB.
+      const updated = Array.isArray(data) ? data[0] : data
+      await openAccount({ ...selected, balance: Number(updated?.balance ?? selected.balance) })
     }
     setRecording(false)
   }
@@ -116,6 +127,21 @@ export default function CreditClient() {
       <>
         <Topbar title="Fiado — Crédito de clientes" />
         <div className="admin-content"><p className="text-muted text-sm">Cargando...</p></div>
+      </>
+    )
+  }
+
+  if (!creditEnabled) {
+    return (
+      <>
+        <Topbar title="Fiado — Crédito de clientes" />
+        <div className="admin-content">
+          <div className="card" style={{ maxWidth: 480, textAlign: 'center', padding: 32 }}>
+            <div style={{ fontSize: '2rem', marginBottom: 8 }}>🔒</div>
+            <h4 style={{ marginBottom: 8 }}>Módulo desactivado</h4>
+            <p className="text-muted text-sm">El fiado no está activo para este negocio. Actívalo en la configuración del tenant si lo necesitas.</p>
+          </div>
+        </div>
       </>
     )
   }

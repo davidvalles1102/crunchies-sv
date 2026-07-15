@@ -10,6 +10,7 @@ import { fmt } from '@/lib/format'
 import type { KitchenOrder } from '@/lib/types'
 import { useToast } from '../../components/ToastProvider'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
+import { svToday, svDayStartUTC } from '@/lib/svDate'
 import { useWakeLock } from '@/lib/useWakeLock'
 import { playNewOrderBeep } from '@/lib/notifySound'
 import LiveClock from '../components/LiveClock'
@@ -41,50 +42,53 @@ export default function KitchenClient() {
   }, [router])
 
   async function loadOrders() {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*, restaurant_tables(number), order_items(*, order_item_modifiers(*))')
-      .in('status', ['in_kitchen', 'ready'])
-      .order('created_at')
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*, restaurant_tables(number), order_items(*, order_item_modifiers(*))')
+        .in('status', ['in_kitchen', 'ready'])
+        .order('created_at')
 
-    if (error) { toast('Error al cargar pedidos: ' + error.message, 'error'); return }
+      if (error) { toast('Error al cargar pedidos: ' + error.message, 'error'); return }
 
-    const all = (data || []) as KitchenOrder[]
+      const all = (data || []) as KitchenOrder[]
 
-    setStartTimes((prev) => {
-      let changed = false
-      const next = { ...prev }
-      all.forEach((o) => {
-        if (!(o.id in next)) {
-          next[o.id] = new Date(o.updated_at || o.created_at).getTime()
-          changed = true
-        }
+      setStartTimes((prev) => {
+        let changed = false
+        const next = { ...prev }
+        all.forEach((o) => {
+          if (!(o.id in next)) {
+            next[o.id] = new Date(o.updated_at || o.created_at).getTime()
+            changed = true
+          }
+        })
+        return changed ? next : prev
       })
-      return changed ? next : prev
-    })
 
-    const currentIds = new Set(all.filter((o) => o.status === 'in_kitchen').map((o) => o.id))
-    if (knownOrderIds.current) {
-      const isNew = [...currentIds].some((id) => !knownOrderIds.current!.has(id))
-      if (isNew) playNewOrderBeep()
-    }
-    knownOrderIds.current = currentIds
+      const currentIds = new Set(all.filter((o) => o.status === 'in_kitchen').map((o) => o.id))
+      if (knownOrderIds.current) {
+        const isNew = [...currentIds].some((id) => !knownOrderIds.current!.has(id))
+        if (isNew) playNewOrderBeep()
+      }
+      knownOrderIds.current = currentIds
 
-    setInKitchen(all.filter((o) => o.status === 'in_kitchen'))
-    setReadyOrders(all.filter((o) => o.status === 'ready'))
+      setInKitchen(all.filter((o) => o.status === 'in_kitchen'))
+      setReadyOrders(all.filter((o) => o.status === 'ready'))
+    } catch { /* red inestable — el proximo poll/evento reintenta, no romper la pantalla */ }
   }
 
   async function loadHistory() {
-    const today = new Date().toISOString().split('T')[0]
-    const { data } = await supabase
-      .from('orders')
-      .select('*, restaurant_tables(number), order_items(*, order_item_modifiers(*))')
-      .eq('status', 'delivered')
-      .gte('updated_at', `${today}T00:00:00`)
-      .order('updated_at', { ascending: false })
-      .limit(25)
+    try {
+      const { data } = await supabase
+        .from('orders')
+        .select('*, restaurant_tables(number), order_items(*, order_item_modifiers(*))')
+        .eq('status', 'delivered')
+        .gte('updated_at', svDayStartUTC(svToday()))
+        .order('updated_at', { ascending: false })
+        .limit(25)
 
-    setHistory((data || []) as KitchenOrder[])
+      setHistory((data || []) as KitchenOrder[])
+    } catch { /* red inestable — el proximo poll/evento reintenta */ }
   }
 
   async function handleAction(action: Action, order: KitchenOrder) {
@@ -96,9 +100,11 @@ export default function KitchenClient() {
       if (action === 'back') updates.delivery_status = 'preparing'
     }
 
-    const { error } = await supabase.from('orders').update(updates).eq('id', order.id)
+    try {
+      const { error } = await supabase.from('orders').update(updates).eq('id', order.id)
+      if (error) { toast('Error al actualizar', 'error'); return }
+    } catch { toast('Sin conexión — intenta de nuevo', 'error'); return }
 
-    if (error) { toast('Error al actualizar', 'error'); return }
     if (action === 'delivered') {
       setStartTimes((prev) => {
         const next = { ...prev }

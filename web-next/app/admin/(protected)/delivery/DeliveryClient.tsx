@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { fmt } from '@/lib/format'
+import { fmt, calcTotals } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import { useWakeLock } from '@/lib/useWakeLock'
@@ -11,6 +11,7 @@ import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 import type { Driver, DeliveryZone, DeliveryOrder } from '@/lib/types'
+import { svToday, svDayStartUTC } from '@/lib/svDate'
 
 type TypeFilter = 'all' | 'delivery' | 'takeout'
 type BoardOrder = DeliveryOrder & { elapsedMinutes: number }
@@ -61,6 +62,7 @@ export default function DeliveryClient() {
   const [dotSubscribed, setDotSubscribed] = useState(false)
   const [dotFlash, setDotFlash] = useState(false)
   const [staffMap, setStaffMap] = useState<Record<string, string>>({})
+  const [taxRate, setTaxRate] = useState(0)
 
   // ── Edit state ──────────────────────────────────────────────────
   const [editing, setEditing] = useState(false)
@@ -73,50 +75,56 @@ export default function DeliveryClient() {
   const [editItems, setEditItems] = useState<{ id: string; item_name: string; item_price: number; qty: number }[]>([])
 
   async function loadDrivers() {
-    const [{ data: driversData }, { data: staffData }] = await Promise.all([
-      supabase.from('drivers').select('*').order('full_name'),
-      supabase.from('staff_members').select('id, full_name').eq('role', 'delivery').eq('active', true),
-    ])
-    setDrivers((driversData as Driver[]) || [])
-    const map: Record<string, string> = {}
-    ;((staffData || []) as { id: string; full_name: string }[]).forEach((s) => { map[s.id] = s.full_name })
-    setStaffMap(map)
+    try {
+      const [{ data: driversData }, { data: staffData }] = await Promise.all([
+        supabase.from('drivers').select('*').order('full_name'),
+        supabase.from('staff_members').select('id, full_name').eq('role', 'delivery').eq('active', true),
+      ])
+      setDrivers((driversData as Driver[]) || [])
+      const map: Record<string, string> = {}
+      ;((staffData || []) as { id: string; full_name: string }[]).forEach((s) => { map[s.id] = s.full_name })
+      setStaffMap(map)
+    } catch { /* red inestable — el proximo poll/evento reintenta */ }
   }
 
   async function loadZones() {
-    const { data } = await supabase.from('delivery_zones').select('*').order('display_order')
-    setZones((data as DeliveryZone[]) || [])
+    try {
+      const { data } = await supabase.from('delivery_zones').select('*').order('display_order')
+      setZones((data as DeliveryZone[]) || [])
+    } catch { /* red inestable — el proximo poll/evento reintenta */ }
   }
 
   const loadOrders = async () => {
     // eslint-disable-next-line react-hooks/purity -- only ever invoked from effects/handlers, never during render
     const now = Date.now()
-    const today = new Date(now).toISOString().split('T')[0]
+    try {
+      const today = svToday()
 
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*, order_items(*, order_item_modifiers(*))')
-      .in('order_type', ['delivery', 'takeout'])
-      .not('delivery_status', 'eq', 'delivered')
-      .gte('created_at', `${today}T00:00:00`)
-      .order('created_at', { ascending: false })
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*, order_items(*, order_item_modifiers(*))')
+        .in('order_type', ['delivery', 'takeout'])
+        .not('delivery_status', 'eq', 'delivered')
+        .gte('created_at', svDayStartUTC(today))
+        .order('created_at', { ascending: false })
 
-    const { data: delivered } = await supabase
-      .from('orders')
-      .select('id, order_type')
-      .in('order_type', ['delivery', 'takeout'])
-      .eq('delivery_status', 'delivered')
-      .gte('created_at', `${today}T00:00:00`)
+      const { data: delivered } = await supabase
+        .from('orders')
+        .select('id, order_type')
+        .in('order_type', ['delivery', 'takeout'])
+        .eq('delivery_status', 'delivered')
+        .gte('created_at', svDayStartUTC(today))
 
-    if (error) { toast('Error al cargar órdenes', 'error'); return }
+      if (error) { toast('Error al cargar órdenes', 'error'); return }
 
-    const withElapsed: BoardOrder[] = ((data as DeliveryOrder[]) || []).map((o) => ({
-      ...o,
-      elapsedMinutes: Math.floor((now - new Date(o.created_at).getTime()) / 60000),
-    }))
+      const withElapsed: BoardOrder[] = ((data as DeliveryOrder[]) || []).map((o) => ({
+        ...o,
+        elapsedMinutes: Math.floor((now - new Date(o.created_at).getTime()) / 60000),
+      }))
 
-    setAllOrders(withElapsed)
-    setDeliveredCount(delivered?.length ?? 0)
+      setAllOrders(withElapsed)
+      setDeliveredCount(delivered?.length ?? 0)
+    } catch { /* red inestable — el proximo poll/evento reintenta, no romper la pantalla */ }
   }
 
   async function addDriver(e: React.FormEvent) {
@@ -205,6 +213,9 @@ export default function DeliveryClient() {
       await loadDrivers()
       await loadZones()
       await loadOrders()
+      const { data: settings } = await supabase.from('tenant_settings').select('tax_enabled, tax_rate')
+        .eq('tenant_id', tenant.tenant_id).maybeSingle<{ tax_enabled: boolean; tax_rate: number }>()
+      setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
     })()
 
     const channel = supabase
@@ -265,6 +276,9 @@ export default function DeliveryClient() {
 
     const subtotal = editItems.filter((i) => i.qty > 0).reduce((s, i) => s + i.item_price * i.qty, 0)
     const fee = parseFloat(editFee) || 0
+    // calcTotals aplica la tasa real del tenant — sin esto el total quedaba
+    // en subtotal+fee sin impuesto, ni siquiera conservaba el tax viejo.
+    const { tax, total: itemsTotal } = calcTotals(subtotal, taxRate)
 
     const { error } = await supabase.from('orders').update({
       delivery_name: editName.trim() || null,
@@ -273,7 +287,8 @@ export default function DeliveryClient() {
       delivery_fee: fee,
       notes: editNotes.trim() || null,
       subtotal,
-      total: subtotal + fee,
+      tax,
+      total: itemsTotal + fee,
       updated_at: new Date().toISOString(),
     }).eq('id', detailOrder.id)
 
@@ -379,7 +394,7 @@ export default function DeliveryClient() {
 
             if (editing) {
               const editSubtotal = editItems.filter((i) => i.qty > 0).reduce((s, i) => s + i.item_price * i.qty, 0)
-              const editTotal = editSubtotal + (parseFloat(editFee) || 0)
+              const editTotal = calcTotals(editSubtotal, taxRate).total + (parseFloat(editFee) || 0)
               return (
                 <>
                   <div className="modal-body">

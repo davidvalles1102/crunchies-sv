@@ -64,6 +64,7 @@ export type OrderMenuItem = {
   name: string
   description: string | null
   price: number
+  cost?: number
   image_url: string | null
   available: boolean
   categories: { name: string; icon: string | null } | null
@@ -95,7 +96,7 @@ export type Payment = {
   id: string
   tenant_id?: string | null
   receipt_number: string
-  method: 'cash' | 'card' | 'transfer' | 'points'
+  method: 'cash' | 'card' | 'transfer' | 'points' | 'credit'
   amount: number
   change_amount: number
   created_at: string

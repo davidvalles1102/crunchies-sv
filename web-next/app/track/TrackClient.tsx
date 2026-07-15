@@ -10,7 +10,7 @@ import styles from './track.module.css'
 
 type TrackOrder = {
   id: string
-  order_type: 'delivery' | 'takeout'
+  order_type: 'delivery' | 'takeout' | 'dine_in'
   delivery_status: string | null
   payment_method: 'cash' | 'card'
   total: number
@@ -105,6 +105,20 @@ export default function TrackClient() {
         <h2 className="mt-16">Pedido no encontrado</h2>
         <p className="text-secondary mt-8">El enlace puede haber expirado o ser incorrecto.</p>
         <Link href="/order" className="btn btn-primary mt-24">Hacer un Pedido</Link>
+      </div>
+    )
+  }
+
+  // Este tracker es para delivery/para llevar — un pedido dine_in (mesa via
+  // QR) no es ni uno ni el otro. Sin este chequeo, order_type !== 'delivery'
+  // caia por default en TAKEOUT_STEPS y le decia "ven a recoger tu pedido"
+  // a alguien que esta sentado en la mesa esperando que se lo sirvan.
+  if (order.order_type === 'dine_in') {
+    return (
+      <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+        <div style={{ fontSize: '3rem' }}>🪑</div>
+        <h2 className="mt-16">Este pedido es de mesa</h2>
+        <p className="text-secondary mt-8">Para ver el estado de un pedido hecho desde la mesa, usa el seguimiento en la misma pantalla donde ordenaste (el ícono 📋 &quot;Mis Pedidos&quot;).</p>
       </div>
     )
   }

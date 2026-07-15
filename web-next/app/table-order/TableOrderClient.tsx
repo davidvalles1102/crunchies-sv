@@ -21,6 +21,7 @@ type PlainMenuItem = {
   name: string
   description: string | null
   price: number
+  cost?: number
   image_url: string | null
   available: boolean
 }
@@ -29,6 +30,7 @@ type CartLine = {
   id: string
   name: string
   price: number
+  cost?: number
   modifiers: Selection[]
   lineKey: string
   qty: number
@@ -101,7 +103,7 @@ export default function TableOrderClient() {
   const [successOrderNum, setSuccessOrderNum] = useState<string | null>(null)
 
   const [myOrders, setMyOrders] = useState<TrackedOrder[]>([])
-  const [modalState, setModalState] = useState<{ item: { id: string; name: string; price: number }; groups: ModifierGroup[] } | null>(null)
+  const [modalState, setModalState] = useState<{ item: { id: string; name: string; price: number; cost?: number }; groups: ModifierGroup[] } | null>(null)
 
   const myOrdersRef = useRef<TrackedOrder[]>([])
   useEffect(() => { myOrdersRef.current = myOrders }, [myOrders])
@@ -147,6 +149,31 @@ export default function TableOrderClient() {
         setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
       }
 
+      // Sin esto, "Mis pedidos" vive solo en memoria del navegador — un
+      // refresh (celular que se bloquea, wifi que se cae) borra el rastreo
+      // de pedidos ya enviados aunque cocina los tenga perfectamente, y el
+      // cliente no se entera cuando estan listos.
+      const { data: existingOrders } = await supabase
+        .from('orders')
+        .select('*, order_items(*, order_item_modifiers(*))')
+        .eq('table_id', tableId)
+        .in('status', ['in_kitchen', 'ready', 'delivered'])
+        .order('created_at', { ascending: true })
+      if (existingOrders?.length) {
+        setMyOrders(existingOrders.map((o) => ({
+          id: o.id,
+          shortId: o.id.slice(0, 8).toUpperCase(),
+          status: o.status,
+          items: (o.order_items || []).map((i: { item_name: string; quantity: number; order_item_modifiers?: { option_name: string; price_delta: number }[] }) => ({
+            name: i.item_name,
+            qty: i.quantity,
+            modifiers: (i.order_item_modifiers || []).map((m) => ({ option_name: m.option_name, price_delta: Number(m.price_delta) })),
+          })),
+          total: o.total,
+          notes: o.notes,
+        })))
+      }
+
       setPhase('ready')
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -178,12 +205,12 @@ export default function TableOrderClient() {
       (i.name.toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q))
   })
 
-  const addToCart = useCallback((item: { id: string; name: string; price: number }, modifiers: Selection[] = []) => {
+  const addToCart = useCallback((item: { id: string; name: string; price: number; cost?: number }, modifiers: Selection[] = []) => {
     const lineKey = buildLineKey(item.id, modifiers)
     setCart((prev) => {
       const ex = prev.find((c) => c.lineKey === lineKey)
       if (ex) return prev.map((c) => c.lineKey === lineKey ? { ...c, qty: c.qty + 1 } : c)
-      return [...prev, { id: item.id, name: item.name, price: item.price + modifiersExtraPrice(modifiers), modifiers, lineKey, qty: 1 }]
+      return [...prev, { id: item.id, name: item.name, price: item.price + modifiersExtraPrice(modifiers), cost: item.cost, modifiers, lineKey, qty: 1 }]
     })
     toast(`${item.name} agregado`, 'success')
   }, [toast])
@@ -193,7 +220,7 @@ export default function TableOrderClient() {
   }, [])
 
   const handleItemClick = async (item: PlainMenuItem) => {
-    const cartItem = { id: item.id, name: item.name, price: Number(item.price) }
+    const cartItem = { id: item.id, name: item.name, price: Number(item.price), cost: Number(item.cost ?? 0) }
     const groups = await getItemModifierGroups(item.id)
     if (groups.length) {
       setModalState({ item: cartItem, groups })
@@ -237,11 +264,23 @@ export default function TableOrderClient() {
       menu_item_id: c.id,
       item_name: c.name,
       item_price: c.price,
+      cost: c.cost ?? 0, // snapshot al momento de la venta, ver OrdersClient.tsx
       quantity: c.qty,
       tenant_id: tenantId,
     }))
 
-    await supabase.from('order_items').insert(orderItemsPayload)
+    const { error: itemsErr } = await supabase.from('order_items').insert(orderItemsPayload)
+    if (itemsErr) {
+      // Sin este chequeo, un fallo aca dejaba la orden creada (vacia, sin
+      // items) y aun asi se le mostraba "pedido enviado" al cliente —
+      // cocina habria visto una tarjeta vacia o nada. Se revierte la orden
+      // para no dejar basura a medio insertar.
+      console.error('[TableOrder] order_items insert failed:', itemsErr)
+      await supabase.from('orders').delete().eq('id', order.id)
+      setOrderMsg('Error al enviar el pedido. Intenta de nuevo.')
+      setSubmitting(false)
+      return
+    }
 
     const modifierRows: { order_item_id: string; option_name: string; price_delta: number; tenant_id: string | null }[] = []
     orderItemsPayload.forEach((row, idx) => {
