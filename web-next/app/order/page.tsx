@@ -33,7 +33,7 @@ export default async function OrderPage() {
   return (
     <>
       {/* <NavBar /> */}
-      <header style={{ padding: '14px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'var(--bg-0)' }}>
+      <header style={{ padding: '14px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-0)' }}>
         <span style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '0.04em', color: 'var(--amber)', fontFamily: 'inherit' }}>CRUNCHIES</span>
       </header>
 
