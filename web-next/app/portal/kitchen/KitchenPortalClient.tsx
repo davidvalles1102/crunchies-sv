@@ -55,7 +55,7 @@ export default function KitchenPortalClient() {
     setReadyOrders(all.filter((o) => o.status === 'ready'))
   }, [supabase])
 
-  useLiveRefetch(() => { if (session) loadOrders() }, { pollMs: 15000 })
+  useLiveRefetch(() => { if (session) loadOrders() }, { pollMs: 5000 })
   useWakeLock(!!session)
 
   const markReady = useCallback(async (order: KitchenOrder) => {
