@@ -775,7 +775,7 @@
   width: 100%;
   max-width: 400px;
   box-shadow: 0 24px 80px rgba(0,0,0,.7);
-  z-index: 10;
+  z-index: var(--z-dropdown);
 }
 .login-logo {
   font-family: var(--font-d);
