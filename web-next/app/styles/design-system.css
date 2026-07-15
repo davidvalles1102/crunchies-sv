@@ -486,7 +486,8 @@ select.form-control { appearance: none; cursor: pointer; }
 }
 
 /* ─── Shared keyframes ───────────────────────────────────────── */
-@keyframes pulse-banner { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+@keyframes pulse-banner  { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+@keyframes pulse-active  { from { box-shadow: 0 0 6px var(--amber-alpha); } to { box-shadow: 0 0 18px var(--amber); } }
 
 /* ─── Reduced motion ─────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
