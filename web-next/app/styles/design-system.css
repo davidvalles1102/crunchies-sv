@@ -67,10 +67,11 @@
   /* Z-index scale */
   --z-dropdown:       100;
   --z-sticky:         200;
-  --z-modal-backdrop: 600;
-  --z-modal:          700;
-  --z-toast:         1100;
-  --z-tooltip:        900;
+  --z-modal-backdrop: 1001;
+  --z-modal:          1002;
+  --z-toast:          1100;
+  --z-tooltip:        1150;
+  --z-loading:        1200;
 }
 
 /* ─── Reset & Base ───────────────────────────────────────────── */
@@ -343,7 +344,7 @@ select.form-control { appearance: none; cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 8888;
+  z-index: var(--z-loading);
 }
 .loading-box {
   background: var(--bg-3);
@@ -364,7 +365,7 @@ select.form-control { appearance: none; cursor: pointer; }
   inset: 0;
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(6px);
-  z-index: 7000;
+  z-index: var(--z-modal-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
