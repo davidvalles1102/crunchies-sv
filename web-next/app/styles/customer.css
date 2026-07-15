@@ -451,6 +451,8 @@
   border-radius: 50%;
   filter: blur(80px);
   opacity: .12;
+  will-change: filter;
+  transform: translateZ(0);
 }
 .auth-bg__glow--orange { top: -100px; left: -100px; background: var(--orange); }
 .auth-bg__glow--amber { bottom: -100px; right: -100px; background: var(--amber); }
