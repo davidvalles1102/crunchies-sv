@@ -149,7 +149,7 @@ export type DeliveryOrder = {
   subtotal: number
   driver_id: string | null
   pickup_staff_id: string | null
-  payment_method: 'cash' | 'nequi'
+  payment_method: 'cash' | 'card'
   total: number
   notes: string | null
   created_at: string

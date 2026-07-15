@@ -44,7 +44,7 @@ export default function OrderClient({
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
   const [orderType, setOrderType] = useState<'takeout' | 'delivery'>('takeout')
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'nequi'>('cash')
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash')
   const [selectedZoneId, setSelectedZoneId] = useState('')
 
   const [custName, setCustName] = useState('')
@@ -339,7 +339,7 @@ export default function OrderClient({
         <div className="cart-payment-selector">
           <div className="payment-type-tabs" style={{ display: 'none' }}>
             <button className={`payment-btn${paymentMethod === 'cash' ? ' active' : ''}`} onClick={() => setPaymentMethod('cash')}>💵 Efectivo</button>
-            <button className={`payment-btn${paymentMethod === 'nequi' ? ' active' : ''}`} onClick={() => setPaymentMethod('nequi')}>📱 Nequi</button>
+            <button className={`payment-btn${paymentMethod === 'card' ? ' active' : ''}`} onClick={() => setPaymentMethod('card')}>💳 Tarjeta</button>
           </div>
           {paymentMethod === 'cash' ? (
             <div className="cart-payment-cash">
@@ -347,16 +347,9 @@ export default function OrderClient({
               <span>{orderType === 'delivery' ? 'Pago en efectivo al recibir tu pedido' : 'Pago en efectivo al recoger tu orden'}</span>
             </div>
           ) : (
-            <div className="nequi-info">
-              <div className="nequi-header">
-                <span style={{ fontSize: '1.3rem' }}>📱</span>
-                <strong className="neon-green">Transferir por Nequi</strong>
-              </div>
-              <div className="nequi-number">+503 7311 8276</div>
-              <p className="text-xs text-muted mt-6">
-                Transfiere el total al número de arriba antes de enviar tu pedido.
-                El restaurante verificará el pago.
-              </p>
+            <div className="cart-payment-cash">
+              <span>💳</span>
+              <span>{orderType === 'delivery' ? 'Pago con tarjeta al recibir tu pedido' : 'Pago con tarjeta al recoger tu orden'}</span>
             </div>
           )}
         </div>

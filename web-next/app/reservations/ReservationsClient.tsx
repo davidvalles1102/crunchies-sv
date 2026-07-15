@@ -160,7 +160,7 @@ export default function ReservationsClient() {
                   <option value="">Seleccionar...</option>
                   {TIMES.map((t) => (
                     <option key={t} value={t}>
-                      {new Date(`2000-01-01T${t}:00`).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })}
+                      {new Date(`2000-01-01T${t}:00`).toLocaleTimeString('es-SV', { hour: 'numeric', minute: '2-digit' })}
                     </option>
                   ))}
                 </select>

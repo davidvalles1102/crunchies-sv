@@ -239,8 +239,8 @@ function DeliveryCard({ order, session, loading, onReceive, onDeliver }: {
 
       <div className="delivery-portal-card__customer">
         👤 {order.delivery_name || '—'} &nbsp;·&nbsp; 📞 {order.delivery_phone || '—'}
-        <span style={{ marginLeft: 10, color: order.payment_method === 'nequi' ? 'var(--orange)' : 'var(--amber)' }}>
-          {order.payment_method === 'nequi' ? '📱 Nequi' : '💵 Efectivo'}
+        <span style={{ marginLeft: 10, color: order.payment_method === 'card' ? 'var(--orange)' : 'var(--amber)' }}>
+          {order.payment_method === 'card' ? '💳 Tarjeta' : '💵 Efectivo'}
         </span>
       </div>
 

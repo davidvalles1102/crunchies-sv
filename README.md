@@ -20,7 +20,9 @@ Restaurante de pollo, alitas y chunks. Este repositorio contiene el sistema comp
 | Gráficas | Chart.js v4 |
 | Códigos QR | `qrcode` |
 
-Todo el código de cliente vive en Client Components (`'use client'`) que consumen Supabase directamente desde el navegador; no hay capa de API propia — Supabase + RLS hacen ese trabajo.
+Todo el código de cliente vive en Client Components (`'use client'`) que consumen Supabase directamente desde el navegador; la única excepción es la autenticación por PIN de los portales (`/api/portal/auth`), una route handler server-side que nunca expone credenciales al cliente (ver sección de Portales PIN más abajo). El resto de la lectura/escritura de datos pasa por Supabase + RLS directamente.
+
+**Multitenant real (no solo diseñado):** el sistema ya opera como SaaS multi-negocio — `tenant_id` propagado en todas las tablas operativas, RLS tenant-aware, onboarding de un negocio nuevo sin tocar SQL (`create_tenant()`), caja/cierre de turno, inventario con consumo automático por receta, fiado/crédito de cliente, enforcement de plan/suspensión y exportación fiscal. Todo esto está cubierto por pruebas de integración reales contra Postgres (`supabase/test/scenarios.test.mjs`, ver sección de Testing).
 
 ---
 
@@ -113,7 +115,7 @@ web-next/
 |------|---------|
 | `/` | Vitrina del menú. Tabs de categoría, búsqueda, cards con imagen, precio y descripción. |
 | `/auth` | Login / registro / reset de contraseña. |
-| `/order` | Pedido online: Para Llevar / Domicilio, zonas y costo de envío, efectivo o Nequi. |
+| `/order` | Pedido online: Para Llevar / Domicilio, zonas y costo de envío, efectivo o tarjeta. |
 | `/table-order?table=<id>` | Igual que `/order` pero `order_type: dine_in`, mesa identificada por la URL del QR. Envía la orden directo a `in_kitchen` (sin paso intermedio). |
 | `/mis-pedidos` | Historial del cliente logueado, stepper de estado. |
 | `/track` | Seguimiento de un pedido específico por ID, sin necesidad de login. |
@@ -135,8 +137,24 @@ web-next/
 | `/admin/reservations` | Gestión de todas las reservaciones. | admin, waiter |
 | `/admin/reports` | KPIs y gráficas (ventas, métodos de pago, categorías, gastos, top platillos). | admin |
 | `/admin/customers` | CRM de clientes, historial real de pedidos, ajuste de puntos. | admin |
-| `/admin/finance` | Balance financiero. | admin |
+| `/admin/finance` | Balance financiero, COGS real por platillo. | admin |
 | `/admin/expense-tracker` | Registro de gastos por categoría. | admin |
+| `/admin/cash` | Caja: apertura/cierre de turno con conciliación (`compute_cash_session_expected`, `close_cash_session`). | admin, waiter |
+| `/admin/credit` | Fiado — cuentas de crédito de cliente, cargos y abonos (`charge_customer_credit`, `record_credit_payment`). | admin, waiter |
+| `/admin/inventory` | Inventario: items, recetas, consumo automático al vender, movimientos, `low_stock_items`. | admin |
+| `/admin/fiscal-export` | Exportación fiscal (subtotal/impuesto/total por rango, formato contable). | admin |
+| `/admin/staff` | Gestión de personal y PINs de acceso a los portales. | admin |
+| `/admin/platform` | Panel de plataforma: alta/edición/suspensión de tenants (negocios), plan. | admin (rol de plataforma) |
+
+### Portales PIN (personal operativo, sin login de admin)
+
+Cuentas compartidas de cocina/mesero/delivery no usan el login de `/admin/login` — entran con un PIN de 4 dígitos. El PIN se verifica server-side (`POST /api/portal/auth`, RPC `verify_staff_pin`) y las credenciales reales nunca llegan al navegador; ver `web-next/lib/pin-auth.ts` y la sección de Seguridad más abajo.
+
+| Ruta | Función |
+|------|---------|
+| `/portal/kitchen` | Versión ligera del display de cocina para acceso solo con PIN. |
+| `/portal/waiter` | Toma de pedidos y cobro para meseros con PIN (sin acceso al resto del panel admin). |
+| `/portal/delivery` | Gestión de domicilios para repartidores con PIN. |
 
 ---
 
@@ -159,6 +177,11 @@ web-next/
 | `expenses` | Gastos (`expense_date`, `category`, `amount`). |
 | `loyalty_transactions` | Historial de puntos (`customer_id`, `points`, `type`, `order_id`). |
 | `delivery_zones` / `drivers` | Zonas de entrega y repartidores. |
+| `tenants` / `tenant_members` / `tenant_settings` / `tenant_plan_subscriptions` | Modelo multitenant: negocio, membresía de staff, configuración (marca, `tax_enabled`, `tax_rate`, `invoice_mode`), plan/estado. |
+| `staff_members` | Cuentas compartidas de portal (mesero/cocina/delivery) con PIN, `failed_attempts`, `locked_until`. |
+| `cash_sessions` / `cash_session_movements` | Caja: apertura/cierre de turno, movimientos, monto esperado vs. real. |
+| `recipe_items` | Receta por platillo — descuenta inventario automáticamente al vender (trigger sobre `order_items`). |
+| `customer_credit_accounts` / `customer_credit_transactions` | Fiado — límite de crédito, cargos y abonos por cliente. |
 
 ### Estados de una Orden (`orders.status`)
 
@@ -239,6 +262,20 @@ npm run dev
 ```
 
 Abre `http://localhost:3000`.
+
+---
+
+## Testing
+
+```bash
+cd web-next
+npm run test      # unitarios: calcTotals, modificadores, keys de línea de pedido
+npm run test:db   # integración real contra Postgres (PGlite): aislamiento multitenant,
+                   # caja, inventario, fiado, seguridad de pedidos anónimos, estrés (500 órdenes)
+npm run test:all  # ambos
+```
+
+Los tests de integración (`../supabase/test/scenarios.test.mjs`) corren contra una instancia de Postgres embebida (PGlite), no contra Supabase de producción — no requieren `.env.local` ni conexión a internet.
 
 ---
 

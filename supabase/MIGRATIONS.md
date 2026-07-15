@@ -41,7 +41,7 @@ solo el nombre.
 |---|---------------------------|-------------|-------------|
 | 1 | **`create_missing_tables.sql`** | ✅ | **EJECUTAR PRIMERO** — Crea las 10 tablas que faltan con RLS |
 | 2 | **`fix_delivery_status_constraint.sql`** | ✅ | Columnas delivery en orders + CHECK constraint correcto |
-| 3 | `migrations/add_payment_method.sql` | ✅ | Columna payment_method en orders (cash/nequi) |
+| 3 | `migrations/add_payment_method.sql` | ✅ | Columna payment_method en orders (cash/nequi — ⚠️ ver #26, `nequi` fue residuo de marca colombiana, ya no es un valor válido) |
 | 4 | `schema/delivery_management_schema.sql` | ✅ | Columnas driver_id, delivery_zone_id, delivery_fee en orders |
 | 5 | `migrations/anon_ordering_rls.sql` | ✅ | RLS para pedidos anónimos via QR (sin cuenta de cliente) |
 | 6 | `migrations/fix_tables_and_rls.sql` | ✅ | RLS para clientes autenticados pidiendo desde QR |
@@ -62,6 +62,9 @@ solo el nombre.
 | 21 | **`migrations/fiscal.sql`** | ✅ | **Fase multitenant 8** — `tenant_settings.tax_rate` (default 13% IVA), fila explícita del tenant raíz en 0% para no cambiarle el cobro a Crunchies sin que nadie lo pidiera |
 | 22 | **`migrations/customer_credit.sql`** | ✅ | **Módulo "fiado"** — `customer_credit_accounts`/`customer_credit_transactions`, `payments.method` gana `'credit'`, RPCs `charge_customer_credit()` y `record_credit_payment()` |
 | 23 | **`migrations/menu_item_cost.sql`** | ✅ | `menu_items.cost` — costo por platillo, usado en Finanzas para calcular COGS real contra la venta |
+| 24 | ~~`migrations/enable_root_tenant_tax.sql`~~ | ✅ | ⚠️ **Revertida por #25** — activaba IVA 13% en `crunchies-root` asumiendo que era contribuyente formal. Error de contexto: este cliente no maneja IVA ni DTE, solo recibos normales. No se borra el archivo (referencia histórica), pero no debe volver a correrse sin revisar con el cliente primero |
+| 25 | **`migrations/disable_root_tenant_tax.sql`** | ✅ | Revierte #24 — `tax_enabled=false` en `tenant_settings` de `crunchies-root` (deja `tax_rate=0.13` guardado pero inactivo). Estado correcto para este cliente: sin IVA |
+| 26 | **`migrations/remove_nequi_payment_method.sql`** | ✅ | Quita `'nequi'` como valor válido de `orders.payment_method` (residuo de la marca colombiana original) — remapea filas existentes a `'card'` y endurece el CHECK a `('cash','card')` |
 
 > ⚠️ Correr 15 y 16 solo después de que las migrations 1-14 ya estén aplicadas
 > (dependen de que todas las tablas operativas existan). Verificar con la

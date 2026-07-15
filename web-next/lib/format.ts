@@ -18,8 +18,8 @@ export const fmt = {
   date: (d: string) => {
     const s = String(d)
     const dt = s.length === 10 ? new Date(s + 'T12:00:00') : new Date(s)
-    return dt.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })
+    return dt.toLocaleDateString('es-SV', { year: 'numeric', month: 'short', day: 'numeric' })
   },
-  time: (d: string) => new Date(d).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+  time: (d: string) => new Date(d).toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' }),
   datetime: (d: string) => `${fmt.date(d)} ${fmt.time(d)}`,
 }

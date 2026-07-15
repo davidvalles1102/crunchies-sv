@@ -11,6 +11,18 @@ function redirectPath(role: string) {
   return role === 'kitchen' ? '/admin/kitchen' : '/admin/dashboard'
 }
 
+class TimeoutError extends Error {}
+
+// Sin esto, una llamada de red colgada (celular con conexion inestable, tunel
+// lento) deja la promesa sin resolver ni rechazar para siempre — el boton se
+// queda en "Verificando..." sin error visible.
+function withTimeout<T>(promise: Promise<T>, ms = 10000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new TimeoutError('timeout')), ms)),
+  ])
+}
+
 export default function LoginClient() {
   const supabase = createClient()
   const router = useRouter()
@@ -24,10 +36,9 @@ export default function LoginClient() {
   useEffect(() => {
     ;(async () => {
       try {
-        const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000))
-        const session = await Promise.race([getSession(), timeout])
+        const session = await withTimeout(getSession(), 4000)
         if (session) {
-          const profile = await Promise.race([getProfile(session.user.id), timeout])
+          const profile = await withTimeout(getProfile(session.user.id), 4000)
           if (!profile || !ALLOWED_ROLES.includes(profile.role)) {
             await supabase.auth.signOut()
             setBusy(false)
@@ -53,10 +64,10 @@ export default function LoginClient() {
     setError('')
 
     try {
-      const { data, error: signInErr } = await supabase.auth.signInWithPassword({
+      const { data, error: signInErr } = await withTimeout(supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
-      })
+      }))
 
       if (signInErr) {
         setError('Credenciales incorrectas.')
@@ -65,7 +76,7 @@ export default function LoginClient() {
         return
       }
 
-      const profile = await getProfile(data.user.id)
+      const profile = await withTimeout(getProfile(data.user.id))
       if (!profile) {
         await supabase.auth.signOut()
         setError('Perfil no encontrado. Ejecuta el SQL de configuración en Supabase.')
@@ -83,7 +94,11 @@ export default function LoginClient() {
 
       router.push(redirectPath(profile.role))
     } catch (ex) {
-      setError('Error inesperado: ' + (ex instanceof Error ? ex.message : String(ex)))
+      setError(
+        ex instanceof TimeoutError
+          ? 'El servidor no respondió a tiempo. Revisa tu conexión e intenta de nuevo.'
+          : 'Error inesperado: ' + (ex instanceof Error ? ex.message : String(ex))
+      )
       setBusy(false)
       setBusyLabel('Ingresar al Panel')
     }

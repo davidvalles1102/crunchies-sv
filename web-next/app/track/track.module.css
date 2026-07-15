@@ -180,13 +180,3 @@
   font-weight: 700;
   font-family: var(--font-d);
 }
-
-/* Payment card Nequi style */
-.track-nequi-number {
-  font-family: var(--font-d);
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--orange);
-  text-shadow: var(--glow-orange-s);
-  margin: 8px 0;
-}

@@ -1,5 +1,3 @@
-'use client'
-
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const ACTIVE_TENANT_KEY = 'crunchies_active_tenant'

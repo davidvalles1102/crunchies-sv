@@ -467,8 +467,8 @@ export default function DeliveryClient() {
                         )}
                         <div className="flex justify-between">
                           <span className="text-muted">Pago</span>
-                          <span style={{ fontWeight: 600, color: o.payment_method === 'nequi' ? 'var(--orange)' : 'var(--amber)' }}>
-                            {o.payment_method === 'nequi' ? '📱 Nequi' : '💵 Efectivo'}
+                          <span style={{ fontWeight: 600, color: o.payment_method === 'card' ? 'var(--orange)' : 'var(--amber)' }}>
+                            {o.payment_method === 'card' ? '💳 Tarjeta' : '💵 Efectivo'}
                           </span>
                         </div>
                         {isDelivery && (
@@ -648,8 +648,8 @@ function DeliveryCard({ order, drivers, staffMap, onDetail, onAdvance, onAssignD
         {isDelivery && order.delivery_address && (
           <div className="delivery-card__address text-sm" style={{ color: 'var(--amber)', marginTop: 4 }}>📍 {order.delivery_address}</div>
         )}
-        <div className="text-xs mt-4" style={{ color: order.payment_method === 'nequi' ? 'var(--orange)' : 'var(--text-muted)' }}>
-          {order.payment_method === 'nequi' ? '📱 Nequi — verificar pago' : '💵 Efectivo'}
+        <div className="text-xs mt-4" style={{ color: order.payment_method === 'card' ? 'var(--orange)' : 'var(--text-muted)' }}>
+          {order.payment_method === 'card' ? '💳 Tarjeta' : '💵 Efectivo'}
         </div>
         {isDelivery && (
           <div className="flex gap-8 items-center mt-8" style={{ flexWrap: 'wrap' }}>

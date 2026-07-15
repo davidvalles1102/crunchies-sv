@@ -294,27 +294,6 @@
   font-weight: 500;
 }
 
-/* Nequi panel */
-.nequi-info {
-  padding: 14px 18px;
-  background: rgba(0,220,130,.06);
-  border-bottom: 1px solid var(--orange-dim);
-}
-.nequi-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.nequi-number {
-  font-family: var(--font-d);
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--orange);
-  letter-spacing: .04em;
-  text-shadow: var(--glow-orange-s);
-}
-
 /* Actions */
 .cart-actions {
   padding: 14px 16px;
