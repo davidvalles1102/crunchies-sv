@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
 
   if (authError || !authData.session) {
     console.error('[portal/auth] signInWithPassword:', authError?.message)
-    return NextResponse.json({ error: 'Error de autenticación del servidor' }, { status: 500 })
+    return NextResponse.json({ error: 'Error de autenticación del servidor', debug: authError?.message ?? 'no session' }, { status: 500 })
   }
 
   // El uuid real de tenants.id — null si tenant_foundation.sql aun no corrio
