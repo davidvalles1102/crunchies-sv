@@ -42,6 +42,9 @@
   --danger-dim: rgba(255, 68, 85, 0.15);
   --info:       #4A9EE0;
   --info-dim:   rgba(74, 158, 224, 0.12);
+  --indigo:       #818cf8;
+  --indigo-alpha: rgba(99, 102, 241, 0.10);
+  --indigo-dim:   rgba(99, 102, 241, 0.30);
 
   /* Borders — warm-tinted */
   --border:       rgba(255, 150, 80, 0.08);
