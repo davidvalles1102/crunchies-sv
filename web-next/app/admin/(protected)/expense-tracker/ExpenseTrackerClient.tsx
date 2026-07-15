@@ -13,6 +13,7 @@ import { fmt } from '@/lib/format'
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { svToday, svDaysAgo } from '@/lib/svDate'
 import type { Expense, ExpenseCategory } from '@/lib/types'
 
 const CAT_LABELS: Record<ExpenseCategory, string> = {
@@ -52,7 +53,7 @@ const emptyForm = {
   description: '',
   amount: '',
   payment_method: 'cash',
-  expense_date: new Date().toISOString().split('T')[0],
+  expense_date: svToday(),
   is_recurring: false,
   recurrence: 'monthly',
 }
@@ -78,7 +79,7 @@ export default function ExpenseTrackerClient() {
 
   useEffect(() => {
     ;(async () => {
-      const since = new Date(Date.now() - rangeDays * 86400_000).toISOString().split('T')[0]
+      const since = svDaysAgo(rangeDays)
       const { data, error } = await supabase
         .from('expenses')
         .select('*, profiles!registered_by(full_name)')
@@ -128,7 +129,7 @@ export default function ExpenseTrackerClient() {
     }
   }, [expenses])
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = svToday()
   const periodTotal = expenses.reduce((s, e) => s + Number(e.amount), 0)
   const todayTotal = expenses.filter((e) => e.expense_date === today).reduce((s, e) => s + Number(e.amount), 0)
   const recurring = expenses.filter((e) => e.is_recurring)
@@ -137,7 +138,7 @@ export default function ExpenseTrackerClient() {
   const topCat = Object.entries(byCatTotals).sort((a, b) => b[1] - a[1])[0]
 
   const loadExpenses = async () => {
-    const since = new Date(Date.now() - rangeDays * 86400_000).toISOString().split('T')[0]
+    const since = svDaysAgo(rangeDays)
     const { data, error } = await supabase
       .from('expenses')
       .select('*, profiles!registered_by(full_name)')

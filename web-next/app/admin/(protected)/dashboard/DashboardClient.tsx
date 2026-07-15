@@ -7,6 +7,7 @@ import {
   Tooltip, Legend, Filler,
 } from 'chart.js'
 import { createClient } from '@/lib/supabase/client'
+import { svToday, svDayStartUTC } from '@/lib/svDate'
 
 Chart.register(LineController, DoughnutController, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend, Filler)
 import { fmt } from '@/lib/format'
@@ -78,11 +79,8 @@ export default function DashboardClient() {
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        // El Salvador = UTC-6, sin horario de verano
-        const SV_OFFSET_MS = 6 * 60 * 60 * 1000
-        const localNow = new Date(Date.now() - SV_OFFSET_MS)
-        const today = localNow.toISOString().split('T')[0]   // fecha local "YYYY-MM-DD"
-        const todayStart = `${today}T06:00:00Z`              // 00:00 SV = 06:00 UTC
+        const today = svToday()
+        const todayStart = svDayStartUTC(today)
         const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString()
 
         const results = await Promise.all([
