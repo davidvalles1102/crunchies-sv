@@ -326,7 +326,7 @@
   align-items: center;
   flex-shrink: 0;
 }
-.ticket-table  { font-family: var(--font-d); font-size: 1.15rem; font-weight: 400; letter-spacing: .06em; color: var(--orange); }
+.ticket-table  { font-family: var(--font); font-size: 1.15rem; font-weight: 700; letter-spacing: .04em; color: var(--orange); }
 .ticket-waiter { }
 
 .order-status-banner {
