@@ -22,8 +22,8 @@ type Order = {
 const STATUS_CFG: Record<string, { label: string; cls: string; icon: string; active: boolean }> = {
   pending:    { label: 'Pendiente',  cls: 'badge-amber', icon: '🕐', active: true },
   preparing:  { label: 'Preparando', cls: 'badge-info',  icon: '🔥', active: true },
-  ready:      { label: 'Listo',      cls: 'badge-green', icon: '✅', active: true },
-  on_the_way: { label: 'En Camino',  cls: 'badge-green', icon: '🛵', active: true },
+  ready:      { label: 'Listo',      cls: 'badge-primary', icon: '✅', active: true },
+  on_the_way: { label: 'En Camino',  cls: 'badge-primary', icon: '🛵', active: true },
   delivered:  { label: 'Entregado',  cls: 'badge-muted', icon: '📦', active: false },
 }
 

@@ -19,8 +19,8 @@ const STATUS_LABEL: Record<string, string> = {
   delivered: 'Entregada', paid: 'Pagada', cancelled: 'Cancelada',
 }
 const STATUS_CLS: Record<string, string> = {
-  open: 'badge-amber', in_kitchen: 'badge-info', ready: 'badge-green',
-  delivered: 'badge-muted', paid: 'badge-green', cancelled: 'badge-danger',
+  open: 'badge-amber', in_kitchen: 'badge-info', ready: 'badge-primary',
+  delivered: 'badge-muted', paid: 'badge-primary', cancelled: 'badge-danger',
 }
 
 type RecentOrder = {

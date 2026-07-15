@@ -131,7 +131,7 @@
 
 .track-step.done .track-step__circle {
   border-color: var(--orange);
-  background: rgba(0,220,130,.15);
+  background: rgba(255,102,0,.15);
   box-shadow: 0 0 14px var(--orange-alpha);
 }
 

@@ -22,7 +22,7 @@ type Reservation = {
 
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   pending:   { label: 'Pendiente',  cls: 'badge-amber' },
-  confirmed: { label: 'Confirmada', cls: 'badge-green' },
+  confirmed: { label: 'Confirmada', cls: 'badge-primary' },
   seated:    { label: 'En Mesa',    cls: 'badge-info' },
   cancelled: { label: 'Cancelada',  cls: 'badge-danger' },
   no_show:   { label: 'No Show',    cls: 'badge-muted' },

@@ -252,7 +252,7 @@ export default function OrderClient({
       {ORDERING_ENABLED && <div className="order-cart-panel">
         <div className="cart-header">
           <h3>Tu Orden</h3>
-          <span className="badge badge-green">{cart.reduce((s, i) => s + i.qty, 0)} items</span>
+          <span className="badge badge-primary">{cart.reduce((s, i) => s + i.qty, 0)} items</span>
         </div>
 
         <div className="cart-items">

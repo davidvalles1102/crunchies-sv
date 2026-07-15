@@ -754,7 +754,7 @@
 }
 .kitchen-card--ready {
   border-color: var(--orange);
-  background: rgba(102, 255, 102, .03);
+  background: rgba(255, 102, 0, .03);
 }
 .kitchen-card--urgent {
   border-color: var(--danger);
@@ -806,7 +806,7 @@
   border-radius: 20px;
   white-space: nowrap;
 }
-.timer--ok     { background: rgba(102,255,102,.12); color: var(--orange); }
+.timer--ok     { background: rgba(255,102,0,.12); color: var(--orange); }
 .timer--warn   { background: rgba(255,153,0,.15);  color: var(--amber); }
 .timer--urgent { background: var(--danger-dim);     color: var(--danger); }
 
@@ -924,7 +924,7 @@
 }
 .waiter-comanda-banner--ready {
   border-color: var(--orange-dim);
-  background: rgba(102,255,102,.06);
+  background: rgba(255,102,0,.06);
 }
 .waiter-comanda-banner--delivered {
   opacity: .65;

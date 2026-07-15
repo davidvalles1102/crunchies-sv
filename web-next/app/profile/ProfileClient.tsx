@@ -27,7 +27,7 @@ type LoyaltyTx = {
 }
 
 const STATUS_CLS: Record<string, string> = {
-  pending: 'badge-amber', confirmed: 'badge-green', seated: 'badge-info', cancelled: 'badge-danger',
+  pending: 'badge-amber', confirmed: 'badge-primary', seated: 'badge-info', cancelled: 'badge-danger',
 }
 
 export default function ProfileClient() {
@@ -229,7 +229,7 @@ export default function ProfileClient() {
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Editar Perfil">
           <div className="modal-header">
             <h3>Editar Perfil</h3>
-            <button className="modal-close" onClick={() => setEditOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setEditOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <form className="flex-col gap-16" onSubmit={handleEditSubmit}>

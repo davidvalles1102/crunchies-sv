@@ -314,7 +314,7 @@ export default function ExpenseTrackerClient() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={form.id ? 'Editar Gasto' : 'Nuevo Gasto'}>
           <div className="modal-header">
             <h3>{form.id ? 'Editar Gasto' : 'Nuevo Gasto'}</h3>
-            <button className="modal-close" onClick={() => setModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <form onSubmit={(e) => e.preventDefault()}>

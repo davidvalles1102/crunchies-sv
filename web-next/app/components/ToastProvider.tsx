@@ -26,19 +26,35 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
     }, 3500)
   }, [])
 
+  const politeToasts = toasts.filter((t) => t.type === 'success' || t.type === 'info')
+  const assertiveToasts = toasts.filter((t) => t.type === 'error' || t.type === 'warning')
+
   return (
     <ToastContext.Provider value={toast}>
       {children}
       <div id="toast-container">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={`toast ${t.type}`}
-            style={t.closing ? { animation: 'fadeOut .3s ease forwards' } : undefined}
-          >
-            {t.message}
-          </div>
-        ))}
+        <div aria-live="polite" aria-atomic="false">
+          {politeToasts.map((t) => (
+            <div
+              key={t.id}
+              className={`toast ${t.type}`}
+              style={t.closing ? { animation: 'fadeOut .3s ease forwards' } : undefined}
+            >
+              {t.message}
+            </div>
+          ))}
+        </div>
+        <div aria-live="assertive" aria-atomic="false">
+          {assertiveToasts.map((t) => (
+            <div
+              key={t.id}
+              className={`toast ${t.type}`}
+              style={t.closing ? { animation: 'fadeOut .3s ease forwards' } : undefined}
+            >
+              {t.message}
+            </div>
+          ))}
+        </div>
       </div>
     </ToastContext.Provider>
   )

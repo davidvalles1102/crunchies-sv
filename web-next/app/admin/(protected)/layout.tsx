@@ -37,10 +37,10 @@ export default function ProtectedAdminLayout({ children }: { children: React.Rea
     <AdminContext.Provider value={ctx}>
       <div className="admin-body">
         <Sidebar />
-        <div className="admin-main">
+        <main id="main-content" className="admin-main">
           <TenantStatusBanner />
           {children}
-        </div>
+        </main>
       </div>
     </AdminContext.Provider>
   )

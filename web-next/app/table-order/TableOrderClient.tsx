@@ -367,7 +367,7 @@ export default function TableOrderClient() {
         <div className="order-cart-panel">
           <div className="cart-header">
             <h3>Tu Orden — <span className="neon-green">Mesa {tableInfo?.number}</span></h3>
-            <span className="badge badge-green">{cartCount} items</span>
+            <span className="badge badge-primary">{cartCount} items</span>
           </div>
 
           <div className="cart-items">

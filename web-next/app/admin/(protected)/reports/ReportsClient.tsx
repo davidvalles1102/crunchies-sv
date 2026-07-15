@@ -19,7 +19,7 @@ const EXPENSE_CAT_LABELS: Record<string, string> = {
 }
 
 const STATUS_ES: Record<string, string> = { open: 'Abierta', in_kitchen: 'En Cocina', ready: 'Lista', delivered: 'Entregada', paid: 'Pagada', cancelled: 'Cancelada' }
-const STATUS_CLS: Record<string, string> = { paid: 'badge-green', cancelled: 'badge-danger', open: 'badge-amber', in_kitchen: 'badge-info', ready: 'badge-green', delivered: 'badge-muted' }
+const STATUS_CLS: Record<string, string> = { paid: 'badge-primary', cancelled: 'badge-danger', open: 'badge-amber', in_kitchen: 'badge-info', ready: 'badge-primary', delivered: 'badge-muted' }
 
 type ReportOrder = {
   id: string

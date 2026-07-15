@@ -35,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${poppins.variable} ${bangers.variable}`}>
       <body>
+        <a href="#main-content" className="skip-to-content">Saltar al contenido</a>
         <ToastProvider>
           <ConfirmProvider>{children}</ConfirmProvider>
         </ToastProvider>

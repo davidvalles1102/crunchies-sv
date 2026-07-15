@@ -227,7 +227,7 @@ function DeliveryCard({ order, session, loading, onReceive, onDeliver }: {
             ? <span className="badge badge-amber">🛵 En camino — tú</span>
             : isOnTheWay
             ? <span className="badge badge-muted">🛵 Tomado por otro driver</span>
-            : <span className="badge badge-green">✅ Listo para recoger</span>}
+            : <span className="badge badge-primary">✅ Listo para recoger</span>}
           <span className={`badge ${timerCls === 'timer--ok' ? 'badge-muted' : timerCls === 'timer--warn' ? 'badge-amber' : 'badge-danger'}`}>⏱ {order.elapsedReady}m</span>
         </div>
         <span className="text-xs text-muted">{fmt.time(order.created_at)}</span>

@@ -121,7 +121,7 @@ export default function KitchenPortalClient() {
 
         <div className="kitchen-col">
           <div className="kitchen-col__header">
-            <span className="badge badge-green" style={{ fontSize: '.88rem', padding: '5px 14px' }}>✅ LISTO — ESPERANDO MESERO</span>
+            <span className="badge badge-primary" style={{ fontSize: '.88rem', padding: '5px 14px' }}>✅ LISTO — ESPERANDO MESERO</span>
             <span className="badge badge-muted">{readyOrders.length}</span>
           </div>
           <div className="kitchen-orders">

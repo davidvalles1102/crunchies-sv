@@ -697,7 +697,7 @@ export default function OrdersClient() {
       <Modal open={payModalOpen} onClose={() => setPayModalOpen(false)} title="Procesar Pago">
           <div className="modal-header">
             <h3>Procesar Pago</h3>
-            <button className="modal-close" onClick={() => setPayModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setPayModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="pay-summary">
@@ -764,7 +764,7 @@ export default function OrdersClient() {
       <Modal open={receiptModalOpen} onClose={() => setReceiptModalOpen(false)} title="Recibo">
           <div className="modal-header">
             <h3>Recibo</h3>
-            <button className="modal-close" onClick={() => setReceiptModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setReceiptModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             {lastReceiptData && (
@@ -818,7 +818,7 @@ export default function OrdersClient() {
       <Modal open={waModalOpen} onClose={() => setWaModalOpen(false)} title="📱 Enviar por WhatsApp" maxWidth={380}>
           <div className="modal-header">
             <h3>📱 Enviar por WhatsApp</h3>
-            <button className="modal-close" onClick={() => setWaModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setWaModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <p className="text-sm text-muted" style={{ marginBottom: 14 }}>WhatsApp se abrirá con la factura lista para enviar. Solo presiona ▶ en WhatsApp.</p>

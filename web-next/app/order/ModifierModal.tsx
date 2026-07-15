@@ -69,7 +69,7 @@ export default function ModifierModal({
     <Modal onClose={onCancel} title={item.name} maxWidth={420}>
       <div className="modal-header">
           <h3>{item.name}</h3>
-          <button className="modal-close" onClick={onCancel}>✕</button>
+          <button className="modal-close" aria-label="Cerrar" onClick={onCancel}>✕</button>
         </div>
         <div className="modal-body">
           {groups.map((g) => (

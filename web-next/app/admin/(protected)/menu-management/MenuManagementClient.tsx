@@ -317,7 +317,7 @@ export default function MenuManagementClient() {
       <Modal open={itemModalOpen} onClose={() => setItemModalOpen(false)} title={editingId ? 'Editar Platillo' : 'Nuevo Platillo'} maxWidth={600}>
           <div className="modal-header">
             <h3>{editingId ? 'Editar Platillo' : 'Nuevo Platillo'}</h3>
-            <button className="modal-close" onClick={() => setItemModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setItemModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <form className="flex-col gap-16" onSubmit={(e) => { e.preventDefault(); saveItem() }}>
@@ -395,7 +395,7 @@ export default function MenuManagementClient() {
       <Modal open={catsModalOpen} onClose={() => setCatsModalOpen(false)} title="Categorías">
           <div className="modal-header">
             <h3>Categorías</h3>
-            <button className="modal-close" onClick={() => setCatsModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setCatsModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="flex-col gap-8">
@@ -418,7 +418,7 @@ export default function MenuManagementClient() {
       <Modal open={modsModalOpen} onClose={() => setModsModalOpen(false)} title="Grupos de Modificadores" maxWidth={560}>
           <div className="modal-header">
             <h3>Grupos de Modificadores</h3>
-            <button className="modal-close" onClick={() => setModsModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setModsModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="flex-col gap-16">

@@ -280,7 +280,7 @@ export default function CustomersClient() {
       <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.full_name || 'Cliente'} maxWidth={580}>
           <div className="modal-header">
             <h3>{selected?.full_name || 'Cliente'}</h3>
-            <button className="modal-close" onClick={() => setSelected(null)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setSelected(null)}>✕</button>
           </div>
           <div className="modal-body">
             {detailLoading ? (

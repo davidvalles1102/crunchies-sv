@@ -20,7 +20,7 @@ type Tenant = {
 }
 
 const STATUS_CFG: Record<Tenant['status'], { label: string; cls: string }> = {
-  active:    { label: 'Activo',     cls: 'badge-green' },
+  active:    { label: 'Activo',     cls: 'badge-primary' },
   trial:     { label: 'Prueba',     cls: 'badge-amber' },
   suspended: { label: 'Suspendido', cls: 'badge-danger' },
   archived:  { label: 'Archivado',  cls: 'badge-muted' },

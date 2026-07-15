@@ -20,8 +20,8 @@ type BoardOrder = DeliveryOrder & { elapsedMinutes: number }
 const STATUS_CFG: Record<string, { label: string; cls: string; icon: string; next: string | null; nextLabel: string | null }> = {
   pending:    { label: 'Pendiente',  cls: 'badge-amber', icon: '🕐', next: 'preparing',  nextLabel: '👨‍🍳 Preparar' },
   preparing:  { label: 'Preparando', cls: 'badge-info',  icon: '🔥', next: 'ready',       nextLabel: '✅ Listo' },
-  ready:      { label: 'Listo',      cls: 'badge-green', icon: '✅', next: 'on_the_way',  nextLabel: '🛵 En Camino' },
-  on_the_way: { label: 'En Camino',  cls: 'badge-green', icon: '🛵', next: 'delivered',   nextLabel: '📦 Entregado' },
+  ready:      { label: 'Listo',      cls: 'badge-primary', icon: '✅', next: 'on_the_way',  nextLabel: '🛵 En Camino' },
+  on_the_way: { label: 'En Camino',  cls: 'badge-primary', icon: '🛵', next: 'delivered',   nextLabel: '📦 Entregado' },
   delivered:  { label: 'Entregado',  cls: 'badge-muted', icon: '📦', next: null,          nextLabel: null },
 }
 
@@ -364,7 +364,7 @@ export default function DeliveryClient() {
       <Modal open={!!detailOrder} onClose={() => { setDetailOrder(null); setEditing(false) }} title={detailOrder ? (detailOrder.order_type === 'delivery' ? '🛵 Orden Domicilio' : '🥡 Para Llevar') : 'Detalle de Orden'} maxWidth={520}>
           <div className="modal-header">
             <h3>{detailOrder ? (detailOrder.order_type === 'delivery' ? '🛵 Orden Domicilio' : '🥡 Para Llevar') : 'Detalle de Orden'}</h3>
-            <button className="modal-close" onClick={() => { setDetailOrder(null); setEditing(false) }}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => { setDetailOrder(null); setEditing(false) }}>✕</button>
           </div>
           {detailOrder && (() => {
             const o = detailOrder
@@ -535,7 +535,7 @@ export default function DeliveryClient() {
       <Modal open={driversOpen} onClose={() => setDriversOpen(false)} title="Repartidores" maxWidth={520}>
           <div className="modal-header">
             <h3>Repartidores</h3>
-            <button className="modal-close" onClick={() => setDriversOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setDriversOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="flex-col gap-8">
@@ -576,7 +576,7 @@ export default function DeliveryClient() {
       <Modal open={zonesOpen} onClose={() => setZonesOpen(false)} title="Zonas de Entrega" maxWidth={480}>
           <div className="modal-header">
             <h3>Zonas de Entrega</h3>
-            <button className="modal-close" onClick={() => setZonesOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setZonesOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="flex-col gap-8">

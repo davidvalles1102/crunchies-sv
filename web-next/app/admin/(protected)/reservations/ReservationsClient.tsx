@@ -12,7 +12,7 @@ import type { Reservation, RestaurantTable } from '@/lib/types'
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: string }> = {
   pending:   { label: 'Pendiente',  cls: 'badge-amber',  icon: '🕐' },
-  confirmed: { label: 'Confirmada', cls: 'badge-green',  icon: '✅' },
+  confirmed: { label: 'Confirmada', cls: 'badge-primary',  icon: '✅' },
   seated:    { label: 'En Mesa',    cls: 'badge-info',   icon: '🪑' },
   cancelled: { label: 'Cancelada',  cls: 'badge-danger', icon: '❌' },
   no_show:   { label: 'No Show',    cls: 'badge-muted',  icon: '👻' },
@@ -250,7 +250,7 @@ export default function ReservationsClient() {
       <Modal open={!!detailReservation} onClose={() => setDetailReservation(null)} title="Detalle de Reservación" maxWidth={580}>
           <div className="modal-header">
             <h3>Detalle de Reservación</h3>
-            <button className="modal-close" onClick={() => setDetailReservation(null)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setDetailReservation(null)}>✕</button>
           </div>
           {detailReservation && (() => {
             const r = detailReservation
@@ -337,7 +337,7 @@ export default function ReservationsClient() {
       <Modal open={assignOpen} onClose={() => setAssignOpen(false)} title="Asignar Mesa" maxWidth={400}>
           <div className="modal-header">
             <h3>Asignar Mesa</h3>
-            <button className="modal-close" onClick={() => setAssignOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setAssignOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="form-group">

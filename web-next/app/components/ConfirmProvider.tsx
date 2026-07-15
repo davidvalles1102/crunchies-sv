@@ -52,7 +52,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
       <Modal open={!!active} onClose={handleCancel} title={active?.title ?? ''} maxWidth={420}>
         <div className="modal-header">
           <h3>{active?.title}</h3>
-          <button className="modal-close" onClick={handleCancel}>✕</button>
+          <button className="modal-close" aria-label="Cerrar" onClick={handleCancel}>✕</button>
         </div>
         <div className="modal-body">
           <p style={{ whiteSpace: 'pre-line', lineHeight: 1.6 }}>{active?.message}</p>

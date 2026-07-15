@@ -13,7 +13,7 @@ import type { RestaurantTable } from '@/lib/types'
 import styles from './tables.module.css'
 
 const STATUS_LABEL: Record<string, string> = { available: 'Disponible', occupied: 'Ocupada', reserved: 'Reservada', maintenance: 'Mantenimiento' }
-const STATUS_BADGE: Record<string, string> = { available: 'badge-green', occupied: 'badge-danger', reserved: 'badge-amber', maintenance: 'badge-muted' }
+const STATUS_BADGE: Record<string, string> = { available: 'badge-primary', occupied: 'badge-danger', reserved: 'badge-amber', maintenance: 'badge-muted' }
 const ACTIVE_ORDER_STATUS_LABEL: Record<string, string> = { open: 'abierta', in_kitchen: 'en cocina', ready: 'lista', delivered: 'entregada' }
 
 type ActiveQR = { type: 'table'; id: string; number: number } | { type: 'menu' }
@@ -128,7 +128,7 @@ export default function TablesClient() {
       <Modal open={!!activeQR} onClose={closeModal} title={activeQR?.type === 'menu' ? '📋 QR — Menú (Vitrina)' : `QR — Mesa ${activeQR?.type === 'table' ? activeQR.number : ''}`} maxWidth={360}>
           <div className="modal-header">
             <h3>{activeQR?.type === 'menu' ? '📋 QR — Menú (Vitrina)' : `QR — Mesa ${activeQR?.type === 'table' ? activeQR.number : ''}`}</h3>
-            <button className="modal-close" onClick={closeModal}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={closeModal}>✕</button>
           </div>
           <div className={`modal-body ${styles['qr-body']}`}>
             {activeQR?.type === 'menu' && (

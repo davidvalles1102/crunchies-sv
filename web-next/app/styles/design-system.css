@@ -22,6 +22,7 @@
 
   /* Orange — primary accent (#FF6600) */
   --orange:        #FF6600;
+  --orange-hover:  #FF7A1F;
   --orange-dim:    #7A3000;
   --orange-dark:   #3D1800;
   --orange-alpha:  rgba(255, 102, 0, 0.10);
@@ -31,6 +32,7 @@
 
   /* Amber — secondary accent (#FF9900) */
   --amber:        #FF9900;
+  --amber-hover:  #FFB020;
   --amber-dim:    #7A4A00;
   --amber-dark:   #3D2400;
   --amber-alpha:  rgba(255, 153, 0, 0.10);
@@ -70,11 +72,35 @@
   /* Z-index scale */
   --z-dropdown:       100;
   --z-sticky:         200;
+  --z-fab:            380;
+  --z-panel-overlay:  390;
+  --z-panel:          400;
+  --z-sidebar-overlay: 499;
+  --z-sidebar:        500;
   --z-modal-backdrop: 1001;
   --z-modal:          1002;
   --z-toast:          1100;
   --z-tooltip:        1150;
   --z-loading:        1200;
+}
+
+/* ─── Skip-to-content ────────────────────────────────────────── */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: var(--z-loading);
+  padding: 10px 18px;
+  background: var(--orange);
+  color: #fff;
+  border-radius: var(--r-md);
+  font-weight: 600;
+  font-size: .9rem;
+  text-decoration: none;
+  transition: top .15s ease;
+}
+.skip-to-content:focus {
+  top: 16px;
 }
 
 /* ─── Reset & Base ───────────────────────────────────────────── */
@@ -157,7 +183,7 @@ h4 { font-size: .92rem;  font-weight: 600; }
   box-shadow: var(--glow-orange-s);
 }
 .btn-primary:hover {
-  background: #FF7A1F;
+  background: var(--orange-hover);
   box-shadow: var(--glow-orange);
   transform: translateY(-1px);
 }
@@ -168,7 +194,7 @@ h4 { font-size: .92rem;  font-weight: 600; }
   box-shadow: var(--glow-amber-s);
 }
 .btn-amber:hover {
-  background: #FFB020;
+  background: var(--amber-hover);
   box-shadow: var(--glow-amber);
   transform: translateY(-1px);
 }
@@ -249,7 +275,7 @@ select.form-control { appearance: none; cursor: pointer; }
   letter-spacing: .03em;
   text-transform: uppercase;
 }
-.badge-green   { background: var(--orange-alpha); color: var(--orange); border: 1px solid var(--orange-dim); }
+.badge-primary   { background: var(--orange-alpha); color: var(--orange); border: 1px solid var(--orange-dim); }
 .badge-amber   { background: var(--amber-alpha); color: var(--amber); border: 1px solid var(--amber-dim); }
 .badge-danger  { background: var(--danger-dim);  color: var(--danger); border: 1px solid rgba(255,68,85,.30); }
 .badge-info    { background: var(--info-dim);    color: var(--info);   border: 1px solid rgba(74,158,224,.30); }
@@ -450,11 +476,6 @@ select.form-control { appearance: none; cursor: pointer; }
 .hidden { display: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 
-/* ─── Scrollbar ──────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--bg-2); }
-::-webkit-scrollbar-thumb { background: var(--bg-5); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--orange-dim); }
 
 /* ─── Touch tap targets (≥44px) ─────────────────────────────── */
 @media (max-width: 768px) {

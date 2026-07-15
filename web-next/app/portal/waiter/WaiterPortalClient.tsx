@@ -441,7 +441,7 @@ export default function WaiterPortalClient() {
             {paying ? 'Procesando...' : `✓ Cobrar ${fmt.currency(grandTotal)} y cerrar mesa`}
           </button>
           {payMethod === 'cash' && parseFloat(cashIn) > 0 && parseFloat(cashIn) < grandTotal && (
-            <p className="text-xs" style={{ textAlign: 'center', color: '#ef4444' }}>El efectivo no cubre el total</p>
+            <p className="text-xs" style={{ textAlign: 'center', color: 'var(--danger)' }}>El efectivo no cubre el total</p>
           )}
         </div>
       </div>

@@ -155,7 +155,7 @@ export default function PaymentsClient() {
       <Modal open={!!receiptPayment} onClose={() => setReceiptPayment(null)} title="Recibo">
           <div className="modal-header">
             <h3>Recibo</h3>
-            <button className="modal-close" onClick={() => setReceiptPayment(null)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setReceiptPayment(null)}>✕</button>
           </div>
           {receiptPayment && (
             <div className="modal-body">
@@ -200,7 +200,7 @@ export default function PaymentsClient() {
       <Modal open={waOpen} onClose={() => setWaOpen(false)} title="📱 Enviar por WhatsApp" maxWidth={380}>
           <div className="modal-header">
             <h3>📱 Enviar por WhatsApp</h3>
-            <button className="modal-close" onClick={() => setWaOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setWaOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <p className="text-sm text-muted" style={{ marginBottom: 14 }}>
