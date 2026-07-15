@@ -679,12 +679,17 @@
   }
 }
 
-/* Columna (En cocina / Listos) */
+/* Columna (En cocina / Listos) — min-width:0 es obligatorio: un item de
+   grid/flex sin esto no se achica mas alla del ancho intrinseco de su
+   contenido (aunque el padre sea mas angosto), lo que rompe el
+   text-overflow:ellipsis de .kitchen-card__table con nombres largos y
+   desborda toda la pagina horizontalmente en movil. */
 .kitchen-col {
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border-right: 1px solid var(--border);
+  min-width: 0;
 }
 .kitchen-col:last-child { border-right: none; }
 @media (max-width: 767px) {
@@ -705,6 +710,7 @@
   border-bottom: 2px solid var(--border);
   flex-shrink: 0;
   gap: 10px;
+  min-width: 0;
 }
 
 /* Área scrollable de tarjetas */
@@ -715,11 +721,15 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
 }
 @media (max-width: 767px) {
   .kitchen-orders {
     overflow-y: visible;
-    flex: none;
+    /* antes: "flex: none" — el shorthand tambien pone flex-shrink:0,
+       que es lo que causaba el desborde (ver comentario en .kitchen-col).
+       flex-grow:0 solo evita que crezca de mas sin tocar el shrink. */
+    flex-grow: 0;
   }
 }
 
@@ -737,6 +747,7 @@
   border-radius: var(--r-md);
   overflow: hidden;
   transition: border-color .2s;
+  min-width: 0; /* es item flex de .kitchen-orders — mismo motivo que arriba */
 }
 .kitchen-card--ready {
   border-color: var(--orange);
