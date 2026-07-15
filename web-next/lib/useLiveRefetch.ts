@@ -14,10 +14,17 @@ export function useLiveRefetch(refetch: () => void, { pollMs = 20000 }: { pollMs
   useEffect(() => { refetchRef.current = refetch })
 
   useEffect(() => {
-    const onVisible = () => { if (document.visibilityState === 'visible') refetchRef.current() }
+    // Un poll de respaldo corre solo, sin usuario esperando resultado — si
+    // el celular esta sin señal/wifi justo en ese instante, `refetch()`
+    // rechaza (TypeError: Failed to fetch) y sin este catch esa promesa
+    // no manejada tira el overlay de error de Next.js y "rompe" la
+    // pantalla. Se ignora: el siguiente poll (o el proximo refetch al
+    // recuperar visibilidad) simplemente lo vuelve a intentar.
+    const safeRefetch = () => { Promise.resolve(refetchRef.current()).catch(() => {}) }
+    const onVisible = () => { if (document.visibilityState === 'visible') safeRefetch() }
     document.addEventListener('visibilitychange', onVisible)
     window.addEventListener('focus', onVisible)
-    const poll = setInterval(() => refetchRef.current(), pollMs)
+    const poll = setInterval(safeRefetch, pollMs)
     return () => {
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', onVisible)

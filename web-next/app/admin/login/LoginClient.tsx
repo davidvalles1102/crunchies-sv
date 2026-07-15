@@ -4,23 +4,12 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getSession, getProfile } from '@/lib/supabase/auth'
+import { withTimeout, TimeoutError } from '@/lib/withTimeout'
 
 const ALLOWED_ROLES = ['admin', 'waiter', 'kitchen']
 
 function redirectPath(role: string) {
   return role === 'kitchen' ? '/admin/kitchen' : '/admin/dashboard'
-}
-
-class TimeoutError extends Error {}
-
-// Sin esto, una llamada de red colgada (celular con conexion inestable, tunel
-// lento) deja la promesa sin resolver ni rechazar para siempre — el boton se
-// queda en "Verificando..." sin error visible.
-function withTimeout<T>(promise: Promise<T>, ms = 10000): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => setTimeout(() => reject(new TimeoutError('timeout')), ms)),
-  ])
 }
 
 export default function LoginClient() {

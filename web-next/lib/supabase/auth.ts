@@ -1,5 +1,5 @@
 import { createClient } from './client'
-import { ROOT_TENANT, type ActiveTenant } from '../tenant'
+import { ROOT_TENANT, resolveRootTenantId, type ActiveTenant } from '../tenant'
 
 const STAFF_ROLES = ['admin', 'waiter', 'kitchen']
 
@@ -43,7 +43,16 @@ export async function getTenantForUser(userId: string): Promise<ActiveTenant> {
     .limit(1)
     .maybeSingle<{ tenant_id: string; tenants: { slug: string; name: string } | null }>()
 
-  if (error || !data || !data.tenants) return ROOT_TENANT
+  if (!error && data && data.tenants) {
+    return { tenant_id: data.tenant_id, slug: data.tenants.slug, name: data.tenants.name }
+  }
 
-  return { tenant_id: data.tenant_id, slug: data.tenants.slug, name: data.tenants.name }
+  // Sin membership en tenant_members (ej. cuenta de admin creada a mano
+  // desde el Supabase Dashboard, sin ese paso manual) — cae al tenant raiz,
+  // pero resolviendo su UUID real. ROOT_TENANT.tenant_id es el slug
+  // (string), no un uuid; devolverlo tal cual revienta cualquier
+  // insert/filtro contra una columna tenant_id (uuid real). Ver el
+  // comentario junto a resolveRootTenantId() en lib/tenant.ts.
+  const rootId = await resolveRootTenantId(supabase)
+  return rootId ? { ...ROOT_TENANT, tenant_id: rootId } : ROOT_TENANT
 }
