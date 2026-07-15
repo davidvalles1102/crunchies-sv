@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
-import { useRequireRole } from '../../AdminContext'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
+import { useWakeLock } from '@/lib/useWakeLock'
+import { playNewOrderBeep } from '@/lib/notifySound'
+import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 import type { Driver, DeliveryZone, DeliveryOrder } from '@/lib/types'
@@ -36,6 +39,7 @@ const ADVANCE_MSGS: Record<string, string> = {
 
 export default function DeliveryClient() {
   useRequireRole(['admin', 'waiter'])
+  const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
 
@@ -121,7 +125,7 @@ export default function DeliveryClient() {
     const phone = newDriverPhone.trim()
     if (!full_name || !phone) return
 
-    const { error } = await supabase.from('drivers').insert({ full_name, phone })
+    const { error } = await supabase.from('drivers').insert({ full_name, phone, tenant_id: tenant.tenant_id })
     if (error) { toast('Error al agregar repartidor', 'error'); return }
 
     toast('Repartidor agregado')
@@ -161,7 +165,7 @@ export default function DeliveryClient() {
     const fee = parseFloat(newZoneFee)
     if (!name || Number.isNaN(fee)) return
 
-    const { error } = await supabase.from('delivery_zones').insert({ name, fee, display_order: zones.length })
+    const { error } = await supabase.from('delivery_zones').insert({ name, fee, display_order: zones.length, tenant_id: tenant.tenant_id })
     if (error) { toast('Error al agregar zona', 'error'); return }
 
     toast('Zona agregada')
@@ -214,6 +218,7 @@ export default function DeliveryClient() {
 
         if (payload.eventType === 'INSERT') {
           toast(t === 'delivery' ? '🛵 Nueva orden a domicilio' : '🥡 Nueva orden para llevar', 'info')
+          playNewOrderBeep()
         }
         await loadOrders()
       })
@@ -224,6 +229,9 @@ export default function DeliveryClient() {
     return () => { channel.unsubscribe() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useLiveRefetch(loadOrders, { pollMs: 15000 })
+  useWakeLock(true)
 
   const filtered = typeFilter === 'all' ? allOrders : allOrders.filter((o) => o.order_type === typeFilter)
 
@@ -459,8 +467,8 @@ export default function DeliveryClient() {
                         )}
                         <div className="flex justify-between">
                           <span className="text-muted">Pago</span>
-                          <span style={{ fontWeight: 600, color: o.payment_method === 'nequi' ? 'var(--orange)' : 'var(--amber)' }}>
-                            {o.payment_method === 'nequi' ? '📱 Nequi' : '💵 Efectivo'}
+                          <span style={{ fontWeight: 600, color: o.payment_method === 'card' ? 'var(--orange)' : 'var(--amber)' }}>
+                            {o.payment_method === 'card' ? '💳 Tarjeta' : '💵 Efectivo'}
                           </span>
                         </div>
                         {isDelivery && (
@@ -640,8 +648,8 @@ function DeliveryCard({ order, drivers, staffMap, onDetail, onAdvance, onAssignD
         {isDelivery && order.delivery_address && (
           <div className="delivery-card__address text-sm" style={{ color: 'var(--amber)', marginTop: 4 }}>📍 {order.delivery_address}</div>
         )}
-        <div className="text-xs mt-4" style={{ color: order.payment_method === 'nequi' ? 'var(--orange)' : 'var(--text-muted)' }}>
-          {order.payment_method === 'nequi' ? '📱 Nequi — verificar pago' : '💵 Efectivo'}
+        <div className="text-xs mt-4" style={{ color: order.payment_method === 'card' ? 'var(--orange)' : 'var(--text-muted)' }}>
+          {order.payment_method === 'card' ? '💳 Tarjeta' : '💵 Efectivo'}
         </div>
         {isDelivery && (
           <div className="flex gap-8 items-center mt-8" style={{ flexWrap: 'wrap' }}>

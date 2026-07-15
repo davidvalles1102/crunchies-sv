@@ -1,11 +1,15 @@
 'use client'
 
 import { createClient } from './supabase/client'
+import { clearActiveTenant, setActiveTenant } from './tenant'
 
 export type PinSession = {
   staff_id: string
   full_name: string
   role: 'kitchen' | 'delivery' | 'waiter'
+  tenant_id?: string | null
+  tenant_slug?: string | null
+  tenant_name?: string | null
 }
 
 const SESSION_KEY = 'crunchies_pin_session'
@@ -43,8 +47,18 @@ export async function loginWithPin(pin: string): Promise<{ session: PinSession |
     return { session: null, error: 'Error al establecer sesión' }
   }
 
-  const session: PinSession = { staff_id: json.staffId, full_name: json.fullName, role: json.role }
+  const session: PinSession = {
+    staff_id: json.staffId,
+    full_name: json.fullName,
+    role: json.role,
+    tenant_id: json.tenantId ?? null,
+    tenant_slug: json.tenantSlug ?? null,
+    tenant_name: json.tenantName ?? null,
+  }
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  if (session.tenant_id && session.tenant_slug && session.tenant_name) {
+    setActiveTenant({ tenant_id: session.tenant_id, slug: session.tenant_slug, name: session.tenant_name })
+  }
   return { session }
 }
 
@@ -52,6 +66,7 @@ export async function logoutPin(): Promise<void> {
   const supabase = createClient()
   await supabase.auth.signOut()
   sessionStorage.removeItem(SESSION_KEY)
+  clearActiveTenant()
 }
 
 export async function logEvent(

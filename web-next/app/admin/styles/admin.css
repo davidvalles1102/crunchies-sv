@@ -10,6 +10,15 @@
   background: var(--bg-0);
 }
 
+.admin-banner {
+  padding: 10px 20px;
+  font-size: .85rem;
+  font-weight: 600;
+  text-align: center;
+}
+.admin-banner--danger { background: var(--danger-dim); color: var(--danger); }
+.admin-banner--warning { background: var(--amber-dim); color: var(--amber); }
+
 .admin-main {
   flex: 1;
   margin-left: var(--sidebar-w);
@@ -498,14 +507,19 @@
 }
 @media (max-width: 768px) { .kitchen-layout { grid-template-columns: 1fr; } }
 
+/* Item de grid: sin min-width:0 no se achica mas alla del ancho
+   intrinseco de su contenido, aunque el track del grid sea mas angosto. */
+.kitchen-col { min-width: 0; }
+
 .kitchen-col__header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 14px;
+  min-width: 0;
 }
 
-.kitchen-orders { display: flex; flex-direction: column; gap: 14px; }
+.kitchen-orders { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
 .kitchen-empty {
   background: var(--bg-2);
@@ -536,9 +550,16 @@
   padding: 12px 16px;
   background: var(--bg-3);
   border-bottom: 1px solid var(--border);
+  gap: 10px;
 }
-.kitchen-card__table { font-family: var(--font-d); font-size: 1.4rem; font-weight: 400; letter-spacing: .06em; }
-.kitchen-card__timer { font-family: var(--font); font-size: .88rem; font-weight: 700; }
+/* min-width:0 + white-space:nowrap + ellipsis: sin esto un nombre de
+   cliente largo (delivery) desborda la tarjeta y la pagina entera en
+   movil — mismo bug que se encontro y corrigio en portal.css. */
+.kitchen-card__table {
+  font-family: var(--font-d); font-size: 1.4rem; font-weight: 400; letter-spacing: .06em;
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.kitchen-card__timer { font-family: var(--font); font-size: .88rem; font-weight: 700; flex-shrink: 0; }
 .timer--ok     { color: var(--orange); }
 .timer--warn   { color: var(--amber); }
 .timer--urgent { color: var(--danger); }

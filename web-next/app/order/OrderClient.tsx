@@ -27,10 +27,14 @@ export default function OrderClient({
   categories,
   items,
   zones,
+  taxRate = 0,
+  tenantId = null,
 }: {
   categories: Category[]
   items: OrderMenuItem[]
   zones: DeliveryZone[]
+  taxRate?: number
+  tenantId?: string | null
 }) {
   const supabase = createClient()
   const toast = useToast()
@@ -40,7 +44,7 @@ export default function OrderClient({
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
   const [orderType, setOrderType] = useState<'takeout' | 'delivery'>('takeout')
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'nequi'>('cash')
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash')
   const [selectedZoneId, setSelectedZoneId] = useState('')
 
   const [custName, setCustName] = useState('')
@@ -78,7 +82,7 @@ export default function OrderClient({
   }, [items, activeCat, search])
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
-  const { tax, total } = calcTotals(subtotal)
+  const { tax, total } = calcTotals(subtotal, taxRate)
   const grandTotal = total + deliveryFee
 
   const addToCart = (item: { id: string; name: string; price: number }, modifiers: Selection[] = []) => {
@@ -143,6 +147,7 @@ export default function OrderClient({
         subtotal,
         tax,
         total: grandTotal,
+        tenant_id: tenantId,
       })
       .select()
       .single()
@@ -159,13 +164,14 @@ export default function OrderClient({
       item_name: i.name,
       item_price: i.price,
       quantity: i.qty,
+      tenant_id: tenantId,
     }))
     const { data: insertedItems } = await supabase.from('order_items').insert(itemsPayload).select()
 
-    const modifierRows: { order_item_id: string; option_name: string; price_delta: number }[] = []
+    const modifierRows: { order_item_id: string; option_name: string; price_delta: number; tenant_id: string | null }[] = []
     ;(insertedItems || []).forEach((row, idx) => {
       (cart[idx].modifiers || []).forEach((m) => {
-        modifierRows.push({ order_item_id: row.id, option_name: m.option_name, price_delta: m.price_delta })
+        modifierRows.push({ order_item_id: row.id, option_name: m.option_name, price_delta: m.price_delta, tenant_id: tenantId })
       })
     })
     if (modifierRows.length) await supabase.from('order_item_modifiers').insert(modifierRows)
@@ -333,7 +339,7 @@ export default function OrderClient({
         <div className="cart-payment-selector">
           <div className="payment-type-tabs" style={{ display: 'none' }}>
             <button className={`payment-btn${paymentMethod === 'cash' ? ' active' : ''}`} onClick={() => setPaymentMethod('cash')}>💵 Efectivo</button>
-            <button className={`payment-btn${paymentMethod === 'nequi' ? ' active' : ''}`} onClick={() => setPaymentMethod('nequi')}>📱 Nequi</button>
+            <button className={`payment-btn${paymentMethod === 'card' ? ' active' : ''}`} onClick={() => setPaymentMethod('card')}>💳 Tarjeta</button>
           </div>
           {paymentMethod === 'cash' ? (
             <div className="cart-payment-cash">
@@ -341,16 +347,9 @@ export default function OrderClient({
               <span>{orderType === 'delivery' ? 'Pago en efectivo al recibir tu pedido' : 'Pago en efectivo al recoger tu orden'}</span>
             </div>
           ) : (
-            <div className="nequi-info">
-              <div className="nequi-header">
-                <span style={{ fontSize: '1.3rem' }}>📱</span>
-                <strong className="neon-green">Transferir por Nequi</strong>
-              </div>
-              <div className="nequi-number">+503 7311 8276</div>
-              <p className="text-xs text-muted mt-6">
-                Transfiere el total al número de arriba antes de enviar tu pedido.
-                El restaurante verificará el pago.
-              </p>
+            <div className="cart-payment-cash">
+              <span>💳</span>
+              <span>{orderType === 'delivery' ? 'Pago con tarjeta al recibir tu pedido' : 'Pago con tarjeta al recoger tu orden'}</span>
             </div>
           )}
         </div>

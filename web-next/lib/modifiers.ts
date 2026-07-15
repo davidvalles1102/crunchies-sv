@@ -1,4 +1,3 @@
-import { createClient } from './supabase/client'
 import type { ModifierGroup } from './types'
 
 export type Selection = { option_name: string; price_delta: number }
@@ -8,6 +7,7 @@ const groupsCache: Record<string, ModifierGroup[]> = {}
 export async function getItemModifierGroups(menuItemId: string): Promise<ModifierGroup[]> {
   if (groupsCache[menuItemId]) return groupsCache[menuItemId]
 
+  const { createClient } = await import('./supabase/client')
   const supabase = createClient()
   const { data, error } = await supabase
     .from('menu_item_modifier_groups')

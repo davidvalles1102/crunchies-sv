@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
-import { getPinSession, logoutPin, logEvent, type PinSession } from '@/lib/pin-auth'
+import { logoutPin, logEvent, type PinSession } from '@/lib/pin-auth'
+import { usePinSession } from '@/lib/usePinSession'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
+import { useWakeLock } from '@/lib/useWakeLock'
 import PinPad from '../PinPad'
 
 type DeliveryItem = { id: string; item_name: string; quantity: number; order_item_modifiers?: { option_name: string; price_delta: number }[] }
@@ -28,37 +31,12 @@ type StaffDriver = { id: string; full_name: string; isBusy: boolean }
 
 export default function DeliveryPortalClient() {
   const supabase = createClient()
-  const [session, setSession] = useState<PinSession | null>(null)
+  const [session, setSession] = usePinSession('delivery')
   const [orders, setOrders] = useState<Order[]>([])
   const [staffDrivers, setStaffDrivers] = useState<StaffDriver[]>([])
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    const s = getPinSession()
-    if (s?.role === 'delivery') setSession(s)
-  }, [])
-
-  useEffect(() => {
-    if (!session) return undefined
-
-    async function init() {
-      await Promise.all([load(), loadStaffStatus()])
-    }
-    init()
-
-    const channel = supabase
-      .channel('delivery-portal-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        load()
-        loadStaffStatus()
-      })
-      .subscribe()
-
-    return () => { channel.unsubscribe() }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session])
-
-  async function load() {
+  const load = useCallback(async () => {
     const now = Date.now()
     const today = new Date(now).toISOString().split('T')[0]
     const { data } = await supabase
@@ -78,9 +56,9 @@ export default function DeliveryPortalClient() {
         elapsedReady: Math.floor((now - new Date(o.created_at).getTime()) / 60000),
       }))
     )
-  }
+  }, [supabase])
 
-  async function loadStaffStatus() {
+  const loadStaffStatus = useCallback(async () => {
     const [{ data: staff }, { data: active }] = await Promise.all([
       supabase.from('staff_members').select('id, full_name').eq('role', 'delivery').eq('active', true),
       supabase.from('orders').select('pickup_staff_id').eq('delivery_status', 'on_the_way').not('pickup_staff_id', 'is', null),
@@ -93,35 +71,58 @@ export default function DeliveryPortalClient() {
         isBusy: busyIds.has(s.id),
       }))
     )
-  }
+  }, [supabase])
 
-  async function markReceived(order: Order) {
-    if (order.pickup_staff_id && order.pickup_staff_id !== session!.staff_id) return
+  const refresh = useCallback(async () => {
+    await Promise.all([load(), loadStaffStatus()])
+  }, [load, loadStaffStatus])
+
+  const markReceived = useCallback(async (order: Order) => {
+    if (order.pickup_staff_id && order.pickup_staff_id !== session?.staff_id) return
     setLoading(true)
     await supabase
       .from('orders')
       .update({
         delivery_status: 'on_the_way',
-        status: 'delivered',        // quita la orden de la vista de cocina
-        pickup_staff_id: session!.staff_id,
+        status: 'delivered',
+        pickup_staff_id: session?.staff_id,
         updated_at: new Date().toISOString(),
       })
       .eq('id', order.id)
-    logEvent(order.id, 'delivery_received', session!.staff_id, { delivery_name: order.delivery_name })
-    await Promise.all([load(), loadStaffStatus()])
+    if (session) logEvent(order.id, 'delivery_received', session.staff_id, { delivery_name: order.delivery_name })
+    await refresh()
     setLoading(false)
-  }
+  }, [refresh, session, supabase])
 
-  async function markDelivered(order: Order) {
+  const markDelivered = useCallback(async (order: Order) => {
     setLoading(true)
     await supabase
       .from('orders')
       .update({ delivery_status: 'delivered', status: 'delivered', updated_at: new Date().toISOString() })
       .eq('id', order.id)
-    logEvent(order.id, 'delivery_delivered', session!.staff_id, { delivery_name: order.delivery_name, total: order.total })
-    await Promise.all([load(), loadStaffStatus()])
+    if (session) logEvent(order.id, 'delivery_delivered', session.staff_id, { delivery_name: order.delivery_name, total: order.total })
+    await refresh()
     setLoading(false)
-  }
+  }, [refresh, session, supabase])
+
+  useEffect(() => {
+    if (!session) return undefined
+    let alive = true
+    ;(async () => {
+      await refresh()
+      if (!alive) return
+    })()
+
+    const channel = supabase
+      .channel('delivery-portal-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, refresh)
+      .subscribe()
+
+    return () => { alive = false; channel.unsubscribe() }
+  }, [refresh, session, supabase])
+
+  useLiveRefetch(() => { if (session) refresh() }, { pollMs: 15000 })
+  useWakeLock(!!session)
 
   if (!session) {
     return <PinPad portalName="Delivery" icon="🛵" expectedRole="delivery" onSuccess={setSession} />
@@ -144,7 +145,6 @@ export default function DeliveryPortalClient() {
         </div>
       </header>
 
-      {/* Panel de disponibilidad de drivers */}
       {staffDrivers.length > 1 && (
         <div style={{ display: 'flex', gap: 8, padding: '8px 16px', background: 'var(--bg-2)', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
           {staffDrivers.map((d) => (
@@ -173,7 +173,6 @@ export default function DeliveryPortalClient() {
           </div>
         ) : (
           <>
-            {/* Mis pedidos en ruta */}
             {myOrders.length > 0 && (
               <div>
                 <div style={{ padding: '8px 16px', fontSize: '.75rem', fontWeight: 700, color: 'var(--orange)', letterSpacing: '.05em', textTransform: 'uppercase' }}>
@@ -183,7 +182,6 @@ export default function DeliveryPortalClient() {
               </div>
             )}
 
-            {/* Disponibles para tomar */}
             {available.length > 0 && (
               <div>
                 <div style={{ padding: '8px 16px', fontSize: '.75rem', fontWeight: 700, color: 'var(--amber)', letterSpacing: '.05em', textTransform: 'uppercase' }}>
@@ -193,7 +191,6 @@ export default function DeliveryPortalClient() {
               </div>
             )}
 
-            {/* En ruta por otros */}
             {othersOrders.length > 0 && (
               <div>
                 <div style={{ padding: '8px 16px', fontSize: '.75rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '.05em', textTransform: 'uppercase' }}>
@@ -236,22 +233,18 @@ function DeliveryCard({ order, session, loading, onReceive, onDeliver }: {
         <span className="text-xs text-muted">{fmt.time(order.created_at)}</span>
       </div>
 
-      {order.delivery_address && (
-        <div className="delivery-portal-card__address">📍 {order.delivery_address}</div>
-      )}
+      {order.delivery_address && <div className="delivery-portal-card__address">📍 {order.delivery_address}</div>}
 
       <div className="delivery-portal-card__customer">
         👤 {order.delivery_name || '—'} &nbsp;·&nbsp; 📞 {order.delivery_phone || '—'}
-        <span style={{ marginLeft: 10, color: order.payment_method === 'nequi' ? 'var(--orange)' : 'var(--amber)' }}>
-          {order.payment_method === 'nequi' ? '📱 Nequi' : '💵 Efectivo'}
+        <span style={{ marginLeft: 10, color: order.payment_method === 'card' ? 'var(--orange)' : 'var(--amber)' }}>
+          {order.payment_method === 'card' ? '💳 Tarjeta' : '💵 Efectivo'}
         </span>
       </div>
 
       <div style={{ display: 'flex', gap: 16, fontSize: '.82rem', padding: '6px 0', borderTop: '1px solid var(--border)' }}>
         <span className="text-muted">Platillos: <strong style={{ color: 'var(--text)' }}>{fmt.currency(order.subtotal)}</strong></span>
-        {order.delivery_fee > 0 && (
-          <span className="text-muted">Delivery: <strong style={{ color: 'var(--amber)' }}>{fmt.currency(order.delivery_fee)}</strong></span>
-        )}
+        {order.delivery_fee > 0 && <span className="text-muted">Delivery: <strong style={{ color: 'var(--amber)' }}>{fmt.currency(order.delivery_fee)}</strong></span>}
         <span className="text-muted">Total: <strong style={{ color: 'var(--orange)' }}>{fmt.currency(order.total)}</strong></span>
       </div>
 
@@ -269,20 +262,12 @@ function DeliveryCard({ order, session, loading, onReceive, onDeliver }: {
 
       <div className="delivery-portal-card__actions">
         {!isOnTheWay && !isOthers && (
-          <button className="btn btn-primary btn-full" disabled={loading} onClick={() => onReceive(order)}>
-            🛵 Recibí el pedido — en camino
-          </button>
+          <button className="btn btn-primary btn-full" disabled={loading} onClick={() => onReceive(order)}>🛵 Recibí el pedido — en camino</button>
         )}
         {isOnTheWay && isMine && (
-          <button className="btn btn-amber btn-full" disabled={loading} onClick={() => onDeliver(order)}>
-            📦 Entregué al cliente
-          </button>
+          <button className="btn btn-amber btn-full" disabled={loading} onClick={() => onDeliver(order)}>📦 Entregué al cliente</button>
         )}
-        {isOthers && (
-          <div style={{ textAlign: 'center', fontSize: '.82rem', color: 'var(--text-muted)', padding: '6px 0' }}>
-            Tomado por otro repartidor
-          </div>
-        )}
+        {isOthers && <div style={{ textAlign: 'center', fontSize: '.82rem', color: 'var(--text-muted)', padding: '6px 0' }}>Tomado por otro repartidor</div>}
       </div>
     </div>
   )

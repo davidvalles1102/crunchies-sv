@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRequireRole } from '../../AdminContext'
+import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 import type { Category, ModifierGroup } from '@/lib/types'
@@ -13,6 +13,7 @@ type MgmtMenuItem = {
   name: string
   description: string | null
   price: number
+  cost: number
   image_url: string | null
   available: boolean
   is_featured: boolean
@@ -24,15 +25,17 @@ type ItemForm = {
   category_id: string
   description: string
   price: string
+  cost: string
   image_url: string
   available: boolean
   is_featured: boolean
 }
 
-const EMPTY_ITEM_FORM: ItemForm = { name: '', category_id: '', description: '', price: '', image_url: '', available: true, is_featured: false }
+const EMPTY_ITEM_FORM: ItemForm = { name: '', category_id: '', description: '', price: '', cost: '', image_url: '', available: true, is_featured: false }
 
 export default function MenuManagementClient() {
   useRequireRole(['admin'])
+  const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
 
@@ -91,6 +94,7 @@ export default function MenuManagementClient() {
       category_id: item.category_id ?? '',
       description: item.description ?? '',
       price: String(item.price ?? ''),
+      cost: String(item.cost ?? ''),
       image_url: item.image_url ?? '',
       available: item.available,
       is_featured: item.is_featured,
@@ -118,15 +122,18 @@ export default function MenuManagementClient() {
   const saveItem = async () => {
     setItemFormError('')
     const price = parseFloat(itemForm.price)
+    const cost = parseFloat(itemForm.cost) || 0
     const payload = {
       name: itemForm.name.trim(),
       category_id: itemForm.category_id || null,
       description: itemForm.description.trim() || null,
       price,
+      cost,
       image_url: itemForm.image_url.trim() || null,
       available: itemForm.available,
       is_featured: itemForm.is_featured,
       updated_at: new Date().toISOString(),
+      tenant_id: tenant.tenant_id,
     }
 
     if (!payload.name || Number.isNaN(price)) {
@@ -149,7 +156,7 @@ export default function MenuManagementClient() {
     await supabase.from('menu_item_modifier_groups').delete().eq('menu_item_id', itemId)
     if (selectedModGroupIds.size) {
       await supabase.from('menu_item_modifier_groups').insert(
-        [...selectedModGroupIds].map((gid) => ({ menu_item_id: itemId, modifier_group_id: gid }))
+        [...selectedModGroupIds].map((gid) => ({ menu_item_id: itemId, modifier_group_id: gid, tenant_id: tenant.tenant_id }))
       )
     }
 
@@ -178,7 +185,7 @@ export default function MenuManagementClient() {
     const name = newCatName.trim()
     const icon = newCatIcon.trim() || '🍽️'
     if (!name) return
-    const { error } = await supabase.from('categories').insert({ name, icon, display_order: categories.length + 1 })
+    const { error } = await supabase.from('categories').insert({ name, icon, display_order: categories.length + 1, tenant_id: tenant.tenant_id })
     if (error) { toast('Error', 'error'); return }
     toast('Categoría agregada')
     setNewCatName('')
@@ -204,6 +211,7 @@ export default function MenuManagementClient() {
       selection_type: newModGroupType,
       required: newModGroupRequired,
       max_select: newModGroupType === 'multiple' && newModGroupMax ? parseInt(newModGroupMax) : null,
+      tenant_id: tenant.tenant_id,
     })
     if (error) { toast('Error al crear grupo', 'error'); return }
 
@@ -224,7 +232,7 @@ export default function MenuManagementClient() {
     const delta = parseFloat(String(data.get('delta') ?? '')) || 0
     if (!name) return
 
-    const { error } = await supabase.from('modifier_options').insert({ group_id: groupId, name, price_delta: delta })
+    const { error } = await supabase.from('modifier_options').insert({ group_id: groupId, name, price_delta: delta, tenant_id: tenant.tenant_id })
     if (error) { toast('Error al agregar opción', 'error'); return }
     toast('Opción agregada')
     form.reset()
@@ -280,7 +288,14 @@ export default function MenuManagementClient() {
                 <div className="mgmt-card__body">
                   <div className="mgmt-card__name">{item.name}{item.is_featured ? ' ⭐' : ''}</div>
                   <div className="mgmt-card__cat">{item.categories?.name ?? '—'}</div>
-                  <div className="mgmt-card__price">${Number(item.price).toFixed(2)}</div>
+                  <div className="mgmt-card__price">
+                    ${Number(item.price).toFixed(2)}
+                    {item.cost > 0 && (
+                      <span className="text-xs text-muted" style={{ marginLeft: 8 }}>
+                        costo ${Number(item.cost).toFixed(2)} · margen {(((item.price - item.cost) / item.price) * 100).toFixed(0)}%
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="mgmt-card__actions">
                   <button className="btn btn-outline btn-sm" onClick={() => openItemModal(item)}>✏️ Editar</button>
@@ -328,6 +343,13 @@ export default function MenuManagementClient() {
                   <label className="form-label">Precio *</label>
                   <input type="number" className="form-control" step="0.01" min="0" required value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} />
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Costo (insumos)</label>
+                  <input type="number" className="form-control" step="0.01" min="0" placeholder="0.00" value={itemForm.cost} onChange={(e) => setItemForm({ ...itemForm, cost: e.target.value })} />
+                  <div className="text-xs text-muted mt-4">Usado en Finanzas para calcular la ganancia real por platillo.</div>
+                </div>
+              </div>
+              <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">URL de Imagen</label>
                   <input type="url" className="form-control" placeholder="https://..." value={itemForm.image_url} onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })} />

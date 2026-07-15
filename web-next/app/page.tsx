@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { resolveRootTenantId } from '@/lib/tenant'
 import NavBar from './components/NavBar'
 import MenuSection from './components/MenuSection'
 import type { Category, MenuItem } from '@/lib/types'
@@ -10,11 +11,16 @@ export const revalidate = 0
 
 export default async function HomePage() {
   const supabase = await createClient()
+  const tenantId = await resolveRootTenantId(supabase)
 
-  const [{ data: categories }, { data: items }] = await Promise.all([
-    supabase.from('categories').select('*').eq('active', true).order('display_order'),
-    supabase.from('menu_items').select('*, categories(name)').eq('available', true),
-  ])
+  let categoriesQuery = supabase.from('categories').select('*').eq('active', true).order('display_order')
+  let itemsQuery = supabase.from('menu_items').select('*, categories(name)').eq('available', true)
+  if (tenantId) {
+    categoriesQuery = categoriesQuery.eq('tenant_id', tenantId)
+    itemsQuery = itemsQuery.eq('tenant_id', tenantId)
+  }
+
+  const [{ data: categories }, { data: items }] = await Promise.all([categoriesQuery, itemsQuery])
 
   return (
     <>

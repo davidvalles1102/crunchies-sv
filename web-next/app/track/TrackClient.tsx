@@ -12,7 +12,7 @@ type TrackOrder = {
   id: string
   order_type: 'delivery' | 'takeout'
   delivery_status: string | null
-  payment_method: 'cash' | 'nequi'
+  payment_method: 'cash' | 'card'
   total: number
   driver_id: string | null
   order_items: { id: string; quantity: number; item_name: string; item_price: number }[]
@@ -114,7 +114,7 @@ export default function TrackClient() {
   const status = order.delivery_status || 'pending'
   const currentStep = steps.find((s) => s.key === status) ?? steps[0]
   const currentIdx = STATUS_ORDER.indexOf(status)
-  const isNequi = order.payment_method === 'nequi'
+  const isCard = order.payment_method === 'card'
 
   const bannerBorder = status === 'delivered' ? 'var(--orange)' : status === 'on_the_way' ? 'var(--amber)' : 'var(--border-lit)'
   const bannerBg = status === 'delivered' ? 'rgba(0,220,130,.08)' : status === 'on_the_way' ? 'var(--amber-alpha)' : 'var(--bg-2)'
@@ -186,11 +186,10 @@ export default function TrackClient() {
 
         <div className="card">
           <h4 className="mb-12">Pago</h4>
-          {isNequi ? (
+          {isCard ? (
             <div>
-              <div style={{ color: 'var(--orange)', fontWeight: 600, marginBottom: 6 }}>📱 Nequi</div>
-              <div className={styles['track-nequi-number']}>+503 7311 8276</div>
-              <p className="text-xs text-muted">Recuerda transferir {fmt.currency(order.total)} si aún no lo has hecho.</p>
+              <div style={{ color: 'var(--orange)', fontWeight: 600, marginBottom: 6 }}>💳 Tarjeta</div>
+              <p className="text-sm text-muted">{isDelivery ? 'Pago al recibir tu pedido.' : 'Pago al recoger en el restaurante.'}</p>
             </div>
           ) : (
             <div>

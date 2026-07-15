@@ -10,7 +10,7 @@ import {
 Chart.register(BarController, LineController, CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Filler)
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
-import { useRequireRole } from '../../AdminContext'
+import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 import type { Expense, ExpenseCategory } from '@/lib/types'
@@ -59,6 +59,7 @@ const emptyForm = {
 
 export default function ExpenseTrackerClient() {
   useRequireRole(['admin'])
+  const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
 
@@ -182,7 +183,7 @@ export default function ExpenseTrackerClient() {
       ;({ error } = await supabase.from('expenses').update(payload).eq('id', form.id))
     } else {
       const { data: { user } } = await supabase.auth.getUser()
-      ;({ error } = await supabase.from('expenses').insert({ ...payload, registered_by: user?.id }))
+      ;({ error } = await supabase.from('expenses').insert({ ...payload, registered_by: user?.id, tenant_id: tenant.tenant_id }))
     }
 
     setSaving(false)

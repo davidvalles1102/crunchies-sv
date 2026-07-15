@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { resolveRootTenantId } from '@/lib/tenant'
 
 // ponytail: in-memory rate limiter; resets on redeploy — use Upstash Redis if brute-force becomes a real concern
 const ipAttempts = new Map<string, { count: number; resetAt: number }>()
@@ -23,6 +24,9 @@ const ROLE_CREDENTIALS: Record<string, { email: string; password: string }> = {
   delivery: { email: process.env.PORTAL_DELIVERY_EMAIL!, password: process.env.PORTAL_DELIVERY_PASSWORD! },
   waiter:   { email: process.env.PORTAL_WAITER_EMAIL!,   password: process.env.PORTAL_WAITER_PASSWORD! },
 }
+
+const ROOT_TENANT_SLUG = 'crunchies-root'
+const ROOT_TENANT_NAME = 'Crunchies Mi Rancho'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
@@ -77,10 +81,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Error de autenticación del servidor' }, { status: 500 })
   }
 
+  // El uuid real de tenants.id — null si tenant_foundation.sql aun no corrio
+  // en este entorno (pin-auth.ts trata un tenantId nulo como "sin tenant").
+  const tenantId = await resolveRootTenantId(supabase)
+
   return NextResponse.json({
     staffId:      s.staff_id,
     fullName:     s.full_name,
     role:         s.role,
+    tenantId,
+    tenantSlug:   tenantId ? ROOT_TENANT_SLUG : null,
+    tenantName:   tenantId ? ROOT_TENANT_NAME : null,
     accessToken:  authData.session.access_token,
     refreshToken: authData.session.refresh_token,
   })

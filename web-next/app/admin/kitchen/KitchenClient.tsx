@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -9,6 +9,9 @@ import { modifiersSummary } from '@/lib/modifiers'
 import { fmt } from '@/lib/format'
 import type { KitchenOrder } from '@/lib/types'
 import { useToast } from '../../components/ToastProvider'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
+import { useWakeLock } from '@/lib/useWakeLock'
+import { playNewOrderBeep } from '@/lib/notifySound'
 import LiveClock from '../components/LiveClock'
 
 type Action = 'ready' | 'delivered' | 'back'
@@ -26,6 +29,7 @@ export default function KitchenClient() {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [startTimes, setStartTimes] = useState<Record<string, number>>({})
   const [nowTick, setNowTick] = useState(0)
+  const knownOrderIds = useRef<Set<string> | null>(null)
 
   // Kitchen display — no role gate, but requires authenticated staff
   useEffect(() => {
@@ -58,6 +62,13 @@ export default function KitchenClient() {
       })
       return changed ? next : prev
     })
+
+    const currentIds = new Set(all.filter((o) => o.status === 'in_kitchen').map((o) => o.id))
+    if (knownOrderIds.current) {
+      const isNew = [...currentIds].some((id) => !knownOrderIds.current!.has(id))
+      if (isNew) playNewOrderBeep()
+    }
+    knownOrderIds.current = currentIds
 
     setInKitchen(all.filter((o) => o.status === 'in_kitchen'))
     setReadyOrders(all.filter((o) => o.status === 'ready'))
@@ -118,6 +129,9 @@ export default function KitchenClient() {
     return () => { channel.unsubscribe() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready])
+
+  useLiveRefetch(() => { if (ready) { loadOrders(); loadHistory() } }, { pollMs: 15000 })
+  useWakeLock(ready)
 
   useEffect(() => {
     if (!ready) return undefined

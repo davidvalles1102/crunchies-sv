@@ -24,7 +24,7 @@ export default function SuccessModal({
   onClose: () => void
 }) {
   const isDelivery = order.order_type === 'delivery'
-  const isNequi = order.payment_method === 'nequi'
+  const isCard = order.payment_method === 'card'
 
   return (
     <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
@@ -49,18 +49,9 @@ export default function SuccessModal({
                 <span className="text-muted">Total</span>
                 <span className="neon-amber" style={{ fontWeight: 700, fontSize: '1.1rem' }}>{fmt.currency(total)}</span>
               </div>
-              {isNequi ? (
-                <div style={{ background: 'rgba(0,220,130,.08)', border: '1px solid var(--orange-dim)', borderRadius: 'var(--r-md)', padding: '10px 14px', marginTop: 8 }}>
-                  <div style={{ fontWeight: 600, color: 'var(--orange)', marginBottom: 4 }}>📱 Pago por Nequi</div>
-                  <div style={{ fontSize: '.82rem', color: 'var(--text-secondary)' }}>
-                    Transfiere <strong>{fmt.currency(total)}</strong> al número <strong>+503 7311 8276</strong> si aún no lo has hecho.
-                  </div>
-                </div>
-              ) : (
-                <div style={{ color: 'var(--text-muted)', fontSize: '.78rem', marginTop: 4 }}>
-                  💵 Pago en efectivo {isDelivery ? 'al recibir' : 'al recoger'}
-                </div>
-              )}
+              <div style={{ color: 'var(--text-muted)', fontSize: '.78rem', marginTop: 4 }}>
+                {isCard ? '💳 Pago con tarjeta' : '💵 Pago en efectivo'} {isDelivery ? 'al recibir' : 'al recoger'}
+              </div>
             </div>
           </div>
 

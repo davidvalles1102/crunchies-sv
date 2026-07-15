@@ -9,6 +9,7 @@ import type { Category, OrderMenuItem, ModifierGroup, RestaurantTable } from '@/
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import ModifierModal from '../../../order/ModifierModal'
 import { buildReceiptPDF } from './receipt-pdf'
 import type { TicketItem, CurrentOrder, ReceiptData } from './types'
@@ -53,7 +54,7 @@ function mapItems(rawItems: RawOrderItem[] | null): TicketItem[] {
 
 export default function OrdersClient() {
   useRequireRole(['admin', 'waiter'])
-  const { profile } = useAdmin()
+  const { profile, tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
 
@@ -75,7 +76,7 @@ export default function OrdersClient() {
   const [mobSheetOpen, setMobSheetOpen] = useState(false)
 
   const [payModalOpen, setPayModalOpen] = useState(false)
-  const [selectedPayMethod, setSelectedPayMethod] = useState<'cash' | 'card' | 'transfer'>('cash')
+  const [selectedPayMethod, setSelectedPayMethod] = useState<'cash' | 'card' | 'transfer' | 'credit'>('cash')
   const [cashReceived, setCashReceived] = useState('')
   const [payCustomerSearch, setPayCustomerSearch] = useState('')
   const [customerSuggestions, setCustomerSuggestions] = useState<{ id: string; full_name: string; loyalty_points: number }[]>([])
@@ -88,6 +89,7 @@ export default function OrdersClient() {
   const [waModalOpen, setWaModalOpen] = useState(false)
   const [waPhone, setWaPhone] = useState('')
   const [deliveryFee, setDeliveryFee] = useState(0)
+  const [taxRate, setTaxRate] = useState(0)
 
   const selectedTable = tables.find((t) => t.id === selectedTableId) ?? null
 
@@ -98,16 +100,19 @@ export default function OrdersClient() {
 
   useEffect(() => {
     ;(async () => {
-      const [{ data: tablesData }, [{ data: cats }, { data: items }]] = await Promise.all([
+      const [{ data: tablesData }, [{ data: cats }, { data: items }], { data: settings }] = await Promise.all([
         supabase.from('restaurant_tables').select('*').order('number'),
         Promise.all([
           supabase.from('categories').select('*').eq('active', true).order('display_order'),
           supabase.from('menu_items').select('*').eq('available', true),
         ]),
+        supabase.from('tenant_settings').select('tax_enabled, tax_rate').eq('tenant_id', tenant.tenant_id)
+          .maybeSingle<{ tax_enabled: boolean; tax_rate: number }>(),
       ])
       setTables((tablesData as RestaurantTable[]) || [])
       setCategories((cats as Category[]) || [])
       setMenuItems((items as OrderMenuItem[]) || [])
+      setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -131,6 +136,21 @@ export default function OrdersClient() {
     return () => { channel.unsubscribe() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrder?.id])
+
+  // Respaldo si el socket de Realtime muere en segundo plano (movil): sin
+  // esto, el mesero nunca se entera de que la orden esta lista si el
+  // evento postgres_changes de arriba no llego.
+  useLiveRefetch(async () => {
+    const orderId = currentOrder?.id
+    if (!orderId) return
+    const { data } = await supabase.from('orders').select('status, delivery_status').eq('id', orderId).maybeSingle<{ status: string; delivery_status: string | null }>()
+    if (!data) return
+    setCurrentOrder((prev) => {
+      if (!prev || prev.id !== orderId || prev.status === data.status) return prev
+      if (data.status === 'ready') toast('✅ ¡Orden lista! Llevar a la mesa', 'success')
+      return { ...prev, status: data.status, delivery_status: data.delivery_status ?? prev.delivery_status }
+    })
+  }, { pollMs: 15000 })
 
   const switchOrderType = (type: OrderType) => {
     setOrderType(type)
@@ -190,6 +210,7 @@ export default function OrdersClient() {
       delivery_status: orderType !== 'dine_in' ? 'pending' : null,
       delivery_fee: orderType === 'delivery' ? deliveryFee : 0,
       status: 'open',
+      tenant_id: tenant.tenant_id,
     }).select().single()
 
     if (error) { toast('Error al crear orden', 'error'); return }
@@ -221,11 +242,12 @@ export default function OrdersClient() {
         item_name: item.name,
         item_price: unitPrice,
         quantity: 1,
+        tenant_id: tenant.tenant_id,
       }).select().single()
 
       if (modifiers.length && data) {
         await supabase.from('order_item_modifiers').insert(
-          modifiers.map((m) => ({ order_item_id: data.id, option_name: m.option_name, price_delta: m.price_delta }))
+          modifiers.map((m) => ({ order_item_id: data.id, option_name: m.option_name, price_delta: m.price_delta, tenant_id: tenant.tenant_id }))
         )
       }
 
@@ -233,7 +255,7 @@ export default function OrdersClient() {
     }
 
     const subtotal = newItems.reduce((s, i) => s + i.price * i.qty, 0)
-    const { tax, total: itemsTotal } = calcTotals(subtotal)
+    const { tax, total: itemsTotal } = calcTotals(subtotal, taxRate)
     const fee = orderType === 'delivery' ? deliveryFee : 0
     const total = itemsTotal + fee
     const reopenKitchen = currentOrder.status === 'ready' || currentOrder.status === 'delivered'
@@ -265,7 +287,7 @@ export default function OrdersClient() {
     }
 
     const subtotal = newItems.reduce((s, i) => s + i.price * i.qty, 0)
-    const { tax, total: itemsTotal } = calcTotals(subtotal)
+    const { tax, total: itemsTotal } = calcTotals(subtotal, taxRate)
     const fee = orderType === 'delivery' ? deliveryFee : 0
     const total = itemsTotal + fee
     const reopenKitchen = delta > 0 && (currentOrder.status === 'ready' || currentOrder.status === 'delivered')
@@ -381,6 +403,10 @@ export default function OrdersClient() {
 
   const processPayment = async () => {
     if (!currentOrder) return
+    if (selectedPayMethod === 'credit' && !linkedCustomer) {
+      toast('Vincula un cliente para vender al fiado', 'warning')
+      return
+    }
     setPaying(true)
 
     const chargeTotal = effectiveTotal()
@@ -390,16 +416,52 @@ export default function OrdersClient() {
     const redeemedPts = pointsToRedeem
     const redeemedValue = redeemedPts * POINT_VALUE
 
-    const { error: payErr } = await supabase.from('payments').insert({
+    // Vincula el pago a la caja abierta si existe (tabla/columna nuevas de
+    // cash_sessions.sql). Si esa migration todavia no corrio en este entorno,
+    // la query falla silenciosamente y se omite la clave — no rompe el cobro.
+    let cashSessionId: string | null = null
+    if (selectedPayMethod === 'cash') {
+      const { data: openSession } = await supabase
+        .from('cash_sessions')
+        .select('id')
+        .eq('tenant_id', tenant.tenant_id)
+        .eq('status', 'open')
+        .maybeSingle<{ id: string }>()
+      cashSessionId = openSession?.id ?? null
+    }
+
+    const paymentPayload: Record<string, unknown> = {
       order_id: currentOrder.id,
       processed_by: profile.id,
       amount: chargeTotal,
       method: selectedPayMethod,
       receipt_number: receipt,
       change_amount: change,
-    })
+      tenant_id: tenant.tenant_id,
+    }
+    if (cashSessionId) paymentPayload.cash_session_id = cashSessionId
+
+    const { data: insertedPayment, error: payErr } = await supabase.from('payments').insert(paymentPayload).select('id').single()
 
     if (payErr) { toast('Error al procesar pago', 'error'); setPaying(false); return }
+
+    if (selectedPayMethod === 'credit' && linkedCustomer) {
+      const { error: creditErr } = await supabase.rpc('charge_customer_credit', {
+        p_tenant_id: tenant.tenant_id,
+        p_customer_id: linkedCustomer.id,
+        p_amount: chargeTotal,
+        p_order_id: currentOrder.id,
+      })
+      if (creditErr) {
+        await supabase.from('payments').delete().eq('id', insertedPayment.id)
+        const msg = creditErr.message.includes('credit_limit_exceeded')
+          ? 'Este cliente ya alcanzó su límite de crédito'
+          : 'Error al registrar el fiado'
+        toast(msg, 'error')
+        setPaying(false)
+        return
+      }
+    }
 
     await supabase.from('orders').update({ status: 'paid' }).eq('id', currentOrder.id)
     if (orderType === 'dine_in' && selectedTable) {
@@ -411,12 +473,12 @@ export default function OrdersClient() {
     if (linkedCustomer) {
       let newBalance = linkedCustomer.points
       if (redeemedPts > 0) {
-        await supabase.from('loyalty_transactions').insert({ customer_id: linkedCustomer.id, order_id: currentOrder.id, points: redeemedPts, type: 'redeemed' })
+        await supabase.from('loyalty_transactions').insert({ customer_id: linkedCustomer.id, order_id: currentOrder.id, points: redeemedPts, type: 'redeemed', tenant_id: tenant.tenant_id })
         newBalance -= redeemedPts
       }
       earnedPts = Math.floor(chargeTotal)
       if (earnedPts > 0) {
-        await supabase.from('loyalty_transactions').insert({ customer_id: linkedCustomer.id, order_id: currentOrder.id, points: earnedPts, type: 'earned' })
+        await supabase.from('loyalty_transactions').insert({ customer_id: linkedCustomer.id, order_id: currentOrder.id, points: earnedPts, type: 'earned', tenant_id: tenant.tenant_id })
         newBalance += earnedPts
       }
       await supabase.from('profiles').update({ loyalty_points: Math.max(0, newBalance) }).eq('id', linkedCustomer.id)
@@ -646,8 +708,14 @@ export default function OrdersClient() {
                 <button className={`pay-method${selectedPayMethod === 'cash' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('cash')}>💵 Efectivo</button>
                 <button className={`pay-method${selectedPayMethod === 'card' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('card')}>💳 Tarjeta</button>
                 <button className={`pay-method${selectedPayMethod === 'transfer' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('transfer')}>📲 Transferencia</button>
+                <button className={`pay-method${selectedPayMethod === 'credit' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('credit')}>🧾 Fiado</button>
               </div>
             </div>
+            {selectedPayMethod === 'credit' && !linkedCustomer && (
+              <div className="text-xs" style={{ color: 'var(--danger)', marginTop: 8 }}>
+                Vincula un cliente abajo antes de vender al fiado.
+              </div>
+            )}
             {selectedPayMethod === 'cash' && (
               <div>
                 <div className="form-group mt-16">
@@ -686,7 +754,7 @@ export default function OrdersClient() {
           </div>
           <div className="modal-footer">
             <button className="btn btn-outline" onClick={() => setPayModalOpen(false)}>Cancelar</button>
-            <button className="btn btn-primary" disabled={paying} onClick={processPayment}>✓ Confirmar Pago</button>
+            <button className="btn btn-primary" disabled={paying || (selectedPayMethod === 'credit' && !linkedCustomer)} onClick={processPayment}>✓ Confirmar Pago</button>
           </div>
         </div>
       </div>

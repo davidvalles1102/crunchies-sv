@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
-import { useRequireRole } from '../../AdminContext'
+import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 
@@ -41,6 +41,7 @@ type Filter = 'all' | 'vip' | 'inactive' | 'new'
 
 export default function CustomersClient() {
   useRequireRole(['admin'])
+  const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
 
@@ -161,7 +162,7 @@ export default function CustomersClient() {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { error } = await supabase.from('customer_notes').insert({ customer_id: selected.id, note, created_by: user.id })
+    const { error } = await supabase.from('customer_notes').insert({ customer_id: selected.id, note, created_by: user.id, tenant_id: tenant.tenant_id })
     if (error) { toast('Error al guardar la nota', 'error'); return }
 
     toast('Nota agregada')
@@ -183,6 +184,7 @@ export default function CustomersClient() {
       customer_id: selected.id,
       points: Math.abs(pts),
       type: pts > 0 ? 'earned' : 'redeemed',
+      tenant_id: tenant.tenant_id,
     })
 
     toast(`Puntos ${pts > 0 ? 'agregados' : 'descontados'} correctamente`)

@@ -86,6 +86,8 @@ export default function TableOrderClient() {
 
   const [categories, setCategories] = useState<Category[]>([])
   const [menuItems, setMenuItems] = useState<PlainMenuItem[]>([])
+  const [taxRate, setTaxRate] = useState(0)
+  const [tenantId, setTenantId] = useState<string | null>(null)
   const [activeCat, setActiveCat] = useState('all')
   const [search, setSearch] = useState('')
 
@@ -121,16 +123,29 @@ export default function TableOrderClient() {
       if (!tbl) { setErrorMsg('Mesa no encontrada. Escanea el código QR correcto.'); setPhase('error'); return }
 
       setTableInfo({ number: tbl.number, location: tbl.location })
+      setTenantId(tbl.tenant_id ?? null)
       if (tbl.status !== 'occupied') {
         await supabase.from('restaurant_tables').update({ status: 'occupied' }).eq('id', tableId)
       }
 
-      const [{ data: cats }, { data: items }] = await Promise.all([
-        supabase.from('categories').select('*').eq('active', true).order('display_order'),
-        supabase.from('menu_items').select('*').eq('available', true).order('name'),
-      ])
+      // El tenant se resuelve desde la mesa escaneada (no desde un default
+      // global): dos negocios comparten la misma DB pero cada QR apunta a
+      // una mesa de un tenant especifico.
+      let catsQuery = supabase.from('categories').select('*').eq('active', true).order('display_order')
+      let itemsQuery = supabase.from('menu_items').select('*').eq('available', true).order('name')
+      if (tbl.tenant_id) {
+        catsQuery = catsQuery.eq('tenant_id', tbl.tenant_id)
+        itemsQuery = itemsQuery.eq('tenant_id', tbl.tenant_id)
+      }
+      const [{ data: cats }, { data: items }] = await Promise.all([catsQuery, itemsQuery])
       setCategories((cats as Category[]) ?? [])
       setMenuItems((items as PlainMenuItem[]) ?? [])
+
+      if (tbl.tenant_id) {
+        const { data: settings } = await supabase.from('tenant_settings').select('tax_enabled, tax_rate')
+          .eq('tenant_id', tbl.tenant_id).maybeSingle<{ tax_enabled: boolean; tax_rate: number }>()
+        setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
+      }
 
       setPhase('ready')
     })()
@@ -188,7 +203,7 @@ export default function TableOrderClient() {
   }
 
   const cartCount = cart.reduce((s, c) => s + c.qty, 0)
-  const { subtotal, tax, total } = calcTotals(cart.reduce((s, c) => s + c.price * c.qty, 0))
+  const { subtotal, tax, total } = calcTotals(cart.reduce((s, c) => s + c.price * c.qty, 0), taxRate)
 
   const submitOrder = async () => {
     if (!cart.length || !tableId) return
@@ -204,6 +219,7 @@ export default function TableOrderClient() {
         status: 'in_kitchen',
         notes: notes.trim() || null,
         subtotal, tax, total,
+        tenant_id: tenantId,
       })
       .select()
       .single()
@@ -222,14 +238,15 @@ export default function TableOrderClient() {
       item_name: c.name,
       item_price: c.price,
       quantity: c.qty,
+      tenant_id: tenantId,
     }))
 
     await supabase.from('order_items').insert(orderItemsPayload)
 
-    const modifierRows: { order_item_id: string; option_name: string; price_delta: number }[] = []
+    const modifierRows: { order_item_id: string; option_name: string; price_delta: number; tenant_id: string | null }[] = []
     orderItemsPayload.forEach((row, idx) => {
       ;(cart[idx].modifiers || []).forEach((m) => {
-        modifierRows.push({ order_item_id: row.id, option_name: m.option_name, price_delta: m.price_delta })
+        modifierRows.push({ order_item_id: row.id, option_name: m.option_name, price_delta: m.price_delta, tenant_id: tenantId })
       })
     })
     if (modifierRows.length) await supabase.from('order_item_modifiers').insert(modifierRows)

@@ -1,41 +1,82 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { modifiersSummary } from '@/lib/modifiers'
 import { fmt } from '@/lib/format'
-import { getPinSession, logoutPin, type PinSession } from '@/lib/pin-auth'
+import { logoutPin } from '@/lib/pin-auth'
+import { usePinSession } from '@/lib/usePinSession'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
+import { useWakeLock } from '@/lib/useWakeLock'
+import { playNewOrderBeep } from '@/lib/notifySound'
 import PinPad from '../PinPad'
 import type { KitchenOrder } from '@/lib/types'
 
 export default function KitchenPortalClient() {
   const supabase = createClient()
-  const [session, setSession] = useState<PinSession | null>(null)
+  const [session, setSession] = usePinSession('kitchen')
   const [inKitchen, setInKitchen] = useState<KitchenOrder[]>([])
   const [readyOrders, setReadyOrders] = useState<KitchenOrder[]>([])
   const [startTimes, setStartTimes] = useState<Record<string, number>>({})
-  const [nowTick, setNowTick] = useState(Date.now())
+  const [nowTick, setNowTick] = useState(() => Date.now())
+  const knownOrderIds = useRef<Set<string> | null>(null)
 
-  useEffect(() => {
-    const s = getPinSession()
-    if (s?.role === 'kitchen') setSession(s)
-  }, [])
+  const loadOrders = useCallback(async () => {
+    const { data } = await supabase
+      .from('orders')
+      .select('*, restaurant_tables(number), order_items(*, order_item_modifiers(*))')
+      .in('status', ['in_kitchen', 'ready'])
+      .or('order_type.neq.delivery,delivery_status.in.(pending,preparing,ready)')
+      .order('created_at', { ascending: true })
+
+    const all = (data || []) as KitchenOrder[]
+    setStartTimes((prev) => {
+      const next = { ...prev }
+      let changed = false
+      all.forEach((o) => {
+        if (!(o.id in next)) {
+          next[o.id] = new Date(o.updated_at || o.created_at).getTime()
+          changed = true
+        }
+      })
+      return changed ? next : prev
+    })
+
+    // Suena una alerta si aparece una orden en_kitchen que no estaba antes.
+    // knownOrderIds arranca en null para no sonar con la carga inicial.
+    const currentIds = new Set(all.filter((o) => o.status === 'in_kitchen').map((o) => o.id))
+    if (knownOrderIds.current) {
+      const isNew = [...currentIds].some((id) => !knownOrderIds.current!.has(id))
+      if (isNew) playNewOrderBeep()
+    }
+    knownOrderIds.current = currentIds
+
+    setInKitchen(all.filter((o) => o.status === 'in_kitchen'))
+    setReadyOrders(all.filter((o) => o.status === 'ready'))
+  }, [supabase])
+
+  useLiveRefetch(() => { if (session) loadOrders() }, { pollMs: 15000 })
+  useWakeLock(!!session)
+
+  const markReady = useCallback(async (order: KitchenOrder) => {
+    const updates: Record<string, unknown> = { status: 'ready', updated_at: new Date().toISOString() }
+    if (['delivery', 'takeout'].includes(order.order_type)) updates.delivery_status = 'ready'
+    await supabase.from('orders').update(updates).eq('id', order.id)
+    await loadOrders()
+  }, [loadOrders, supabase])
 
   useEffect(() => {
     if (!session) return undefined
 
-    // Upsert PRIMERO, luego cargar — evita race condition donde order_items_staff
-    // bloqueaba el SELECT porque el perfil aún tenía role='customer'
-    async function init() {
+    let alive = true
+    ;(async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         await supabase.from('profiles').upsert({ id: user.id, role: 'kitchen' }, { onConflict: 'id' })
       }
-      await loadOrders()
-    }
-    init()
+      if (alive) await loadOrders()
+    })()
 
-    // Escuchar cambios en orders Y en order_items (para cuando el mesero agrega más platillos)
     const channel = supabase
       .channel('kitchen-portal-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, loadOrders)
@@ -43,36 +84,8 @@ export default function KitchenPortalClient() {
       .subscribe()
 
     const tick = setInterval(() => setNowTick(Date.now()), 30_000)
-    return () => { channel.unsubscribe(); clearInterval(tick) }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session])
-
-  async function loadOrders() {
-    const { data } = await supabase
-      .from('orders')
-      .select('*, restaurant_tables(number), order_items(*, order_item_modifiers(*))')
-      .in('status', ['in_kitchen', 'ready'])
-      .or('order_type.neq.delivery,delivery_status.in.(pending,preparing,ready)')
-      .order('created_at', { ascending: true }) // FIFO
-    const all = (data || []) as KitchenOrder[]
-    setStartTimes((prev) => {
-      const next = { ...prev }
-      let changed = false
-      all.forEach((o) => {
-        if (!(o.id in next)) { next[o.id] = new Date(o.updated_at || o.created_at).getTime(); changed = true }
-      })
-      return changed ? next : prev
-    })
-    setInKitchen(all.filter((o) => o.status === 'in_kitchen'))
-    setReadyOrders(all.filter((o) => o.status === 'ready'))
-  }
-
-  async function markReady(order: KitchenOrder) {
-    const updates: Record<string, unknown> = { status: 'ready', updated_at: new Date().toISOString() }
-    if (['delivery', 'takeout'].includes(order.order_type)) updates.delivery_status = 'ready'
-    await supabase.from('orders').update(updates).eq('id', order.id)
-    await loadOrders()
-  }
+    return () => { alive = false; channel.unsubscribe(); clearInterval(tick) }
+  }, [loadOrders, session, supabase])
 
   const elapsed = (id: string) => Math.floor((nowTick - (startTimes[id] ?? nowTick)) / 60000)
 
@@ -94,39 +107,27 @@ export default function KitchenPortalClient() {
       </header>
 
       <div className="kitchen-layout">
-        {/* Columna izquierda — EN PREPARACIÓN */}
         <div className="kitchen-col">
           <div className="kitchen-col__header">
-            <span className="badge badge-amber" style={{ fontSize: '.88rem', padding: '5px 14px' }}>
-              🔥 EN PREPARACIÓN
-            </span>
+            <span className="badge badge-amber" style={{ fontSize: '.88rem', padding: '5px 14px' }}>🔥 EN PREPARACIÓN</span>
             <span className="badge badge-muted">{inKitchen.length}</span>
           </div>
           <div className="kitchen-orders">
             {inKitchen.length === 0
               ? <div className="kitchen-empty">Sin órdenes pendientes</div>
-              : inKitchen.map((o) => (
-                  <KCard key={o.id} order={o} elapsed={elapsed(o.id)} onReady={markReady} />
-                ))
-            }
+              : inKitchen.map((o) => <KCard key={o.id} order={o} elapsed={elapsed(o.id)} onReady={markReady} />)}
           </div>
         </div>
 
-        {/* Columna derecha — LISTO, esperando mesero */}
         <div className="kitchen-col">
           <div className="kitchen-col__header">
-            <span className="badge badge-green" style={{ fontSize: '.88rem', padding: '5px 14px' }}>
-              ✅ LISTO — ESPERANDO MESERO
-            </span>
+            <span className="badge badge-green" style={{ fontSize: '.88rem', padding: '5px 14px' }}>✅ LISTO — ESPERANDO MESERO</span>
             <span className="badge badge-muted">{readyOrders.length}</span>
           </div>
           <div className="kitchen-orders">
             {readyOrders.length === 0
               ? <div className="kitchen-empty">Sin órdenes listas</div>
-              : readyOrders.map((o) => (
-                  <KCard key={o.id} order={o} elapsed={elapsed(o.id)} onReady={markReady} />
-                ))
-            }
+              : readyOrders.map((o) => <KCard key={o.id} order={o} elapsed={elapsed(o.id)} onReady={markReady} />)}
           </div>
         </div>
       </div>
@@ -140,9 +141,7 @@ function KCard({ order, elapsed, onReady }: {
   onReady: (o: KitchenOrder) => void
 }) {
   const timerCls = elapsed < 10 ? 'timer--ok' : elapsed < 20 ? 'timer--warn' : 'timer--urgent'
-  const cardCls  = order.status === 'ready' ? 'kitchen-card--ready'
-    : elapsed >= 20 ? 'kitchen-card--urgent' : ''
-
+  const cardCls = order.status === 'ready' ? 'kitchen-card--ready' : elapsed >= 20 ? 'kitchen-card--urgent' : ''
   const isExt = ['delivery', 'takeout'].includes(order.order_type)
   const tableLabel = isExt
     ? (order.order_type === 'delivery' ? `🛵 ${order.delivery_name || 'Delivery'}` : '🥡 Para llevar')
@@ -153,7 +152,6 @@ function KCard({ order, elapsed, onReady }: {
 
   return (
     <div className={`kitchen-card ${cardCls}`}>
-      {/* Mesa + tiempo */}
       <div className="kitchen-card__top">
         <div className="kitchen-card__table">{tableLabel}</div>
         <div className="kitchen-card__meta">
@@ -162,7 +160,6 @@ function KCard({ order, elapsed, onReady }: {
         </div>
       </div>
 
-      {/* Ítems pedidos */}
       <div className="kitchen-card__items">
         {items.length === 0 ? (
           <div className="kitchen-item" style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '.85rem' }}>
@@ -172,17 +169,13 @@ function KCard({ order, elapsed, onReady }: {
             </div>
           </div>
         ) : items.map((i) => {
-          const mods = (i.order_item_modifiers || []).map((m) => ({
-            option_name: m.option_name, price_delta: m.price_delta ?? 0,
-          }))
+          const mods = (i.order_item_modifiers || []).map((m) => ({ option_name: m.option_name, price_delta: m.price_delta ?? 0 }))
           return (
             <div key={i.id} className="kitchen-item">
               <span className="kitchen-item__qty">{i.quantity}</span>
               <div className="kitchen-item__info">
                 <span className="kitchen-item__name">{i.item_name}</span>
-                {mods.length > 0 && (
-                  <span className="kitchen-item__mod">· {modifiersSummary(mods)}</span>
-                )}
+                {mods.length > 0 && <span className="kitchen-item__mod">· {modifiersSummary(mods)}</span>}
                 {i.notes && <span className="kitchen-item__note">📝 {i.notes}</span>}
               </div>
             </div>
@@ -190,17 +183,11 @@ function KCard({ order, elapsed, onReady }: {
         })}
       </div>
 
-      {/* Nota de la orden */}
-      {order.notes && (
-        <div className="kitchen-card__note">📋 {order.notes}</div>
-      )}
+      {order.notes && <div className="kitchen-card__note">📋 {order.notes}</div>}
 
-      {/* Acción: solo cocina marca "Listo". El mesero confirma la entrega. */}
       <div className="kitchen-card__actions">
         {order.status === 'in_kitchen' ? (
-          <button className="btn btn-primary" onClick={() => onReady(order)}>
-            ✅ Marcar Listo
-          </button>
+          <button className="btn btn-primary" onClick={() => onReady(order)}>✅ Marcar Listo</button>
         ) : (
           <div style={{ padding: '6px 0', color: 'var(--orange)', fontSize: '.85rem', fontWeight: 600, textAlign: 'center', flex: 1 }}>
             🍽️ Listo — el mesero confirma la entrega

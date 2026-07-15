@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
-import { useRequireRole } from '../../AdminContext'
+import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 
@@ -47,6 +47,7 @@ function genPin() {
 
 export default function StaffClient() {
   useRequireRole(['admin'])
+  const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
 
@@ -62,20 +63,17 @@ export default function StaffClient() {
   const [newPin, setNewPin] = useState(genPin())
   const [creating, setCreating] = useState(false)
 
-  useEffect(() => { loadStaff() }, [])
-  useEffect(() => { if (tab === 'performance') loadPerf() }, [tab, perfDays])
-
-  async function loadStaff() {
+  const loadStaff = useCallback(async () => {
     const { data } = await supabase
       .from('staff_members')
       .select('*')
       .order('role')
       .order('full_name')
     setStaff((data as StaffMember[]) || [])
-  }
+  }, [supabase])
 
-  async function loadPerf() {
-    const since = new Date(Date.now() - perfDays * 86400000).toISOString()
+  const loadPerf = useCallback(async () => {
+    const since = new Date(new Date().getTime() - perfDays * 86400000).toISOString()
 
     const { data: members } = await supabase.from('staff_members').select('*').eq('active', true)
     const { data: events } = await supabase
@@ -112,14 +110,25 @@ export default function StaffClient() {
     })
 
     setPerf(computed)
-  }
+  }, [perfDays, supabase])
+
+  useEffect(() => {
+    const timer = setTimeout(() => { void loadStaff() }, 0)
+    return () => clearTimeout(timer)
+  }, [loadStaff])
+
+  useEffect(() => {
+    if (tab !== 'performance') return undefined
+    const timer = setTimeout(() => { void loadPerf() }, 0)
+    return () => clearTimeout(timer)
+  }, [loadPerf, tab])
 
   async function createStaff(e: React.FormEvent) {
     e.preventDefault()
     const name = newName.trim()
     if (!name || !newPin || newPin.length !== 6) { toast('Nombre y PIN de 6 dígitos requeridos', 'warning'); return }
     setCreating(true)
-    const { error } = await supabase.from('staff_members').insert({ full_name: name, role: newRole, pin: newPin })
+    const { error } = await supabase.from('staff_members').insert({ full_name: name, role: newRole, pin: newPin, tenant_id: tenant.tenant_id })
     if (error) {
       toast(error.message.includes('unique') ? 'Ese PIN ya existe, genera otro' : error.message, 'error')
     } else {
@@ -201,7 +210,8 @@ export default function StaffClient() {
                             style={{ padding: '4px 8px', fontSize: '.8rem' }}
                             onClick={() => setRevealedPins((prev) => {
                               const next = new Set(prev)
-                              next.has(m.id) ? next.delete(m.id) : next.add(m.id)
+                              if (next.has(m.id)) next.delete(m.id)
+                              else next.add(m.id)
                               return next
                             })}
                             aria-label={revealedPins.has(m.id) ? 'Ocultar PIN' : 'Mostrar PIN'}

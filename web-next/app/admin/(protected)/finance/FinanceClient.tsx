@@ -22,7 +22,8 @@ const CAT_LABELS: Record<string, string> = {
 
 type FinanceOrder = { total: number; created_at: string }
 type FinanceExpense = { category: string; amount: number; expense_date: string }
-type FinanceItem = { item_name: string; item_price: number; quantity: number }
+type FinanceItem = { item_name: string; item_price: number; quantity: number; menu_item_id: string | null; created_at: string }
+type MenuItemCost = { id: string; cost: number }
 
 
 function chartOpts() {
@@ -52,6 +53,7 @@ export default function FinanceClient() {
   const [orders, setOrders] = useState<FinanceOrder[]>([])
   const [expenses, setExpenses] = useState<FinanceExpense[]>([])
   const [items, setItems] = useState<FinanceItem[]>([])
+  const [menuCosts, setMenuCosts] = useState<Record<string, number>>({})
   const [expensesMissing, setExpensesMissing] = useState(false)
 
   const plCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -59,12 +61,18 @@ export default function FinanceClient() {
   const plChartRef = useRef<Chart | null>(null)
   const pieChartRef = useRef<Chart | null>(null)
 
-  const renderPLChart = (ordersData: FinanceOrder[], expensesData: FinanceExpense[]) => {
+  const renderPLChart = (ordersData: FinanceOrder[], expensesData: FinanceExpense[], itemsData: FinanceItem[], costMap: Record<string, number>) => {
     const revByDay: Record<string, number> = {}
     const expByDay: Record<string, number> = {}
+    const cogsByDay: Record<string, number> = {}
     ordersData.forEach((o) => { const d = svDate(o.created_at); revByDay[d] = (revByDay[d] || 0) + Number(o.total) })
     expensesData.forEach((e) => { const d = e.expense_date; expByDay[d] = (expByDay[d] || 0) + Number(e.amount) })
-    const allDays = [...new Set([...Object.keys(revByDay), ...Object.keys(expByDay)])].sort()
+    itemsData.forEach((i) => {
+      const d = i.created_at.slice(0, 10)
+      const cost = (i.menu_item_id ? (costMap[i.menu_item_id] ?? 0) : 0) * i.quantity
+      cogsByDay[d] = (cogsByDay[d] || 0) + cost
+    })
+    const allDays = [...new Set([...Object.keys(revByDay), ...Object.keys(expByDay), ...Object.keys(cogsByDay)])].sort()
 
     if (!plCanvasRef.current) return
     plChartRef.current?.destroy()
@@ -74,6 +82,7 @@ export default function FinanceClient() {
         labels: allDays,
         datasets: [
           { label: 'Ingresos', data: allDays.map((d) => revByDay[d] || 0), borderColor: '#FF6600', backgroundColor: 'rgba(255,102,0,0.06)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#FF6600' },
+          { label: 'Costo Insumos', data: allDays.map((d) => cogsByDay[d] || 0), borderColor: '#F39C12', backgroundColor: 'rgba(243,156,18,0.06)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#F39C12' },
           { label: 'Gastos', data: allDays.map((d) => expByDay[d] || 0), borderColor: '#FF4455', backgroundColor: 'rgba(255,68,85,0.06)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#FF4455' },
         ],
       },
@@ -111,10 +120,12 @@ export default function FinanceClient() {
       { data: ordersData, error: errO },
       { data: expensesData, error: errE },
       { data: itemsData },
+      { data: menuItemsData },
     ] = await Promise.all([
       supabase.from('orders').select('total, created_at').in('status', ['paid', 'delivered']).gte('created_at', since + 'T06:00:00'),
       supabase.from('expenses').select('*').gte('expense_date', since).order('expense_date'),
-      supabase.from('order_items').select('item_name, item_price, quantity').gte('created_at', since + 'T06:00:00'),
+      supabase.from('order_items').select('item_name, item_price, quantity, menu_item_id, created_at').gte('created_at', since + 'T06:00:00'),
+      supabase.from('menu_items').select('id, cost'),
     ])
 
     const expMissing = errE != null && errE.code === '42P01'
@@ -124,11 +135,13 @@ export default function FinanceClient() {
     const finalOrders = (ordersData as FinanceOrder[]) || []
     const finalExpenses = expMissing ? [] : ((expensesData as FinanceExpense[]) || [])
     const finalItems = (itemsData as FinanceItem[]) || []
+    const costMap = Object.fromEntries(((menuItemsData as MenuItemCost[]) || []).map((m) => [m.id, Number(m.cost)]))
 
     setOrders(finalOrders)
     setExpenses(finalExpenses)
     setItems(finalItems)
-    renderPLChart(finalOrders, finalExpenses)
+    setMenuCosts(costMap)
+    renderPLChart(finalOrders, finalExpenses, finalItems, costMap)
     renderExpensePie(finalExpenses)
   }
 
@@ -142,18 +155,9 @@ export default function FinanceClient() {
   }, [days])
 
   const exportEDC = () => {
-    const revByDay: Record<string, number> = {}
-    const expByDay: Record<string, number> = {}
-    orders.forEach((o) => { const d = svDate(o.created_at); revByDay[d] = (revByDay[d] || 0) + Number(o.total) })
-    expenses.forEach((e) => { const d = e.expense_date; expByDay[d] = (expByDay[d] || 0) + Number(e.amount) })
-    const allDays = [...new Set([...Object.keys(revByDay), ...Object.keys(expByDay)])].sort()
-    let balance = 0
-    const rows: string[][] = [['Fecha', 'Ingresos', 'Gastos', 'Neto', 'Balance']]
-    allDays.forEach((d) => {
-      const r = revByDay[d] || 0
-      const e = expByDay[d] || 0
-      balance += r - e
-      rows.push([d, r.toFixed(2), e.toFixed(2), (r - e).toFixed(2), balance.toFixed(2)])
+    const rows: string[][] = [['Fecha', 'Ingresos', 'Costo Insumos', 'Gastos Operativos', 'Neto', 'Balance']]
+    edcRows.forEach((row) => {
+      rows.push([row.date, row.rev.toFixed(2), row.cogs.toFixed(2), row.opex.toFixed(2), row.net.toFixed(2), row.balance.toFixed(2)])
     })
     const csv = rows.map((r) => r.map((v) => `"${v}"`).join(',')).join('\n')
     const a = document.createElement('a')
@@ -162,32 +166,39 @@ export default function FinanceClient() {
     a.click()
   }
 
+  const itemCost = (i: FinanceItem) => (i.menu_item_id ? (menuCosts[i.menu_item_id] ?? 0) : 0) * i.quantity
+
   const revenue = orders.reduce((s, o) => s + Number(o.total), 0)
   const expensesTotal = expenses.reduce((s, e) => s + Number(e.amount), 0)
-  const profit = revenue - expensesTotal
+  const cogsTotal = items.reduce((s, i) => s + itemCost(i), 0)
+  const profit = revenue - expensesTotal - cogsTotal
   const margin = revenue > 0 ? (profit / revenue * 100) : 0
   const avgTicket = orders.length ? revenue / orders.length : 0
 
-  const byItem: Record<string, { qty: number; revenue: number }> = {}
+  const byItem: Record<string, { qty: number; revenue: number; cost: number }> = {}
   items.forEach((i) => {
-    if (!byItem[i.item_name]) byItem[i.item_name] = { qty: 0, revenue: 0 }
+    if (!byItem[i.item_name]) byItem[i.item_name] = { qty: 0, revenue: 0, cost: 0 }
     byItem[i.item_name].qty += i.quantity
     byItem[i.item_name].revenue += i.quantity * Number(i.item_price)
+    byItem[i.item_name].cost += itemCost(i)
   })
   const topProducts = Object.entries(byItem).sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 8)
   const maxRev = topProducts[0]?.[1].revenue || 1
 
   const edcRevByDay: Record<string, number> = {}
   const edcExpByDay: Record<string, number> = {}
+  const edcCogsByDay: Record<string, number> = {}
   orders.forEach((o) => { const d = svDate(o.created_at); edcRevByDay[d] = (edcRevByDay[d] || 0) + Number(o.total) })
   expenses.forEach((e) => { const d = e.expense_date; edcExpByDay[d] = (edcExpByDay[d] || 0) + Number(e.amount) })
-  const edcDays = [...new Set([...Object.keys(edcRevByDay), ...Object.keys(edcExpByDay)])].sort()
-  const edcRows = edcDays.reduce<{ date: string; rev: number; exp: number; net: number; balance: number }[]>((acc, d) => {
+  items.forEach((i) => { const d = i.created_at.slice(0, 10); edcCogsByDay[d] = (edcCogsByDay[d] || 0) + itemCost(i) })
+  const edcDays = [...new Set([...Object.keys(edcRevByDay), ...Object.keys(edcExpByDay), ...Object.keys(edcCogsByDay)])].sort()
+  const edcRows = edcDays.reduce<{ date: string; rev: number; opex: number; cogs: number; net: number; balance: number }[]>((acc, d) => {
     const rev = edcRevByDay[d] || 0
-    const exp = edcExpByDay[d] || 0
-    const net = rev - exp
+    const opex = edcExpByDay[d] || 0
+    const cogs = edcCogsByDay[d] || 0
+    const net = rev - opex - cogs
     const prevBalance = acc.length ? acc[acc.length - 1].balance : 0
-    return [...acc, { date: d, rev, exp, net, balance: prevBalance + net }]
+    return [...acc, { date: d, rev, opex, cogs, net, balance: prevBalance + net }]
   }, [])
 
   return (
@@ -216,7 +227,12 @@ export default function FinanceClient() {
             <div className="stat-sub">{orders.length} órdenes</div>
           </div>
           <div className="stat-card stat-danger">
-            <div className="stat-label">Gastos del Período</div>
+            <div className="stat-label">Costo de Insumos (COGS)</div>
+            <div className="stat-value">{fmt.currency(cogsTotal)}</div>
+            <div className="stat-sub">{revenue > 0 ? `${((cogsTotal / revenue) * 100).toFixed(1)}% de la venta` : 'Sin ventas'}</div>
+          </div>
+          <div className="stat-card stat-danger">
+            <div className="stat-label">Gastos Operativos</div>
             <div className="stat-value">{fmt.currency(expensesTotal)}</div>
             <div className="stat-sub">{expenses.length} registros</div>
           </div>
@@ -237,7 +253,7 @@ export default function FinanceClient() {
 
         <div className="charts-grid mt-20">
           <div className="card">
-            <h3 className="mb-16">Ingresos vs Gastos por Día</h3>
+            <h3 className="mb-16">Ingresos vs Costos por Día</h3>
             <div style={{ position: 'relative', height: 220 }}><canvas ref={plCanvasRef}></canvas></div>
           </div>
           <div className="card">
@@ -276,20 +292,22 @@ export default function FinanceClient() {
                 <tr>
                   <th>Fecha</th>
                   <th style={{ textAlign: 'right' }}>Ingresos</th>
-                  <th style={{ textAlign: 'right' }}>Gastos</th>
+                  <th style={{ textAlign: 'right' }}>Costo Insumos</th>
+                  <th style={{ textAlign: 'right' }}>Gastos Operativos</th>
                   <th style={{ textAlign: 'right' }}>Neto del Día</th>
                   <th style={{ textAlign: 'right' }}>Balance Acumulado</th>
                 </tr>
               </thead>
               <tbody>
                 {edcRows.length === 0 ? (
-                  <tr><td colSpan={5} className="text-muted text-center" style={{ padding: 32 }}>Sin movimientos.</td></tr>
+                  <tr><td colSpan={6} className="text-muted text-center" style={{ padding: 32 }}>Sin movimientos.</td></tr>
                 ) : (
                   edcRows.map((row) => (
                     <tr key={row.date}>
                       <td>{fmt.date(row.date)}</td>
                       <td style={{ textAlign: 'right', color: 'var(--orange)', fontWeight: 600 }}>{row.rev > 0 ? fmt.currency(row.rev) : '—'}</td>
-                      <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: 600 }}>{row.exp > 0 ? fmt.currency(row.exp) : '—'}</td>
+                      <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: 600 }}>{row.cogs > 0 ? fmt.currency(row.cogs) : '—'}</td>
+                      <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: 600 }}>{row.opex > 0 ? fmt.currency(row.opex) : '—'}</td>
                       <td style={{ textAlign: 'right', fontWeight: 700, color: row.net >= 0 ? 'var(--orange)' : 'var(--danger)' }}>{fmt.currency(row.net)}</td>
                       <td style={{ textAlign: 'right', fontWeight: 700, color: row.balance >= 0 ? 'var(--orange)' : 'var(--danger)' }}>{fmt.currency(row.balance)}</td>
                     </tr>

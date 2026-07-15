@@ -5,7 +5,10 @@ import { createClient } from '@/lib/supabase/client'
 import { fmt, calcTotals } from '@/lib/format'
 import { getItemModifierGroups, modifiersExtraPrice, modifiersSummary, buildLineKey } from '@/lib/modifiers'
 import type { Selection } from '@/lib/modifiers'
-import { getPinSession, logoutPin, logEvent, type PinSession } from '@/lib/pin-auth'
+import { logoutPin, logEvent } from '@/lib/pin-auth'
+import { usePinSession } from '@/lib/usePinSession'
+import { useLiveRefetch } from '@/lib/useLiveRefetch'
+import { useWakeLock } from '@/lib/useWakeLock'
 import PinPad from '../PinPad'
 import ModifierModal from '../../order/ModifierModal'
 import { useToast } from '../../components/ToastProvider'
@@ -49,7 +52,7 @@ function mapItems(raw: {
 export default function WaiterPortalClient() {
   const supabase = createClient()
   const toast = useToast()
-  const [session, setSession] = useState<PinSession | null>(null)
+  const [session, setSession] = usePinSession('waiter')
   const [view, setView] = useState<WaiterView>('tables')
   const [mobileTab, setMobileTab] = useState<'menu' | 'ticket'>('menu')
 
@@ -59,6 +62,7 @@ export default function WaiterPortalClient() {
   const [menuItems, setMenuItems] = useState<OrderMenuItem[]>([])
   const [activeCat, setActiveCat] = useState('all')
   const [search, setSearch] = useState('')
+  const [taxRate, setTaxRate] = useState(0)
 
   const [selectedTable, setSelectedTable] = useState<RestaurantTable | null>(null)
   // currentOrder = la comanda ABIERTA (editable). null si no hay comanda abierta.
@@ -74,11 +78,6 @@ export default function WaiterPortalClient() {
   const [cashIn, setCashIn] = useState('')
   const [paying, setPaying] = useState(false)
   const [readyAlert, setReadyAlert] = useState<Set<string>>(new Set())
-
-  useEffect(() => {
-    const s = getPinSession()
-    if (s?.role === 'waiter') setSession(s)
-  }, [])
 
   useEffect(() => {
     if (!session) return undefined
@@ -112,6 +111,16 @@ export default function WaiterPortalClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTable?.id])
 
+  // Respaldo si el socket de Realtime muere en segundo plano (movil): sin
+  // esto, el mesero no se entera de que hay una orden lista para entregar
+  // hasta que reabra el portal a mano.
+  useLiveRefetch(() => {
+    if (!session) return
+    loadTableStatus()
+    if (selectedTable && selectedTable.status === 'occupied') loadActiveOrders(selectedTable.id)
+  }, { pollMs: 15000 })
+  useWakeLock(!!session)
+
   async function loadAll() {
     const [{ data: tablesData }, { data: cats }, { data: items }] = await Promise.all([
       supabase.from('restaurant_tables').select('*').order('number'),
@@ -122,6 +131,12 @@ export default function WaiterPortalClient() {
     setCategories((cats as Category[]) || [])
     setMenuItems((items as OrderMenuItem[]) || [])
     await loadTableStatus()
+
+    if (session?.tenant_id) {
+      const { data: settings } = await supabase.from('tenant_settings').select('tax_enabled, tax_rate')
+        .eq('tenant_id', session.tenant_id).maybeSingle<{ tax_enabled: boolean; tax_rate: number }>()
+      setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
+    }
   }
 
   async function loadTables() {
@@ -191,6 +206,7 @@ export default function WaiterPortalClient() {
         waiter_id: null,
         order_type: 'dine_in',
         status: 'open',
+        tenant_id: session?.tenant_id ?? null,
       }).select().single()
       if (error || !data) { toast(error?.message ?? 'Error al crear la orden', 'error'); return }
       order = { id: data.id, table_id: selectedTable.id, status: 'open', items: [], subtotal: 0, tax: 0, total: 0 }
@@ -210,18 +226,19 @@ export default function WaiterPortalClient() {
       const { data, error } = await supabase.from('order_items').insert({
         order_id: order.id, menu_item_id: item.id,
         item_name: item.name, item_price: unitPrice, quantity: 1,
+        tenant_id: session?.tenant_id ?? null,
       }).select().single()
       if (error || !data) { toast(error?.message ?? 'Error al agregar el ítem', 'error'); return }
       if (modifiers.length) {
         await supabase.from('order_item_modifiers').insert(
-          modifiers.map((m) => ({ order_item_id: data.id, option_name: m.option_name, price_delta: m.price_delta }))
+          modifiers.map((m) => ({ order_item_id: data.id, option_name: m.option_name, price_delta: m.price_delta, tenant_id: session?.tenant_id ?? null }))
         )
       }
       newItems = [...order.items, { dbId: data.id, id: item.id, name: item.name, price: unitPrice, qty: 1, modifiers, lineKey }]
     }
 
     const subtotal = newItems.reduce((s, i) => s + i.price * i.qty, 0)
-    const { tax, total } = calcTotals(subtotal)
+    const { tax, total } = calcTotals(subtotal, taxRate)
     await supabase.from('orders').update({ subtotal, tax, total }).eq('id', order.id)
     const updated = { ...order, items: newItems, subtotal, tax, total }
     setCurrentOrder(updated)
@@ -246,7 +263,7 @@ export default function WaiterPortalClient() {
       newItems = currentOrder.items.map((i) => i.dbId === dbId ? { ...i, qty: newQty } : i)
     }
     const subtotal = newItems.reduce((s, i) => s + i.price * i.qty, 0)
-    const { tax, total } = calcTotals(subtotal)
+    const { tax, total } = calcTotals(subtotal, taxRate)
     await supabase.from('orders').update({ subtotal, tax, total }).eq('id', currentOrder.id)
     const updated = { ...currentOrder, items: newItems, subtotal, tax, total }
     setCurrentOrder(updated)
@@ -283,13 +300,31 @@ export default function WaiterPortalClient() {
     const grandTotal = tableOrders.reduce((s, o) => s + o.total, 0)
     const received = parseFloat(cashIn) || grandTotal
 
-    const { error } = await supabase.from('payments').insert({
+    // Vincula el pago a la caja abierta del tenant si existe (cash_sessions.sql) —
+    // si esa migration no corrio en este entorno, la query falla en silencio y
+    // se omite la clave, sin romper el cobro.
+    let cashSessionId: string | null = null
+    if (payMethod === 'cash' && session?.tenant_id) {
+      const { data: openSession } = await supabase
+        .from('cash_sessions')
+        .select('id')
+        .eq('tenant_id', session.tenant_id)
+        .eq('status', 'open')
+        .maybeSingle<{ id: string }>()
+      cashSessionId = openSession?.id ?? null
+    }
+
+    const paymentPayload: Record<string, unknown> = {
       order_id: tableOrders[0].id,
       amount: grandTotal,
       method: payMethod,
       receipt_number: `REC-${Date.now()}`,
       change_amount: Math.max(0, received - grandTotal),
-    })
+      tenant_id: session?.tenant_id ?? null,
+    }
+    if (cashSessionId) paymentPayload.cash_session_id = cashSessionId
+
+    const { error } = await supabase.from('payments').insert(paymentPayload)
     if (error) { toast('Error al procesar el pago', 'error'); setPaying(false); return }
 
     await Promise.all(tableOrders.map((o) =>

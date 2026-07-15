@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Chart } from 'chart.js/auto'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
-import { useRequireRole } from '../../AdminContext'
+import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 
 const EXPENSE_CAT_LABELS: Record<string, string> = {
@@ -65,6 +65,7 @@ function chartOptions(prefix = '') {
 
 export default function ReportsClient() {
   useRequireRole(['admin'])
+  const { tenant } = useAdmin()
   const supabase = createClient()
 
   const [days, setDays] = useState(30)
@@ -271,6 +272,9 @@ export default function ReportsClient() {
       </Topbar>
 
       <div className="admin-content">
+        <div className="text-muted text-xs mb-12" style={{ letterSpacing: '.05em', textTransform: 'uppercase' }}>
+          Negocio activo: <strong style={{ color: 'var(--text)' }}>{tenant.name}</strong>
+        </div>
         <div className="stats-grid">
           <div className="stat-card stat-green">
             <div className="stat-label">Ingresos Totales</div>

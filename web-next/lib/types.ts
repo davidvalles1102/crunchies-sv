@@ -1,5 +1,6 @@
 export type Category = {
   id: string
+  tenant_id?: string | null
   name: string
   icon: string | null
   display_order: number
@@ -8,6 +9,7 @@ export type Category = {
 
 export type MenuItem = {
   id: string
+  tenant_id?: string | null
   category_id: string | null
   name: string
   description: string | null
@@ -20,6 +22,7 @@ export type MenuItem = {
 
 export type Profile = {
   id: string
+  tenant_id?: string | null
   full_name: string | null
   phone: string | null
   role: string
@@ -28,6 +31,7 @@ export type Profile = {
 
 export type ModifierOption = {
   id: string
+  tenant_id?: string | null
   name: string
   price_delta: number
   is_default: boolean
@@ -36,6 +40,7 @@ export type ModifierOption = {
 
 export type ModifierGroup = {
   id: string
+  tenant_id?: string | null
   name: string
   selection_type: 'single' | 'multiple'
   required: boolean
@@ -45,6 +50,7 @@ export type ModifierGroup = {
 
 export type DeliveryZone = {
   id: string
+  tenant_id?: string | null
   name: string
   fee: number
   active: boolean
@@ -53,6 +59,7 @@ export type DeliveryZone = {
 
 export type OrderMenuItem = {
   id: string
+  tenant_id?: string | null
   category_id: string | null
   name: string
   description: string | null
@@ -64,6 +71,7 @@ export type OrderMenuItem = {
 
 export type RestaurantTable = {
   id: string
+  tenant_id?: string | null
   number: number
   capacity: number
   location: string
@@ -85,6 +93,7 @@ export type PaymentOrderItem = {
 
 export type Payment = {
   id: string
+  tenant_id?: string | null
   receipt_number: string
   method: 'cash' | 'card' | 'transfer' | 'points'
   amount: number
@@ -101,6 +110,7 @@ export type ExpenseCategory = 'insumos' | 'servicios' | 'nomina' | 'renta' | 'ma
 
 export type Expense = {
   id: string
+  tenant_id?: string | null
   category: ExpenseCategory
   description: string
   amount: number
@@ -114,6 +124,7 @@ export type Expense = {
 
 export type Driver = {
   id: string
+  tenant_id?: string | null
   full_name: string
   phone: string
   active: boolean
@@ -138,7 +149,7 @@ export type DeliveryOrder = {
   subtotal: number
   driver_id: string | null
   pickup_staff_id: string | null
-  payment_method: 'cash' | 'nequi'
+  payment_method: 'cash' | 'card'
   total: number
   notes: string | null
   created_at: string
@@ -147,6 +158,7 @@ export type DeliveryOrder = {
 
 export type Reservation = {
   id: string
+  tenant_id?: string | null
   reservation_date: string
   reservation_time: string
   party_size: number
@@ -168,6 +180,7 @@ export type KitchenOrderItem = {
 
 export type KitchenOrder = {
   id: string
+  tenant_id?: string | null
   status: 'in_kitchen' | 'ready' | 'delivered'
   order_type: 'dine_in' | 'takeout' | 'delivery'
   delivery_name: string | null

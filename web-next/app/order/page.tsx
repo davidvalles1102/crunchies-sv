@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { resolveRootTenantId } from '@/lib/tenant'
 // import NavBar from '../components/NavBar'  // oculto en modo vitrina — restaurar cuando ORDERING_ENABLED = true
 import OrderClient from './OrderClient'
 import type { Category, OrderMenuItem, DeliveryZone } from '@/lib/types'
@@ -9,12 +10,25 @@ export const revalidate = 0
 
 export default async function OrderPage() {
   const supabase = await createClient()
+  const tenantId = await resolveRootTenantId(supabase)
 
-  const [{ data: categories }, { data: items }, { data: zones }] = await Promise.all([
-    supabase.from('categories').select('*').eq('active', true).order('display_order'),
-    supabase.from('menu_items').select('*, categories(name, icon)').eq('available', true),
-    supabase.from('delivery_zones').select('*').eq('active', true).order('display_order'),
-  ])
+  let categoriesQuery = supabase.from('categories').select('*').eq('active', true).order('display_order')
+  let itemsQuery = supabase.from('menu_items').select('*, categories(name, icon)').eq('available', true)
+  let zonesQuery = supabase.from('delivery_zones').select('*').eq('active', true).order('display_order')
+  if (tenantId) {
+    categoriesQuery = categoriesQuery.eq('tenant_id', tenantId)
+    itemsQuery = itemsQuery.eq('tenant_id', tenantId)
+    zonesQuery = zonesQuery.eq('tenant_id', tenantId)
+  }
+
+  let taxRate = 0
+  if (tenantId) {
+    const { data: settings } = await supabase.from('tenant_settings').select('tax_enabled, tax_rate')
+      .eq('tenant_id', tenantId).maybeSingle<{ tax_enabled: boolean; tax_rate: number }>()
+    taxRate = settings?.tax_enabled ? Number(settings.tax_rate) : 0
+  }
+
+  const [{ data: categories }, { data: items }, { data: zones }] = await Promise.all([categoriesQuery, itemsQuery, zonesQuery])
 
   return (
     <>
@@ -27,6 +41,8 @@ export default async function OrderPage() {
         categories={(categories ?? []) as Category[]}
         items={(items ?? []) as OrderMenuItem[]}
         zones={(zones ?? []) as DeliveryZone[]}
+        taxRate={taxRate}
+        tenantId={tenantId}
       />
 
       <footer className="cust-footer">
