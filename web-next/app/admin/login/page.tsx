@@ -11,7 +11,9 @@ export default function AdminLoginPage() {
         <div className="login-glow login-glow--orange"></div>
         <div className="login-glow login-glow--amber"></div>
       </div>
-      <LoginClient />
+      <main id="main-content">
+        <LoginClient />
+      </main>
     </div>
   )
 }
