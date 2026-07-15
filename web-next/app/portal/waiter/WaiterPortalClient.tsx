@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { fmt, calcTotals } from '@/lib/format'
 import { getItemModifierGroups, modifiersExtraPrice, modifiersSummary, buildLineKey } from '@/lib/modifiers'
 import type { Selection } from '@/lib/modifiers'
-import { getPinSession, logoutPin, logEvent, type PinSession } from '@/lib/pin-auth'
+import { logoutPin, logEvent } from '@/lib/pin-auth'
+import { usePinSession } from '@/lib/usePinSession'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import { useWakeLock } from '@/lib/useWakeLock'
 import PinPad from '../PinPad'
@@ -51,10 +52,7 @@ function mapItems(raw: {
 export default function WaiterPortalClient() {
   const supabase = createClient()
   const toast = useToast()
-  const [session, setSession] = useState<PinSession | null>(() => {
-    const s = getPinSession()
-    return s?.role === 'waiter' ? s : null
-  })
+  const [session, setSession] = usePinSession('waiter')
   const [view, setView] = useState<WaiterView>('tables')
   const [mobileTab, setMobileTab] = useState<'menu' | 'ticket'>('menu')
 

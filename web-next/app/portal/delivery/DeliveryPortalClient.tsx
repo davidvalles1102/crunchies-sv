@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
-import { getPinSession, logoutPin, logEvent, type PinSession } from '@/lib/pin-auth'
+import { logoutPin, logEvent, type PinSession } from '@/lib/pin-auth'
+import { usePinSession } from '@/lib/usePinSession'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import { useWakeLock } from '@/lib/useWakeLock'
 import PinPad from '../PinPad'
@@ -30,10 +31,7 @@ type StaffDriver = { id: string; full_name: string; isBusy: boolean }
 
 export default function DeliveryPortalClient() {
   const supabase = createClient()
-  const [session, setSession] = useState<PinSession | null>(() => {
-    const s = getPinSession()
-    return s?.role === 'delivery' ? s : null
-  })
+  const [session, setSession] = usePinSession('delivery')
   const [orders, setOrders] = useState<Order[]>([])
   const [staffDrivers, setStaffDrivers] = useState<StaffDriver[]>([])
   const [loading, setLoading] = useState(false)

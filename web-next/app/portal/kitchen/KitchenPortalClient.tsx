@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { modifiersSummary } from '@/lib/modifiers'
 import { fmt } from '@/lib/format'
-import { getPinSession, logoutPin, type PinSession } from '@/lib/pin-auth'
+import { logoutPin } from '@/lib/pin-auth'
+import { usePinSession } from '@/lib/usePinSession'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import { useWakeLock } from '@/lib/useWakeLock'
 import { playNewOrderBeep } from '@/lib/notifySound'
@@ -13,10 +14,7 @@ import type { KitchenOrder } from '@/lib/types'
 
 export default function KitchenPortalClient() {
   const supabase = createClient()
-  const [session, setSession] = useState<PinSession | null>(() => {
-    const s = getPinSession()
-    return s?.role === 'kitchen' ? s : null
-  })
+  const [session, setSession] = usePinSession('kitchen')
   const [inKitchen, setInKitchen] = useState<KitchenOrder[]>([])
   const [readyOrders, setReadyOrders] = useState<KitchenOrder[]>([])
   const [startTimes, setStartTimes] = useState<Record<string, number>>({})
