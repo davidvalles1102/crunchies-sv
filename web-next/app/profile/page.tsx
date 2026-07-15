@@ -8,7 +8,9 @@ export default function ProfilePage() {
   return (
     <>
       <NavBar />
-      <ProfileClient />
+      <main id="main-content">
+        <ProfileClient />
+      </main>
 
       <footer className="cust-footer">
         <div className="footer-brand">CRUNCHIES</div>

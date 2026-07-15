@@ -8,7 +8,9 @@ export default function MisPedidosPage() {
   return (
     <>
       <NavBar />
-      <MisPedidosClient />
+      <main id="main-content">
+        <MisPedidosClient />
+      </main>
 
       <footer className="cust-footer">
         <div className="footer-brand">CRUNCHIES</div>
