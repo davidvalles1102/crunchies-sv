@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt, calcTotals } from '@/lib/format'
+import Modal from '@/app/components/Modal'
 import { getItemModifierGroups, modifiersExtraPrice, modifiersSummary, buildLineKey } from '@/lib/modifiers'
 import type { Selection } from '@/lib/modifiers'
 import type { Category, OrderMenuItem, ModifierGroup, RestaurantTable } from '@/lib/types'
@@ -691,8 +692,7 @@ export default function OrdersClient() {
       )}
 
       {/* Pay modal */}
-      <div className={`modal-backdrop${payModalOpen ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={payModalOpen} onClose={() => setPayModalOpen(false)} title="Procesar Pago">
           <div className="modal-header">
             <h3>Procesar Pago</h3>
             <button className="modal-close" onClick={() => setPayModalOpen(false)}>✕</button>
@@ -756,12 +756,10 @@ export default function OrdersClient() {
             <button className="btn btn-outline" onClick={() => setPayModalOpen(false)}>Cancelar</button>
             <button className="btn btn-primary" disabled={paying || (selectedPayMethod === 'credit' && !linkedCustomer)} onClick={processPayment}>✓ Confirmar Pago</button>
           </div>
-        </div>
-      </div>
+      </Modal>
 
       {/* Receipt modal */}
-      <div className={`modal-backdrop${receiptModalOpen ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={receiptModalOpen} onClose={() => setReceiptModalOpen(false)} title="Recibo">
           <div className="modal-header">
             <h3>Recibo</h3>
             <button className="modal-close" onClick={() => setReceiptModalOpen(false)}>✕</button>
@@ -812,12 +810,10 @@ export default function OrdersClient() {
             <button className="btn btn-whatsapp" onClick={openWhatsAppModal}>📱 WhatsApp</button>
             <button className="btn btn-primary" onClick={downloadPDF}>🖨️ Imprimir</button>
           </div>
-        </div>
-      </div>
+      </Modal>
 
       {/* WhatsApp modal */}
-      <div className={`modal-backdrop${waModalOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 380 }}>
+      <Modal open={waModalOpen} onClose={() => setWaModalOpen(false)} title="📱 Enviar por WhatsApp" maxWidth={380}>
           <div className="modal-header">
             <h3>📱 Enviar por WhatsApp</h3>
             <button className="modal-close" onClick={() => setWaModalOpen(false)}>✕</button>
@@ -838,8 +834,7 @@ export default function OrdersClient() {
             <button className="btn btn-outline" onClick={() => setWaModalOpen(false)}>Cancelar</button>
             <button className="btn btn-whatsapp" onClick={confirmWhatsApp}>Abrir WhatsApp ▶</button>
           </div>
-        </div>
-      </div>
+      </Modal>
 
       <div className={`mob-backdrop${mobSheetOpen ? ' visible' : ''}`} onClick={() => setMobSheetOpen(false)} />
       <button className="mob-cart-fab" onClick={() => setMobSheetOpen(true)}>

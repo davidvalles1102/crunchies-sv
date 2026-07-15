@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import LiveClock from '../../components/LiveClock'
+import Modal from '@/app/components/Modal'
 import { useToast } from '../../../components/ToastProvider'
 import type { RestaurantTable } from '@/lib/types'
 import styles from './tables.module.css'
@@ -122,8 +123,7 @@ export default function TablesClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${activeQR ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 360 }}>
+      <Modal open={!!activeQR} onClose={closeModal} title={activeQR?.type === 'menu' ? '📋 QR — Menú (Vitrina)' : `QR — Mesa ${activeQR?.type === 'table' ? activeQR.number : ''}`} maxWidth={360}>
           <div className="modal-header">
             <h3>{activeQR?.type === 'menu' ? '📋 QR — Menú (Vitrina)' : `QR — Mesa ${activeQR?.type === 'table' ? activeQR.number : ''}`}</h3>
             <button className="modal-close" onClick={closeModal}>✕</button>
@@ -138,8 +138,7 @@ export default function TablesClient() {
             <p className={styles['qr-url']}>{qrUrl}</p>
             <button className="btn btn-primary btn-full" onClick={downloadQr}>⬇ Descargar PNG</button>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

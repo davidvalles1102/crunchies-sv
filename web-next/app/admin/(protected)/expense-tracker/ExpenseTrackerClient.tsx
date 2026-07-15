@@ -14,6 +14,7 @@ import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 import type { Expense, ExpenseCategory } from '@/lib/types'
+import Modal from '@/app/components/Modal'
 
 const CAT_LABELS: Record<ExpenseCategory, string> = {
   insumos: '🥩 Insumos',
@@ -308,8 +309,7 @@ export default function ExpenseTrackerClient() {
         )}
       </div>
 
-      <div className={`modal-backdrop${modalOpen ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={form.id ? 'Editar Gasto' : 'Nuevo Gasto'}>
           <div className="modal-header">
             <h3>{form.id ? 'Editar Gasto' : 'Nuevo Gasto'}</h3>
             <button className="modal-close" onClick={() => setModalOpen(false)}>✕</button>
@@ -366,8 +366,7 @@ export default function ExpenseTrackerClient() {
             <button className="btn btn-outline" onClick={() => setModalOpen(false)}>Cancelar</button>
             <button className="btn btn-primary" disabled={saving} onClick={saveExpense}>{saving ? 'Guardando...' : 'Guardar Gasto'}</button>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

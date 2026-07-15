@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getSession, getProfile } from '@/lib/supabase/auth'
 import { useToast } from '../components/ToastProvider'
+import Modal from '@/app/components/Modal'
 import { fmt } from '@/lib/format'
 import type { Profile } from '@/lib/types'
 
@@ -225,8 +226,7 @@ export default function ProfileClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${editOpen ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Editar Perfil">
           <div className="modal-header">
             <h3>Editar Perfil</h3>
             <button className="modal-close" onClick={() => setEditOpen(false)}>✕</button>
@@ -245,8 +245,7 @@ export default function ProfileClient() {
               <button type="submit" className="btn btn-primary btn-full">Guardar Cambios</button>
             </form>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

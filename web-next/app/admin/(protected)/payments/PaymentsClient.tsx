@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format'
 import { useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import Modal from '@/app/components/Modal'
 import type { Payment } from '@/lib/types'
 import { buildPaymentPDF } from './receipt-pdf'
 
@@ -151,8 +152,7 @@ export default function PaymentsClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${receiptPayment ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={!!receiptPayment} onClose={() => setReceiptPayment(null)} title="Recibo">
           <div className="modal-header">
             <h3>Recibo</h3>
             <button className="modal-close" onClick={() => setReceiptPayment(null)}>✕</button>
@@ -195,11 +195,9 @@ export default function PaymentsClient() {
             }}>📱 WhatsApp</button>
             <button className="btn btn-primary" onClick={() => receiptPayment && downloadPDF(receiptPayment)}>🖨️ Reimprimir</button>
           </div>
-        </div>
-      </div>
+      </Modal>
 
-      <div className={`modal-backdrop${waOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 380 }}>
+      <Modal open={waOpen} onClose={() => setWaOpen(false)} title="📱 Enviar por WhatsApp" maxWidth={380}>
           <div className="modal-header">
             <h3>📱 Enviar por WhatsApp</h3>
             <button className="modal-close" onClick={() => setWaOpen(false)}>✕</button>
@@ -222,8 +220,7 @@ export default function PaymentsClient() {
             <button className="btn btn-outline" onClick={() => setWaOpen(false)}>Cancelar</button>
             <button className="btn btn-whatsapp" onClick={confirmWhatsApp}>Abrir WhatsApp ▶</button>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

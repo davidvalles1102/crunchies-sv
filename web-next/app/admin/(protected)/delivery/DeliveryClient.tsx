@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
+import Modal from '@/app/components/Modal'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import { useWakeLock } from '@/lib/useWakeLock'
 import { playNewOrderBeep } from '@/lib/notifySound'
@@ -358,8 +359,7 @@ export default function DeliveryClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${detailOrder ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 520 }}>
+      <Modal open={!!detailOrder} onClose={() => { setDetailOrder(null); setEditing(false) }} title={detailOrder ? (detailOrder.order_type === 'delivery' ? '🛵 Orden Domicilio' : '🥡 Para Llevar') : 'Detalle de Orden'} maxWidth={520}>
           <div className="modal-header">
             <h3>{detailOrder ? (detailOrder.order_type === 'delivery' ? '🛵 Orden Domicilio' : '🥡 Para Llevar') : 'Detalle de Orden'}</h3>
             <button className="modal-close" onClick={() => { setDetailOrder(null); setEditing(false) }}>✕</button>
@@ -528,11 +528,9 @@ export default function DeliveryClient() {
               </>
             )
           })()}
-        </div>
-      </div>
+      </Modal>
 
-      <div className={`modal-backdrop${driversOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 520 }}>
+      <Modal open={driversOpen} onClose={() => setDriversOpen(false)} title="Repartidores" maxWidth={520}>
           <div className="modal-header">
             <h3>Repartidores</h3>
             <button className="modal-close" onClick={() => setDriversOpen(false)}>✕</button>
@@ -571,11 +569,9 @@ export default function DeliveryClient() {
               <button type="submit" className="btn btn-primary btn-sm">+ Agregar</button>
             </form>
           </div>
-        </div>
-      </div>
+      </Modal>
 
-      <div className={`modal-backdrop${zonesOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 480 }}>
+      <Modal open={zonesOpen} onClose={() => setZonesOpen(false)} title="Zonas de Entrega" maxWidth={480}>
           <div className="modal-header">
             <h3>Zonas de Entrega</h3>
             <button className="modal-close" onClick={() => setZonesOpen(false)}>✕</button>
@@ -610,8 +606,7 @@ export default function DeliveryClient() {
               <button type="submit" className="btn btn-primary btn-sm">+ Agregar</button>
             </form>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

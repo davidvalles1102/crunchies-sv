@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
+import Modal from '@/app/components/Modal'
 import { useToast } from '../../../components/ToastProvider'
 import type { Category, ModifierGroup } from '@/lib/types'
 
@@ -311,8 +312,7 @@ export default function MenuManagementClient() {
       </div>
 
       {/* Add/Edit item modal */}
-      <div className={`modal-backdrop${itemModalOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 600 }}>
+      <Modal open={itemModalOpen} onClose={() => setItemModalOpen(false)} title={editingId ? 'Editar Platillo' : 'Nuevo Platillo'} maxWidth={600}>
           <div className="modal-header">
             <h3>{editingId ? 'Editar Platillo' : 'Nuevo Platillo'}</h3>
             <button className="modal-close" onClick={() => setItemModalOpen(false)}>✕</button>
@@ -387,12 +387,10 @@ export default function MenuManagementClient() {
             <button className="btn btn-outline" onClick={() => setItemModalOpen(false)}>Cancelar</button>
             <button className="btn btn-primary" onClick={saveItem}>Guardar</button>
           </div>
-        </div>
-      </div>
+      </Modal>
 
       {/* Categories modal */}
-      <div className={`modal-backdrop${catsModalOpen ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={catsModalOpen} onClose={() => setCatsModalOpen(false)} title="Categorías">
           <div className="modal-header">
             <h3>Categorías</h3>
             <button className="modal-close" onClick={() => setCatsModalOpen(false)}>✕</button>
@@ -412,12 +410,10 @@ export default function MenuManagementClient() {
               <button type="submit" className="btn btn-primary">+ Agregar</button>
             </form>
           </div>
-        </div>
-      </div>
+      </Modal>
 
       {/* Modifier groups modal */}
-      <div className={`modal-backdrop${modsModalOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 560 }}>
+      <Modal open={modsModalOpen} onClose={() => setModsModalOpen(false)} title="Grupos de Modificadores" maxWidth={560}>
           <div className="modal-header">
             <h3>Grupos de Modificadores</h3>
             <button className="modal-close" onClick={() => setModsModalOpen(false)}>✕</button>
@@ -490,8 +486,7 @@ export default function MenuManagementClient() {
               <button type="submit" className="btn btn-primary">+ Crear Grupo</button>
             </form>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
+import Modal from '@/app/components/Modal'
 import { useRequireRole } from '../../AdminContext'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import Topbar from '../../components/Topbar'
@@ -246,8 +247,7 @@ export default function ReservationsClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${detailReservation ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 580 }}>
+      <Modal open={!!detailReservation} onClose={() => setDetailReservation(null)} title="Detalle de Reservación" maxWidth={580}>
           <div className="modal-header">
             <h3>Detalle de Reservación</h3>
             <button className="modal-close" onClick={() => setDetailReservation(null)}>✕</button>
@@ -332,11 +332,9 @@ export default function ReservationsClient() {
               </>
             )
           })()}
-        </div>
-      </div>
+      </Modal>
 
-      <div className={`modal-backdrop${assignOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 400 }}>
+      <Modal open={assignOpen} onClose={() => setAssignOpen(false)} title="Asignar Mesa" maxWidth={400}>
           <div className="modal-header">
             <h3>Asignar Mesa</h3>
             <button className="modal-close" onClick={() => setAssignOpen(false)}>✕</button>
@@ -356,8 +354,7 @@ export default function ReservationsClient() {
             <button className="btn btn-outline" onClick={() => setAssignOpen(false)}>Cancelar</button>
             <button className="btn btn-primary" onClick={confirmAssignTable}>Confirmar y Asignar</button>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }
