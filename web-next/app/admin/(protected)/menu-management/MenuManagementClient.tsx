@@ -323,12 +323,12 @@ export default function MenuManagementClient() {
             <form className="flex-col gap-16" onSubmit={(e) => { e.preventDefault(); saveItem() }}>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Nombre *</label>
-                  <input type="text" className="form-control" required value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} />
+                  <label className="form-label" htmlFor="mm-item-name">Nombre *</label>
+                  <input id="mm-item-name" type="text" className="form-control" required value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Categoría *</label>
-                  <select className="form-control" required value={itemForm.category_id} onChange={(e) => setItemForm({ ...itemForm, category_id: e.target.value })}>
+                  <label className="form-label" htmlFor="mm-item-cat">Categoría *</label>
+                  <select id="mm-item-cat" className="form-control" required value={itemForm.category_id} onChange={(e) => setItemForm({ ...itemForm, category_id: e.target.value })}>
                     <option value="">Seleccionar...</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
@@ -337,24 +337,24 @@ export default function MenuManagementClient() {
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label">Descripción</label>
-                <textarea className="form-control" rows={2} value={itemForm.description} onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })} />
+                <label className="form-label" htmlFor="mm-item-desc">Descripción</label>
+                <textarea id="mm-item-desc" className="form-control" rows={2} value={itemForm.description} onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })} />
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Precio *</label>
-                  <input type="number" className="form-control" step="0.01" min="0" required value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} />
+                  <label className="form-label" htmlFor="mm-item-price">Precio *</label>
+                  <input id="mm-item-price" type="number" className="form-control" step="0.01" min="0" required value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Costo (insumos)</label>
-                  <input type="number" className="form-control" step="0.01" min="0" placeholder="0.00" value={itemForm.cost} onChange={(e) => setItemForm({ ...itemForm, cost: e.target.value })} />
+                  <label className="form-label" htmlFor="mm-item-cost">Costo (insumos)</label>
+                  <input id="mm-item-cost" type="number" className="form-control" step="0.01" min="0" placeholder="0.00" value={itemForm.cost} onChange={(e) => setItemForm({ ...itemForm, cost: e.target.value })} />
                   <div className="text-xs text-muted mt-4">Usado en Finanzas para calcular la ganancia real por platillo.</div>
                 </div>
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">URL de Imagen</label>
-                  <input type="url" className="form-control" placeholder="https://..." value={itemForm.image_url} onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })} />
+                  <label className="form-label" htmlFor="mm-item-img">URL de Imagen</label>
+                  <input id="mm-item-img" type="url" className="form-control" placeholder="https://..." value={itemForm.image_url} onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })} />
                 </div>
               </div>
               <div className="flex gap-16">
@@ -368,7 +368,7 @@ export default function MenuManagementClient() {
                 </label>
               </div>
               <div className="form-group">
-                <label className="form-label">Variaciones (tamaño, extras, etc.)</label>
+                <p className="form-label" style={{ marginBottom: 8 }}>Variaciones (tamaño, extras, etc.)</p>
                 <div className="flex-col gap-8" style={{ maxHeight: 140, overflowY: 'auto', padding: 8, border: '1px solid var(--border)', borderRadius: 'var(--r-md)' }}>
                   {modGroups.length === 0 ? (
                     <p className="text-muted text-sm">Sin grupos de modificadores creados. Usa &quot;Modificadores&quot; en la barra superior.</p>
@@ -465,12 +465,12 @@ export default function MenuManagementClient() {
             <form className="flex-col gap-12" onSubmit={addModGroup}>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Nombre</label>
-                  <input type="text" className="form-control" placeholder="Ej: Tamaño de pan" required value={newModGroupName} onChange={(e) => setNewModGroupName(e.target.value)} />
+                  <label className="form-label" htmlFor="mm-mod-name">Nombre</label>
+                  <input id="mm-mod-name" type="text" className="form-control" placeholder="Ej: Tamaño de pan" required value={newModGroupName} onChange={(e) => setNewModGroupName(e.target.value)} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Tipo</label>
-                  <select className="form-control" value={newModGroupType} onChange={(e) => setNewModGroupType(e.target.value as 'single' | 'multiple')}>
+                  <label className="form-label" htmlFor="mm-mod-type">Tipo</label>
+                  <select id="mm-mod-type" className="form-control" value={newModGroupType} onChange={(e) => setNewModGroupType(e.target.value as 'single' | 'multiple')}>
                     <option value="single">Selección única</option>
                     <option value="multiple">Selección múltiple</option>
                   </select>

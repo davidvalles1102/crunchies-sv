@@ -155,12 +155,12 @@ export default function CreditClient() {
               <h4 style={{ marginBottom: 16 }}>💵 Registrar abono — {selected.profiles?.full_name}</h4>
               <form className="flex-col gap-12" onSubmit={recordPayment}>
                 <div className="form-group">
-                  <label className="form-label">Monto</label>
-                  <input type="number" step="0.01" min="0.01" className="form-control" required value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
+                  <label className="form-label" htmlFor="credit-payment-amount">Monto</label>
+                  <input id="credit-payment-amount" type="number" step="0.01" min="0.01" className="form-control" required value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Notas (opcional)</label>
-                  <input type="text" className="form-control" value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)} />
+                  <label className="form-label" htmlFor="credit-payment-notes">Notas (opcional)</label>
+                  <input id="credit-payment-notes" type="text" className="form-control" value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)} />
                 </div>
                 <button type="submit" className="btn btn-primary" disabled={recording}>
                   {recording ? 'Guardando...' : 'Registrar abono'}
@@ -172,8 +172,8 @@ export default function CreditClient() {
               <h4 style={{ marginBottom: 16 }}>🔒 Límite de crédito</h4>
               <form className="flex-col gap-12" onSubmit={saveLimit}>
                 <div className="form-group">
-                  <label className="form-label">Límite (0 = sin límite)</label>
-                  <input type="number" step="0.01" min="0" className="form-control" value={limitInput} onChange={(e) => setLimitInput(e.target.value)} />
+                  <label className="form-label" htmlFor="credit-limit">Límite (0 = sin límite)</label>
+                  <input id="credit-limit" type="number" step="0.01" min="0" className="form-control" value={limitInput} onChange={(e) => setLimitInput(e.target.value)} />
                 </div>
                 <button type="submit" className="btn btn-outline" disabled={savingLimit}>
                   {savingLimit ? 'Guardando...' : 'Guardar límite'}

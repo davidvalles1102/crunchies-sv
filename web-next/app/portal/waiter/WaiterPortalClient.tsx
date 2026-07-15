@@ -418,9 +418,9 @@ export default function WaiterPortalClient() {
 
           {payMethod === 'cash' && (
             <div>
-              <div className="form-label" style={{ marginBottom: 6 }}>Efectivo recibido</div>
+              <label className="form-label" htmlFor="waiter-cash-in" style={{ marginBottom: 6, display: 'block' }}>Efectivo recibido</label>
               <input
-                type="number" className="form-control" placeholder="0.00" step="0.01"
+                id="waiter-cash-in" type="number" className="form-control" placeholder="0.00" step="0.01"
                 style={{ fontSize: '1.3rem', padding: '12px 16px' }}
                 value={cashIn} onChange={(e) => setCashIn(e.target.value)} autoFocus
               />
@@ -607,7 +607,7 @@ export default function WaiterPortalClient() {
                   </div>
                 </div>
                 <div className="waiter-ticket-actions">
-                  <input type="text" className="form-control" placeholder="Nota para cocina (opcional)..."
+                  <input type="text" className="form-control" placeholder="Nota para cocina (opcional)..." aria-label="Nota para cocina"
                     value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} style={{ fontSize: '.8rem' }} />
                   <button className="btn btn-amber btn-full btn-sm" onClick={sendToKitchen}>
                     👨‍🍳 Enviar a Cocina

@@ -387,8 +387,8 @@ export default function TableOrderClient() {
 
           <div className="cart-customer-form">
             <div className="form-group">
-              <label className="form-label">Notas para cocina</label>
-              <input type="text" className="form-control" placeholder="Sin cebolla, extra picante..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <label className="form-label" htmlFor="table-order-notes">Notas para cocina</label>
+              <input id="table-order-notes" type="text" className="form-control" placeholder="Sin cebolla, extra picante..." value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
           </div>
 
@@ -423,8 +423,8 @@ export default function TableOrderClient() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Notas para cocina</label>
-            <input type="text" className="form-control" placeholder="Sin cebolla, extra picante..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <label className="form-label" htmlFor="table-order-notes-mobile">Notas para cocina</label>
+            <input id="table-order-notes-mobile" type="text" className="form-control" placeholder="Sin cebolla, extra picante..." value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
           {orderMsg && <div className="alert alert-error">{orderMsg}</div>}

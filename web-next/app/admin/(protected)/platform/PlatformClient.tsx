@@ -155,9 +155,9 @@ export default function PlatformClient() {
           <h4 style={{ marginBottom: 16 }}>➕ Nuevo negocio</h4>
           <form className="flex-col gap-12" onSubmit={createTenant}>
             <div className="form-group">
-              <label className="form-label">Nombre del negocio</label>
+              <label className="form-label" htmlFor="platform-name">Nombre del negocio</label>
               <input
-                type="text" className="form-control" required placeholder="Ej: Pupusería Doña Ana"
+                id="platform-name" type="text" className="form-control" required placeholder="Ej: Pupusería Doña Ana"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value)
@@ -166,24 +166,24 @@ export default function PlatformClient() {
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Slug (identificador único)</label>
+              <label className="form-label" htmlFor="platform-slug">Slug (identificador único)</label>
               <input
-                type="text" className="form-control" required placeholder="pupuseria-dona-ana"
+                id="platform-slug" type="text" className="form-control" required placeholder="pupuseria-dona-ana"
                 value={slug}
                 onChange={(e) => { setSlug(slugify(e.target.value)); setSlugTouched(true) }}
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Email del dueño</label>
+              <label className="form-label" htmlFor="platform-owner-email">Email del dueño</label>
               <input
-                type="email" className="form-control" required placeholder="dueno@negocio.com"
+                id="platform-owner-email" type="email" className="form-control" required placeholder="dueno@negocio.com"
                 value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)}
               />
               <div className="text-xs text-muted mt-4">El dueño debe registrarse antes en /auth con este email.</div>
             </div>
             <div className="form-group">
-              <label className="form-label">Plan</label>
-              <select className="form-control" value={plan} onChange={(e) => setPlan(e.target.value)}>
+              <label className="form-label" htmlFor="platform-plan">Plan</label>
+              <select id="platform-plan" className="form-control" value={plan} onChange={(e) => setPlan(e.target.value)}>
                 <option value="starter">Starter</option>
                 <option value="pro">Pro</option>
                 <option value="multi-sucursal">Multi-sucursal</option>

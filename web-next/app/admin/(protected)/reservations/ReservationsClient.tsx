@@ -341,8 +341,8 @@ export default function ReservationsClient() {
           </div>
           <div className="modal-body">
             <div className="form-group">
-              <label className="form-label">Mesa</label>
-              <select className="form-control" value={assignTableId} onChange={(e) => setAssignTableId(e.target.value)}>
+              <label className="form-label" htmlFor="admin-reserv-table">Mesa</label>
+              <select id="admin-reserv-table" className="form-control" value={assignTableId} onChange={(e) => setAssignTableId(e.target.value)}>
                 <option value="">Sin asignar</option>
                 {availableTables.map((t) => (
                   <option key={t.id} value={t.id}>Mesa {t.number} — {t.location} (cap. {t.capacity})</option>

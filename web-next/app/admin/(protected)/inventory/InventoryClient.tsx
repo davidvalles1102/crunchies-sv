@@ -204,24 +204,24 @@ export default function InventoryClient() {
           <h4 style={{ marginBottom: 16 }}>➕ Nuevo insumo</h4>
           <form className="flex-col gap-12" onSubmit={createItem}>
             <div className="form-group">
-              <label className="form-label">Nombre</label>
-              <input type="text" className="form-control" required placeholder="Ej: Pechuga de pollo" value={itemName} onChange={(e) => setItemName(e.target.value)} />
+              <label className="form-label" htmlFor="inv-item-name">Nombre</label>
+              <input id="inv-item-name" type="text" className="form-control" required placeholder="Ej: Pechuga de pollo" value={itemName} onChange={(e) => setItemName(e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Unidad</label>
-              <input type="text" className="form-control" placeholder="unit, kg, lb, litro..." value={itemUnit} onChange={(e) => setItemUnit(e.target.value)} />
+              <label className="form-label" htmlFor="inv-item-unit">Unidad</label>
+              <input id="inv-item-unit" type="text" className="form-control" placeholder="unit, kg, lb, litro..." value={itemUnit} onChange={(e) => setItemUnit(e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Costo por unidad</label>
-              <input type="number" step="0.01" min="0" className="form-control" value={itemCost} onChange={(e) => setItemCost(e.target.value)} />
+              <label className="form-label" htmlFor="inv-item-cost">Costo por unidad</label>
+              <input id="inv-item-cost" type="number" step="0.01" min="0" className="form-control" value={itemCost} onChange={(e) => setItemCost(e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Stock inicial</label>
-              <input type="number" step="0.001" min="0" className="form-control" value={itemStock} onChange={(e) => setItemStock(e.target.value)} />
+              <label className="form-label" htmlFor="inv-item-stock">Stock inicial</label>
+              <input id="inv-item-stock" type="number" step="0.001" min="0" className="form-control" value={itemStock} onChange={(e) => setItemStock(e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Punto de reorden</label>
-              <input type="number" step="0.001" min="0" className="form-control" value={itemReorder} onChange={(e) => setItemReorder(e.target.value)} />
+              <label className="form-label" htmlFor="inv-item-reorder">Punto de reorden</label>
+              <input id="inv-item-reorder" type="number" step="0.001" min="0" className="form-control" value={itemReorder} onChange={(e) => setItemReorder(e.target.value)} />
             </div>
             <button type="submit" className="btn btn-primary" disabled={creatingItem}>
               {creatingItem ? 'Guardando...' : '✓ Crear insumo'}
@@ -233,15 +233,15 @@ export default function InventoryClient() {
           <h4 style={{ marginBottom: 16 }}>📦 Registrar movimiento</h4>
           <form className="flex-col gap-12" onSubmit={recordMovement}>
             <div className="form-group">
-              <label className="form-label">Insumo</label>
-              <select className="form-control" required value={movItemId} onChange={(e) => setMovItemId(e.target.value)}>
+              <label className="form-label" htmlFor="inv-mov-item">Insumo</label>
+              <select id="inv-mov-item" className="form-control" required value={movItemId} onChange={(e) => setMovItemId(e.target.value)}>
                 <option value="">Selecciona...</option>
                 {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Tipo</label>
-              <select className="form-control" value={movType} onChange={(e) => setMovType(e.target.value)}>
+              <label className="form-label" htmlFor="inv-mov-type">Tipo</label>
+              <select id="inv-mov-type" className="form-control" value={movType} onChange={(e) => setMovType(e.target.value)}>
                 <option value="in">Entrada (compra)</option>
                 <option value="adjustment">Ajuste</option>
                 <option value="waste">Merma</option>
@@ -249,12 +249,12 @@ export default function InventoryClient() {
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Cantidad</label>
-              <input type="number" step="0.001" min="0.001" className="form-control" required value={movQty} onChange={(e) => setMovQty(e.target.value)} />
+              <label className="form-label" htmlFor="inv-mov-qty">Cantidad</label>
+              <input id="inv-mov-qty" type="number" step="0.001" min="0.001" className="form-control" required value={movQty} onChange={(e) => setMovQty(e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Motivo (opcional)</label>
-              <input type="text" className="form-control" value={movReason} onChange={(e) => setMovReason(e.target.value)} />
+              <label className="form-label" htmlFor="inv-mov-reason">Motivo (opcional)</label>
+              <input id="inv-mov-reason" type="text" className="form-control" value={movReason} onChange={(e) => setMovReason(e.target.value)} />
             </div>
             <button type="submit" className="btn btn-outline" disabled={recordingMov}>
               {recordingMov ? 'Guardando...' : 'Registrar movimiento'}
@@ -266,22 +266,22 @@ export default function InventoryClient() {
           <h4 style={{ marginBottom: 16 }}>🍽️ Recetas — consumo por venta</h4>
           <form className="flex-col gap-12" onSubmit={saveRecipeLine}>
             <div className="form-group">
-              <label className="form-label">Platillo</label>
-              <select className="form-control" required value={recipeMenuItemId} onChange={(e) => setRecipeMenuItemId(e.target.value)}>
+              <label className="form-label" htmlFor="inv-recipe-menu">Platillo</label>
+              <select id="inv-recipe-menu" className="form-control" required value={recipeMenuItemId} onChange={(e) => setRecipeMenuItemId(e.target.value)}>
                 <option value="">Selecciona...</option>
                 {menuItems.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Insumo</label>
-              <select className="form-control" required value={recipeInventoryItemId} onChange={(e) => setRecipeInventoryItemId(e.target.value)}>
+              <label className="form-label" htmlFor="inv-recipe-item">Insumo</label>
+              <select id="inv-recipe-item" className="form-control" required value={recipeInventoryItemId} onChange={(e) => setRecipeInventoryItemId(e.target.value)}>
                 <option value="">Selecciona...</option>
                 {items.map((i) => <option key={i.id} value={i.id}>{i.name} ({i.unit})</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Cantidad consumida por unidad vendida</label>
-              <input type="number" step="0.001" min="0.001" className="form-control" required value={recipeQty} onChange={(e) => setRecipeQty(e.target.value)} />
+              <label className="form-label" htmlFor="inv-recipe-qty">Cantidad consumida por unidad vendida</label>
+              <input id="inv-recipe-qty" type="number" step="0.001" min="0.001" className="form-control" required value={recipeQty} onChange={(e) => setRecipeQty(e.target.value)} />
             </div>
             <button type="submit" className="btn btn-outline" disabled={savingRecipe}>
               {savingRecipe ? 'Guardando...' : 'Guardar receta'}

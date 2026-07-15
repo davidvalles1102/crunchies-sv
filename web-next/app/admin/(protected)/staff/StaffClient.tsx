@@ -239,22 +239,22 @@ export default function StaffClient() {
               <h4 style={{ marginBottom: 16 }}>➕ Nuevo miembro del staff</h4>
               <form className="flex-col gap-12" onSubmit={createStaff}>
                 <div className="form-group">
-                  <label className="form-label">Nombre completo</label>
-                  <input type="text" className="form-control" required placeholder="Ej: María García" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                  <label className="form-label" htmlFor="staff-name">Nombre completo</label>
+                  <input id="staff-name" type="text" className="form-control" required placeholder="Ej: María García" value={newName} onChange={(e) => setNewName(e.target.value)} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Rol</label>
-                  <select className="form-control" value={newRole} onChange={(e) => setNewRole(e.target.value as typeof newRole)}>
+                  <label className="form-label" htmlFor="staff-role">Rol</label>
+                  <select id="staff-role" className="form-control" value={newRole} onChange={(e) => setNewRole(e.target.value as typeof newRole)}>
                     <option value="waiter">🪑 Mesero</option>
                     <option value="kitchen">👨‍🍳 Cocina</option>
                     <option value="delivery">🛵 Delivery</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">PIN de 6 dígitos</label>
+                  <label className="form-label" htmlFor="staff-pin">PIN de 6 dígitos</label>
                   <div className="flex gap-8">
                     <input
-                      type="text" className="form-control" required
+                      id="staff-pin" type="text" className="form-control" required
                       pattern="\d{6}" maxLength={6} placeholder="000000"
                       style={{ fontFamily: 'monospace', fontSize: '1.2rem', letterSpacing: '.2em', maxWidth: 140 }}
                       value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 6))}

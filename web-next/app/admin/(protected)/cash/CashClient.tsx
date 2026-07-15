@@ -181,9 +181,9 @@ export default function CashClient() {
             <h4 style={{ marginBottom: 16 }}>🔓 Abrir caja</h4>
             <form className="flex-col gap-12" onSubmit={openRegister}>
               <div className="form-group">
-                <label className="form-label">Monto de apertura</label>
+                <label className="form-label" htmlFor="cash-opening-amount">Monto de apertura</label>
                 <input
-                  type="number" step="0.01" min="0" className="form-control" required
+                  id="cash-opening-amount" type="number" step="0.01" min="0" className="form-control" required
                   placeholder="0.00" value={openingAmount} onChange={(e) => setOpeningAmount(e.target.value)}
                 />
               </div>
@@ -205,19 +205,19 @@ export default function CashClient() {
               <h4 style={{ marginBottom: 16 }}>➕ Movimiento manual</h4>
               <form className="flex-col gap-12" onSubmit={addMovement}>
                 <div className="form-group">
-                  <label className="form-label">Tipo</label>
-                  <select className="form-control" value={movType} onChange={(e) => setMovType(e.target.value as 'in' | 'out')}>
+                  <label className="form-label" htmlFor="cash-mov-type">Tipo</label>
+                  <select id="cash-mov-type" className="form-control" value={movType} onChange={(e) => setMovType(e.target.value as 'in' | 'out')}>
                     <option value="out">Salida (retiro, compra menor)</option>
                     <option value="in">Entrada (fondo adicional)</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Monto</label>
-                  <input type="number" step="0.01" min="0.01" className="form-control" required value={movAmount} onChange={(e) => setMovAmount(e.target.value)} />
+                  <label className="form-label" htmlFor="cash-mov-amount">Monto</label>
+                  <input id="cash-mov-amount" type="number" step="0.01" min="0.01" className="form-control" required value={movAmount} onChange={(e) => setMovAmount(e.target.value)} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Motivo</label>
-                  <input type="text" className="form-control" required placeholder="Ej: compra de hielo" value={movReason} onChange={(e) => setMovReason(e.target.value)} />
+                  <label className="form-label" htmlFor="cash-mov-reason">Motivo</label>
+                  <input id="cash-mov-reason" type="text" className="form-control" required placeholder="Ej: compra de hielo" value={movReason} onChange={(e) => setMovReason(e.target.value)} />
                 </div>
                 <button type="submit" className="btn btn-outline" disabled={addingMovement}>
                   {addingMovement ? 'Guardando...' : 'Registrar movimiento'}
@@ -240,12 +240,12 @@ export default function CashClient() {
               <h4 style={{ marginBottom: 16 }}>🔒 Cerrar caja</h4>
               <form className="flex-col gap-12" onSubmit={closeRegister}>
                 <div className="form-group">
-                  <label className="form-label">Monto contado</label>
-                  <input type="number" step="0.01" min="0" className="form-control" required value={countedAmount} onChange={(e) => setCountedAmount(e.target.value)} />
+                  <label className="form-label" htmlFor="cash-counted-amount">Monto contado</label>
+                  <input id="cash-counted-amount" type="number" step="0.01" min="0" className="form-control" required value={countedAmount} onChange={(e) => setCountedAmount(e.target.value)} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Notas (opcional)</label>
-                  <input type="text" className="form-control" value={closeNotes} onChange={(e) => setCloseNotes(e.target.value)} />
+                  <label className="form-label" htmlFor="cash-close-notes">Notas (opcional)</label>
+                  <input id="cash-close-notes" type="text" className="form-control" value={closeNotes} onChange={(e) => setCloseNotes(e.target.value)} />
                 </div>
                 <button type="submit" className="btn btn-danger" disabled={closing}>
                   {closing ? 'Cerrando...' : 'Cerrar caja'}

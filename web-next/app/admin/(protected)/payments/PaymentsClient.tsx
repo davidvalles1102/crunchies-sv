@@ -207,9 +207,9 @@ export default function PaymentsClient() {
               WhatsApp se abrirá con el recibo listo para enviar. Solo presiona ▶ en WhatsApp.
             </p>
             <div className="form-group">
-              <label className="form-label">Número del cliente</label>
+              <label className="form-label" htmlFor="payments-wa-phone">Número del cliente</label>
               <input
-                type="tel" className="form-control" placeholder="Ej: 573001234567"
+                id="payments-wa-phone" type="tel" className="form-control" placeholder="Ej: 573001234567"
                 value={waPhone} onChange={(e) => setWaPhone(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') confirmWhatsApp() }}
               />

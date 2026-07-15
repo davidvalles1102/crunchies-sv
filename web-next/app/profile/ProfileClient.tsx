@@ -234,12 +234,12 @@ export default function ProfileClient() {
           <div className="modal-body">
             <form className="flex-col gap-16" onSubmit={handleEditSubmit}>
               <div className="form-group">
-                <label className="form-label">Nombre completo</label>
-                <input type="text" className="form-control" required value={editName} onChange={(e) => setEditName(e.target.value)} />
+                <label className="form-label" htmlFor="profile-name">Nombre completo</label>
+                <input id="profile-name" type="text" className="form-control" required value={editName} onChange={(e) => setEditName(e.target.value)} />
               </div>
               <div className="form-group">
-                <label className="form-label">Teléfono</label>
-                <input type="tel" className="form-control" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
+                <label className="form-label" htmlFor="profile-phone">Teléfono</label>
+                <input id="profile-phone" type="tel" className="form-control" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
               </div>
               {editMsg && <div className="alert alert-error">{editMsg.text}</div>}
               <button type="submit" className="btn btn-primary btn-full">Guardar Cambios</button>

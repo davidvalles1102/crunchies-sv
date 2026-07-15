@@ -319,32 +319,32 @@ export default function ExpenseTrackerClient() {
           <div className="modal-body">
             <form onSubmit={(e) => e.preventDefault()}>
               <div className="form-group">
-                <label className="form-label">Categoría</label>
-                <select className="form-control" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as ExpenseCategory })}>
+                <label className="form-label" htmlFor="expense-category">Categoría</label>
+                <select id="expense-category" className="form-control" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as ExpenseCategory })}>
                   {Object.entries(CAT_LABELS).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
                 </select>
               </div>
               <div className="form-group mt-16">
-                <label className="form-label">Descripción</label>
-                <input type="text" className="form-control" placeholder="Ej: Compra de carne y verduras" required
+                <label className="form-label" htmlFor="expense-desc">Descripción</label>
+                <input id="expense-desc" type="text" className="form-control" placeholder="Ej: Compra de carne y verduras" required
                   value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
               <div className="form-group mt-16">
-                <label className="form-label">Monto</label>
-                <input type="number" className="form-control" min="0.01" step="0.01" placeholder="0.00" required
+                <label className="form-label" htmlFor="expense-amount">Monto</label>
+                <input id="expense-amount" type="number" className="form-control" min="0.01" step="0.01" placeholder="0.00" required
                   value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
               </div>
               <div className="form-group mt-16">
-                <label className="form-label">Método de pago</label>
-                <select className="form-control" value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })}>
+                <label className="form-label" htmlFor="expense-payment-method">Método de pago</label>
+                <select id="expense-payment-method" className="form-control" value={form.payment_method} onChange={(e) => setForm({ ...form, payment_method: e.target.value })}>
                   <option value="cash">💵 Efectivo</option>
                   <option value="card">💳 Tarjeta</option>
                   <option value="transfer">📲 Transferencia</option>
                 </select>
               </div>
               <div className="form-group mt-16">
-                <label className="form-label">Fecha</label>
-                <input type="date" className="form-control" required value={form.expense_date} onChange={(e) => setForm({ ...form, expense_date: e.target.value })} />
+                <label className="form-label" htmlFor="expense-date">Fecha</label>
+                <input id="expense-date" type="date" className="form-control" required value={form.expense_date} onChange={(e) => setForm({ ...form, expense_date: e.target.value })} />
               </div>
               <div className="form-group mt-16">
                 <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
@@ -354,8 +354,8 @@ export default function ExpenseTrackerClient() {
               </div>
               {form.is_recurring && (
                 <div className="form-group mt-16">
-                  <label className="form-label">Frecuencia</label>
-                  <select className="form-control" value={form.recurrence} onChange={(e) => setForm({ ...form, recurrence: e.target.value })}>
+                  <label className="form-label" htmlFor="expense-recurrence">Frecuencia</label>
+                  <select id="expense-recurrence" className="form-control" value={form.recurrence} onChange={(e) => setForm({ ...form, recurrence: e.target.value })}>
                     <option value="daily">Diario</option>
                     <option value="weekly">Semanal</option>
                     <option value="monthly">Mensual</option>

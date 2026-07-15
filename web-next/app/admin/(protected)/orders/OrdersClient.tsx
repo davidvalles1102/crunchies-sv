@@ -705,8 +705,8 @@ export default function OrdersClient() {
               <div className="pay-total-amount neon-green">{fmt.currency(chargeTotal)}</div>
             </div>
             <div className="form-group mt-16">
-              <label className="form-label">Método de pago</label>
-              <div className="pay-methods">
+              <p className="form-label" style={{ marginBottom: 8 }}>Método de pago</p>
+              <div className="pay-methods" role="group" aria-label="Método de pago">
                 <button className={`pay-method${selectedPayMethod === 'cash' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('cash')}>💵 Efectivo</button>
                 <button className={`pay-method${selectedPayMethod === 'card' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('card')}>💳 Tarjeta</button>
                 <button className={`pay-method${selectedPayMethod === 'transfer' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('transfer')}>📲 Transferencia</button>
@@ -721,15 +721,15 @@ export default function OrdersClient() {
             {selectedPayMethod === 'cash' && (
               <div>
                 <div className="form-group mt-16">
-                  <label className="form-label">Efectivo recibido</label>
-                  <input type="number" className="form-control" placeholder="0.00" step="0.01" min="0" value={cashReceived} onChange={(e) => setCashReceived(e.target.value)} />
+                  <label className="form-label" htmlFor="orders-cash-received">Efectivo recibido</label>
+                  <input id="orders-cash-received" type="number" className="form-control" placeholder="0.00" step="0.01" min="0" value={cashReceived} onChange={(e) => setCashReceived(e.target.value)} />
                 </div>
                 <div className="change-display mt-8">Cambio: <span className="neon-amber">{fmt.currency(changeAmount)}</span></div>
               </div>
             )}
             <div className="form-group mt-16" style={{ position: 'relative' }}>
-              <label className="form-label">Cliente (opcional)</label>
-              <input type="text" className="form-control" placeholder="Nombre o correo para puntos de lealtad..." value={payCustomerSearch} onChange={(e) => searchCustomers(e.target.value)} />
+              <label className="form-label" htmlFor="orders-customer-search">Cliente (opcional)</label>
+              <input id="orders-customer-search" type="text" className="form-control" placeholder="Nombre o correo para puntos de lealtad..." value={payCustomerSearch} onChange={(e) => searchCustomers(e.target.value)} />
               {customerSuggestions.length > 0 && (
                 <div className="suggestions-list" style={{ display: 'block' }}>
                   {customerSuggestions.map((c) => (
@@ -823,9 +823,9 @@ export default function OrdersClient() {
           <div className="modal-body">
             <p className="text-sm text-muted" style={{ marginBottom: 14 }}>WhatsApp se abrirá con la factura lista para enviar. Solo presiona ▶ en WhatsApp.</p>
             <div className="form-group">
-              <label className="form-label">Número del cliente</label>
+              <label className="form-label" htmlFor="orders-wa-phone">Número del cliente</label>
               <input
-                type="tel" className="form-control" placeholder="Ej: 573001234567"
+                id="orders-wa-phone" type="tel" className="form-control" placeholder="Ej: 573001234567"
                 value={waPhone} onChange={(e) => setWaPhone(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') confirmWhatsApp() }}
               />
