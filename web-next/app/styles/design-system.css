@@ -484,6 +484,9 @@ select.form-control { appearance: none; cursor: pointer; }
   .modal-close { padding: 10px; }
 }
 
+/* ─── Shared keyframes ───────────────────────────────────────── */
+@keyframes pulse-banner { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+
 /* ─── Reduced motion ─────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

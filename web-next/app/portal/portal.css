@@ -503,8 +503,6 @@
 .portal-order-status.status--kitchen  { background: rgba(255, 153, 0, .12); color: var(--amber); border: 1px solid var(--amber-dim); }
 .portal-order-status.status--ready    { background: var(--orange-alpha); color: var(--orange); border: 1px solid var(--orange-dim); animation: pulse-banner 2s ease-in-out infinite; }
 .portal-order-status.status--delivered{ background: var(--bg-2); color: var(--text-muted); border: 1px solid var(--border); }
-@keyframes pulse-banner { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
-
 /* ─── Pay view ───────────────────────────────────────────────────── */
 .portal-pay-wrap {
   max-width: 480px;
