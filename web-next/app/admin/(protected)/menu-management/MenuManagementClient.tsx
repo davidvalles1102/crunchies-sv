@@ -6,6 +6,7 @@ import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import Modal from '@/app/components/Modal'
 import { useToast } from '../../../components/ToastProvider'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 import type { Category, ModifierGroup } from '@/lib/types'
 
 type MgmtMenuItem = {
@@ -39,6 +40,7 @@ export default function MenuManagementClient() {
   const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [categories, setCategories] = useState<Category[]>([])
   const [items, setItems] = useState<MgmtMenuItem[]>([])
@@ -174,7 +176,7 @@ export default function MenuManagementClient() {
   }
 
   const deleteItem = async (id: string) => {
-    if (!confirm('¿Eliminar este platillo permanentemente?')) return
+    if (!await confirm('¿Eliminar este platillo permanentemente?', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('menu_items').delete().eq('id', id)
     if (error) { toast('Error al eliminar', 'error'); return }
     toast('Platillo eliminado')
@@ -195,7 +197,7 @@ export default function MenuManagementClient() {
   }
 
   const deleteCat = async (id: string) => {
-    if (!confirm('¿Eliminar categoría? Los platillos quedarán sin categoría.')) return
+    if (!await confirm('¿Eliminar categoría? Los platillos quedarán sin categoría.', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('categories').delete().eq('id', id)
     if (error) { toast('Error', 'error'); return }
     toast('Categoría eliminada')
@@ -241,7 +243,7 @@ export default function MenuManagementClient() {
   }
 
   const deleteModGroup = async (id: string) => {
-    if (!confirm('¿Eliminar este grupo y todas sus opciones? Se quitará de los platillos asignados.')) return
+    if (!await confirm('¿Eliminar este grupo y todas sus opciones? Se quitará de los platillos asignados.', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('modifier_groups').delete().eq('id', id)
     if (error) { toast('Error al eliminar', 'error'); return }
     toast('Grupo eliminado')

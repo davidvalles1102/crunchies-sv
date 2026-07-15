@@ -15,6 +15,7 @@ import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 import type { Expense, ExpenseCategory } from '@/lib/types'
 import Modal from '@/app/components/Modal'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 
 const CAT_LABELS: Record<ExpenseCategory, string> = {
   insumos: '🥩 Insumos',
@@ -63,6 +64,7 @@ export default function ExpenseTrackerClient() {
   const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [rangeDays, setRangeDays] = useState(30)
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -195,7 +197,7 @@ export default function ExpenseTrackerClient() {
   }
 
   const deleteExpense = async (id: string) => {
-    if (!confirm('¿Eliminar este gasto permanentemente?')) return
+    if (!await confirm('¿Eliminar este gasto permanentemente?', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('expenses').delete().eq('id', id)
     if (error) { toast('Error al eliminar', 'error'); return }
     toast('Gasto eliminado', 'success')

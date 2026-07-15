@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCustomerSession } from '@/lib/supabase/auth'
 import { resolveRootTenantId } from '@/lib/tenant'
 import { useToast } from '../components/ToastProvider'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 import { fmt } from '@/lib/format'
 import type { User } from '@supabase/supabase-js'
 
@@ -40,6 +41,7 @@ const TIMES = ['12:00', '13:00', '14:00', '15:00', '18:00', '19:00', '20:00', '2
 export default function ReservationsClient() {
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [loadingAuth, setLoadingAuth] = useState(true)
   const [user, setUser] = useState<User | null>(null)
@@ -120,7 +122,7 @@ export default function ReservationsClient() {
 
   const cancelReserv = async (id: string) => {
     if (!user) return
-    if (!confirm('¿Cancelar esta reservación?')) return
+    if (!await confirm('¿Cancelar esta reservación?', { title: 'Cancelar Reservación', confirmLabel: 'Cancelar' })) return
     const { error } = await supabase
       .from('reservations')
       .update({ status: 'cancelled' })

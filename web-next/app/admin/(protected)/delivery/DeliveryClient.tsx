@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
 import Modal from '@/app/components/Modal'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import { useWakeLock } from '@/lib/useWakeLock'
 import { playNewOrderBeep } from '@/lib/notifySound'
@@ -43,6 +44,7 @@ export default function DeliveryClient() {
   const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [allOrders, setAllOrders] = useState<BoardOrder[]>([])
@@ -144,7 +146,7 @@ export default function DeliveryClient() {
   }
 
   async function deleteDriver(id: string) {
-    if (!confirm('¿Eliminar este repartidor? Las órdenes asignadas quedarán sin repartidor.')) return
+    if (!await confirm('¿Eliminar este repartidor? Las órdenes asignadas quedarán sin repartidor.', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('drivers').delete().eq('id', id)
     if (error) { toast('Error al eliminar', 'error'); return }
     toast('Repartidor eliminado')
@@ -182,7 +184,7 @@ export default function DeliveryClient() {
   }
 
   async function deleteZone(id: string) {
-    if (!confirm('¿Eliminar esta zona de entrega?')) return
+    if (!await confirm('¿Eliminar esta zona de entrega?', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('delivery_zones').delete().eq('id', id)
     if (error) { toast('Error al eliminar', 'error'); return }
     toast('Zona eliminada')

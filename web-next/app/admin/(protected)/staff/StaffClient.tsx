@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format'
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 
 type StaffMember = {
   id: string
@@ -50,6 +51,7 @@ export default function StaffClient() {
   const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [tab, setTab] = useState<'team' | 'performance'>('team')
   const [staff, setStaff] = useState<StaffMember[]>([])
@@ -148,7 +150,7 @@ export default function StaffClient() {
   }
 
   async function deleteStaff(m: StaffMember) {
-    if (!confirm(`¿Eliminar a ${m.full_name}? Los logs de eventos se conservan.`)) return
+    if (!await confirm(`¿Eliminar a ${m.full_name}? Los logs de eventos se conservan.`, { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('staff_members').delete().eq('id', m.id)
     if (error) { toast('Error al eliminar', 'error'); return }
     toast(`${m.full_name} eliminado`)

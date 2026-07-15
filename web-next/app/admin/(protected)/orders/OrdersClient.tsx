@@ -10,6 +10,7 @@ import type { Category, OrderMenuItem, ModifierGroup, RestaurantTable } from '@/
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import ModifierModal from '../../../order/ModifierModal'
 import { buildReceiptPDF } from './receipt-pdf'
@@ -58,6 +59,7 @@ export default function OrdersClient() {
   const { profile, tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [categories, setCategories] = useState<Category[]>([])
   const [menuItems, setMenuItems] = useState<OrderMenuItem[]>([])
@@ -334,7 +336,7 @@ export default function OrdersClient() {
   }
 
   const clearTicket = async () => {
-    if (!confirm('¿Limpiar la orden actual?')) return
+    if (!await confirm('¿Limpiar la orden actual?', { title: 'Limpiar orden', confirmLabel: 'Limpiar' })) return
 
     const tableToCheck = (orderType === 'dine_in' && selectedTable) ? selectedTable : null
 

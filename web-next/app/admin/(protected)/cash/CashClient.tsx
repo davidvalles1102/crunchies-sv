@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format'
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 
 type CashSession = {
   id: string
@@ -32,6 +33,7 @@ export default function CashClient() {
   const { tenant, profile } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [session, setSession] = useState<CashSession | null>(null)
   const [movements, setMovements] = useState<Movement[]>([])
@@ -141,7 +143,7 @@ export default function CashClient() {
     if (!session) return
     const counted = parseFloat(countedAmount)
     if (isNaN(counted) || counted < 0) { toast('Monto contado inválido', 'warning'); return }
-    if (!confirm('¿Cerrar caja? Esta acción no se puede deshacer.')) return
+    if (!await confirm('¿Cerrar caja? Esta acción no se puede deshacer.', { title: 'Cerrar Caja', confirmLabel: 'Cerrar Caja' })) return
     setClosing(true)
     const { data, error } = await supabase.rpc('close_cash_session', {
       p_session_id: session.id,

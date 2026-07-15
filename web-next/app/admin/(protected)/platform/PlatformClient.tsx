@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format'
 import { useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 
 type Tenant = {
   id: string
@@ -37,6 +38,7 @@ export default function PlatformClient() {
   useRequireRole(['admin'])
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [loading, setLoading] = useState(true)
@@ -99,7 +101,7 @@ export default function PlatformClient() {
   async function toggleSuspend(t: Tenant) {
     const nextStatus = t.status === 'suspended' ? 'active' : 'suspended'
     const label = nextStatus === 'suspended' ? 'suspender' : 'reactivar'
-    if (!confirm(`¿Seguro que quieres ${label} "${t.name}"?`)) return
+    if (!await confirm(`¿Seguro que quieres ${label} "${t.name}"?`, { confirmLabel: nextStatus === 'suspended' ? 'Suspender' : 'Reactivar' })) return
 
     const { error } = await supabase.rpc('set_tenant_status', { p_tenant_id: t.id, p_status: nextStatus })
     if (error) {

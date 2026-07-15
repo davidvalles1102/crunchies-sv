@@ -7,6 +7,7 @@ import { useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import LiveClock from '../../components/LiveClock'
 import Modal from '@/app/components/Modal'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 import { useToast } from '../../../components/ToastProvider'
 import type { RestaurantTable } from '@/lib/types'
 import styles from './tables.module.css'
@@ -21,6 +22,7 @@ export default function TablesClient() {
   useRequireRole(['admin'])
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [tables, setTables] = useState<RestaurantTable[]>([])
   const [activeQR, setActiveQR] = useState<ActiveQR | null>(null)
@@ -70,7 +72,7 @@ export default function TablesClient() {
 
     if (active?.length) {
       const label = ACTIVE_ORDER_STATUS_LABEL[active[0].status] ?? active[0].status
-      const go = confirm(`⚠️ Mesa ${table.number} tiene una orden ${label}.\n\n¿Liberar la mesa de todas formas?`)
+      const go = await confirm(`⚠️ Mesa ${table.number} tiene una orden ${label}.\n\n¿Liberar la mesa de todas formas?`, { title: 'Mesa ocupada', confirmLabel: 'Liberar' })
       if (!go) return
     }
 
