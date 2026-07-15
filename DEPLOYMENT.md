@@ -138,12 +138,18 @@ Local, ya verificado en esta sesión (no específico de producción, pero es la 
 
 ---
 
-## 5. Bugs conocidos — documentados, no bloqueantes, recomendado arreglar pronto
+## 5. Bugs conocidos
 
-Encontrados durante la auditoría de esta sesión. Ninguno impide operar el negocio día a día; ambos degradan la exactitud de reportes/inventario con el tiempo.
+Encontrados durante la auditoría de esta sesión. Actualizado conforme se van cerrando — ver `supabase/MIGRATIONS.md` #24-27 para el detalle de cada fix ya aplicado.
 
-1. **COGS histórico sin snapshot de costo.** `FinanceClient.tsx` calcula el margen de órdenes pasadas usando el costo *actual* de `menu_items.cost`, no el costo que estaba vigente cuando se vendió cada platillo. Cambiar el costo de un insumo hoy reescribe retroactivamente todos los reportes de margen anteriores. Fix recomendado: guardar el costo unitario en `order_items` al momento de la venta (como ya se hace con `item_price`), en vez de recalcularlo después.
-2. **Inventario no se revierte al editar/quitar un ítem de una orden antes de pagar.** El trigger de consumo automático (`apply_recipe_consumption`) solo corre en `INSERT` sobre `order_items`. Si se reduce cantidad o se elimina un ítem antes de cobrar, el stock ya descontado no se restaura — el inventario puede ir quedando desfasado con el uso normal (correcciones de mesero, cliente que cambia de pedido). Fix recomendado: trigger equivalente en `UPDATE`/`DELETE` de `order_items` que revierta la porción correspondiente del movimiento de inventario.
+### Arreglados
+
+1. **Cobro no exigía comandas entregadas.** `WaiterPortalClient.tsx` y `OrdersClient.tsx` (admin POS) permitían cobrar y cerrar/liberar la mesa con comandas todavía `open`/`in_kitchen`/`ready` — comida sin servir. Ahora el cobro está bloqueado con aviso explícito hasta que todo esté `delivered`.
+2. **Inventario no se revertía al editar/quitar un ítem antes de pagar.** El trigger `apply_recipe_consumption` solo corría en `INSERT`. Reescrito para manejar `UPDATE` (delta de cantidad) y `DELETE` (reversión completa) — `migrations/fix_inventory_reversal.sql`, con test de integración nuevo (`inventario: reducir cantidad o quitar un item ANTES de cobrar revierte el stock`).
+
+### Pendiente
+
+3. **COGS histórico sin snapshot de costo.** `FinanceClient.tsx` calcula el margen de órdenes pasadas usando el costo *actual* de `menu_items.cost`, no el costo que estaba vigente cuando se vendió cada platillo. Cambiar el costo de un insumo hoy reescribe retroactivamente todos los reportes de margen anteriores. Fix recomendado: guardar el costo unitario en `order_items` al momento de la venta (como ya se hace con `item_price`), en vez de recalcularlo después. No lo toqué todavía — fuera del alcance de esta ronda de auditoría de flujos operativos, pero sigue pendiente.
 
 Ver la auditoría completa (incluye hallazgos sobre el realtime de cocina, ya mitigados con `useLiveRefetch`) más arriba en esta conversación.
 
