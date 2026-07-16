@@ -562,8 +562,8 @@ export default function OrdersClient() {
         </div>
         {orderType === 'dine_in' && (
           <div className="table-picker">
-            <label className="form-label" style={{ whiteSpace: 'nowrap' }}>Mesa:</label>
-            <select className="form-control" style={{ width: 140 }} value={selectedTableId} onChange={(e) => onTableChange(e.target.value)}>
+            <label htmlFor="pos-table-select" className="form-label" style={{ whiteSpace: 'nowrap' }}>Mesa:</label>
+            <select id="pos-table-select" className="form-control" style={{ width: 140 }} value={selectedTableId} onChange={(e) => onTableChange(e.target.value)}>
               <option value="">Seleccionar...</option>
               {tables.map((t) => {
                 const suffix = t.status === 'occupied' ? ' — 🔴 Ocupada' : t.status === 'reserved' ? ' — 🟡 Reservada' : t.status === 'maintenance' ? ' — ⛔ Mantenimiento' : ''
