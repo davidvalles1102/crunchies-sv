@@ -10,7 +10,7 @@ colors:
   bg-5:            "#3A1913"
   text-primary:    "#FFFFFF"
   text-secondary:  "#BFA099"
-  text-muted:      "#7A5248"
+  text-muted:      "#A07870"
   orange:          "#FF6600"
   orange-dim:      "#7A3000"
   orange-dark:     "#3D1800"
