@@ -404,20 +404,20 @@ export default function DeliveryClient() {
                       <div className="card" style={{ borderColor: 'var(--amber-dim)' }}>
                         <h4 style={{ color: 'var(--amber)', marginBottom: 10 }}>✏️ Editar datos del cliente</h4>
                         <div className="flex-col gap-8">
-                          <label className="text-xs text-muted">Nombre</label>
-                          <input className="form-control" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Nombre del cliente" />
-                          <label className="text-xs text-muted">Teléfono</label>
-                          <input className="form-control" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="Teléfono" />
+                          <label htmlFor="dlv-edit-name" className="text-xs text-muted">Nombre</label>
+                          <input id="dlv-edit-name" className="form-control" value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Nombre del cliente" />
+                          <label htmlFor="dlv-edit-phone" className="text-xs text-muted">Teléfono</label>
+                          <input id="dlv-edit-phone" className="form-control" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="Teléfono" />
                           {isDelivery && (
                             <>
-                              <label className="text-xs text-muted">Dirección</label>
-                              <input className="form-control" value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Dirección de entrega" />
-                              <label className="text-xs text-muted">Costo de envío ($)</label>
-                              <input className="form-control" type="number" min="0" step="0.01" value={editFee} onChange={(e) => setEditFee(e.target.value)} placeholder="0.00" />
+                              <label htmlFor="dlv-edit-address" className="text-xs text-muted">Dirección</label>
+                              <input id="dlv-edit-address" className="form-control" value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Dirección de entrega" />
+                              <label htmlFor="dlv-edit-fee" className="text-xs text-muted">Costo de envío ($)</label>
+                              <input id="dlv-edit-fee" className="form-control" type="number" min="0" step="0.01" value={editFee} onChange={(e) => setEditFee(e.target.value)} placeholder="0.00" />
                             </>
                           )}
-                          <label className="text-xs text-muted">Notas</label>
-                          <input className="form-control" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Instrucciones especiales..." />
+                          <label htmlFor="dlv-edit-notes" className="text-xs text-muted">Notas</label>
+                          <input id="dlv-edit-notes" className="form-control" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Instrucciones especiales..." />
                         </div>
                       </div>
                       <div className="card">
@@ -581,8 +581,10 @@ export default function DeliveryClient() {
             <hr className="receipt__divider mt-16" />
             <h4 className="mt-16 mb-16">Nuevo repartidor</h4>
             <form className="flex gap-8" onSubmit={addDriver}>
-              <input type="text" className="form-control" placeholder="Nombre" style={{ flex: 1 }} required value={newDriverName} onChange={(e) => setNewDriverName(e.target.value)} />
-              <input type="tel" className="form-control" placeholder="Teléfono" style={{ flex: 1 }} required value={newDriverPhone} onChange={(e) => setNewDriverPhone(e.target.value)} />
+              <label htmlFor="dlv-driver-name" className="sr-only">Nombre del repartidor</label>
+              <input id="dlv-driver-name" type="text" className="form-control" placeholder="Nombre" style={{ flex: 1 }} required value={newDriverName} onChange={(e) => setNewDriverName(e.target.value)} />
+              <label htmlFor="dlv-driver-phone" className="sr-only">Teléfono del repartidor</label>
+              <input id="dlv-driver-phone" type="tel" className="form-control" placeholder="Teléfono" style={{ flex: 1 }} required value={newDriverPhone} onChange={(e) => setNewDriverPhone(e.target.value)} />
               <button type="submit" className="btn btn-primary btn-sm">+ Agregar</button>
             </form>
           </div>
@@ -618,8 +620,10 @@ export default function DeliveryClient() {
             <hr className="receipt__divider mt-16" />
             <h4 className="mt-16 mb-16">Nueva zona</h4>
             <form className="flex gap-8" onSubmit={addZone}>
-              <input type="text" className="form-control" placeholder="Nombre de la zona" style={{ flex: 1 }} required value={newZoneName} onChange={(e) => setNewZoneName(e.target.value)} />
-              <input type="number" className="form-control" placeholder="Tarifa $" step="0.01" min="0" style={{ width: 110 }} required value={newZoneFee} onChange={(e) => setNewZoneFee(e.target.value)} />
+              <label htmlFor="dlv-zone-name" className="sr-only">Nombre de la zona</label>
+              <input id="dlv-zone-name" type="text" className="form-control" placeholder="Nombre de la zona" style={{ flex: 1 }} required value={newZoneName} onChange={(e) => setNewZoneName(e.target.value)} />
+              <label htmlFor="dlv-zone-fee" className="sr-only">Tarifa de envío</label>
+              <input id="dlv-zone-fee" type="number" className="form-control" placeholder="Tarifa $" step="0.01" min="0" style={{ width: 110 }} required value={newZoneFee} onChange={(e) => setNewZoneFee(e.target.value)} />
               <button type="submit" className="btn btn-primary btn-sm">+ Agregar</button>
             </form>
           </div>
