@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { fmt } from '@/lib/format'
 import type { ModifierGroup } from '@/lib/types'
 import type { Selection } from '@/lib/modifiers'
+import Modal from '@/app/components/Modal'
 
 function defaultSelection(g: ModifierGroup): string[] {
   if (g.selection_type === 'single') {
@@ -65,11 +66,10 @@ export default function ModifierModal({
   }
 
   return (
-    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
-      <div className="modal" style={{ maxWidth: 420 }}>
-        <div className="modal-header">
+    <Modal onClose={onCancel} title={item.name} maxWidth={420}>
+      <div className="modal-header">
           <h3>{item.name}</h3>
-          <button className="modal-close" onClick={onCancel}>✕</button>
+          <button className="modal-close" aria-label="Cerrar" onClick={onCancel}>✕</button>
         </div>
         <div className="modal-body">
           {groups.map((g) => (
@@ -109,7 +109,6 @@ export default function ModifierModal({
           <button className="btn btn-outline" onClick={onCancel}>Cancelar</button>
           <button className="btn btn-primary" onClick={handleConfirm}>Agregar</button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

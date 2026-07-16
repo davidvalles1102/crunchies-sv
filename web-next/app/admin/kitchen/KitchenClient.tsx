@@ -192,7 +192,7 @@ export default function KitchenClient() {
 
         <div className="kitchen-col">
           <div className="kitchen-col__header">
-            <span className="badge badge-green" style={{ fontSize: '.9rem', padding: '6px 14px' }}>✅ LISTO PARA SERVIR</span>
+            <span className="badge badge-primary" style={{ fontSize: '.9rem', padding: '6px 14px' }}>✅ LISTO PARA SERVIR</span>
             <span className="badge badge-muted">{readyOrders.length}</span>
           </div>
           <div className="kitchen-orders">
@@ -214,6 +214,7 @@ export default function KitchenClient() {
           </div>
         </div>
         <div className={`kitchen-history__body${historyCollapsed ? ' collapsed' : ''}`}>
+          <div className="kitchen-history__inner">
           {history.length === 0
             ? <div className="kitchen-empty" style={{ padding: 20 }}>Sin órdenes entregadas hoy</div>
             : history.map((o) => {
@@ -254,6 +255,7 @@ export default function KitchenClient() {
                 </div>
               )
             })}
+          </div>
         </div>
       </div>
     </div>

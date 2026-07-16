@@ -6,12 +6,14 @@ import { createClient } from '@/lib/supabase/client'
 import { useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import LiveClock from '../../components/LiveClock'
+import Modal from '@/app/components/Modal'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 import { useToast } from '../../../components/ToastProvider'
 import type { RestaurantTable } from '@/lib/types'
 import styles from './tables.module.css'
 
 const STATUS_LABEL: Record<string, string> = { available: 'Disponible', occupied: 'Ocupada', reserved: 'Reservada', maintenance: 'Mantenimiento' }
-const STATUS_BADGE: Record<string, string> = { available: 'badge-green', occupied: 'badge-danger', reserved: 'badge-amber', maintenance: 'badge-muted' }
+const STATUS_BADGE: Record<string, string> = { available: 'badge-primary', occupied: 'badge-danger', reserved: 'badge-amber', maintenance: 'badge-muted' }
 const ACTIVE_ORDER_STATUS_LABEL: Record<string, string> = { open: 'abierta', in_kitchen: 'en cocina', ready: 'lista', delivered: 'entregada' }
 
 type ActiveQR = { type: 'table'; id: string; number: number } | { type: 'menu' }
@@ -20,6 +22,7 @@ export default function TablesClient() {
   useRequireRole(['admin'])
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [tables, setTables] = useState<RestaurantTable[]>([])
   const [activeQR, setActiveQR] = useState<ActiveQR | null>(null)
@@ -69,7 +72,7 @@ export default function TablesClient() {
 
     if (active?.length) {
       const label = ACTIVE_ORDER_STATUS_LABEL[active[0].status] ?? active[0].status
-      const go = confirm(`⚠️ Mesa ${table.number} tiene una orden ${label}.\n\n¿Liberar la mesa de todas formas?`)
+      const go = await confirm(`⚠️ Mesa ${table.number} tiene una orden ${label}.\n\n¿Liberar la mesa de todas formas?`, { title: 'Mesa ocupada', confirmLabel: 'Liberar' })
       if (!go) return
     }
 
@@ -122,11 +125,10 @@ export default function TablesClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${activeQR ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 360 }}>
+      <Modal open={!!activeQR} onClose={closeModal} title={activeQR?.type === 'menu' ? '📋 QR — Menú (Vitrina)' : `QR — Mesa ${activeQR?.type === 'table' ? activeQR.number : ''}`} maxWidth={360}>
           <div className="modal-header">
             <h3>{activeQR?.type === 'menu' ? '📋 QR — Menú (Vitrina)' : `QR — Mesa ${activeQR?.type === 'table' ? activeQR.number : ''}`}</h3>
-            <button className="modal-close" onClick={closeModal}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={closeModal}>✕</button>
           </div>
           <div className={`modal-body ${styles['qr-body']}`}>
             {activeQR?.type === 'menu' && (
@@ -138,8 +140,7 @@ export default function TablesClient() {
             <p className={styles['qr-url']}>{qrUrl}</p>
             <button className="btn btn-primary btn-full" onClick={downloadQr}>⬇ Descargar PNG</button>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

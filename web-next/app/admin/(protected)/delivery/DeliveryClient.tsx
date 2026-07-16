@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt, calcTotals } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
+import Modal from '@/app/components/Modal'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import { useWakeLock } from '@/lib/useWakeLock'
 import { playNewOrderBeep } from '@/lib/notifySound'
@@ -19,8 +21,8 @@ type BoardOrder = DeliveryOrder & { elapsedMinutes: number }
 const STATUS_CFG: Record<string, { label: string; cls: string; icon: string; next: string | null; nextLabel: string | null }> = {
   pending:    { label: 'Pendiente',  cls: 'badge-amber', icon: '🕐', next: 'preparing',  nextLabel: '👨‍🍳 Preparar' },
   preparing:  { label: 'Preparando', cls: 'badge-info',  icon: '🔥', next: 'ready',       nextLabel: '✅ Listo' },
-  ready:      { label: 'Listo',      cls: 'badge-green', icon: '✅', next: 'on_the_way',  nextLabel: '🛵 En Camino' },
-  on_the_way: { label: 'En Camino',  cls: 'badge-green', icon: '🛵', next: 'delivered',   nextLabel: '📦 Entregado' },
+  ready:      { label: 'Listo',      cls: 'badge-primary', icon: '✅', next: 'on_the_way',  nextLabel: '🛵 En Camino' },
+  on_the_way: { label: 'En Camino',  cls: 'badge-primary', icon: '🛵', next: 'delivered',   nextLabel: '📦 Entregado' },
   delivered:  { label: 'Entregado',  cls: 'badge-muted', icon: '📦', next: null,          nextLabel: null },
 }
 
@@ -43,6 +45,7 @@ export default function DeliveryClient() {
   const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [allOrders, setAllOrders] = useState<BoardOrder[]>([])
@@ -151,7 +154,7 @@ export default function DeliveryClient() {
   }
 
   async function deleteDriver(id: string) {
-    if (!confirm('¿Eliminar este repartidor? Las órdenes asignadas quedarán sin repartidor.')) return
+    if (!await confirm('¿Eliminar este repartidor? Las órdenes asignadas quedarán sin repartidor.', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('drivers').delete().eq('id', id)
     if (error) { toast('Error al eliminar', 'error'); return }
     toast('Repartidor eliminado')
@@ -189,7 +192,7 @@ export default function DeliveryClient() {
   }
 
   async function deleteZone(id: string) {
-    if (!confirm('¿Eliminar esta zona de entrega?')) return
+    if (!await confirm('¿Eliminar esta zona de entrega?', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('delivery_zones').delete().eq('id', id)
     if (error) { toast('Error al eliminar', 'error'); return }
     toast('Zona eliminada')
@@ -373,11 +376,10 @@ export default function DeliveryClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${detailOrder ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 520 }}>
+      <Modal open={!!detailOrder} onClose={() => { setDetailOrder(null); setEditing(false) }} title={detailOrder ? (detailOrder.order_type === 'delivery' ? '🛵 Orden Domicilio' : '🥡 Para Llevar') : 'Detalle de Orden'} maxWidth={520}>
           <div className="modal-header">
             <h3>{detailOrder ? (detailOrder.order_type === 'delivery' ? '🛵 Orden Domicilio' : '🥡 Para Llevar') : 'Detalle de Orden'}</h3>
-            <button className="modal-close" onClick={() => { setDetailOrder(null); setEditing(false) }}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => { setDetailOrder(null); setEditing(false) }}>✕</button>
           </div>
           {detailOrder && (() => {
             const o = detailOrder
@@ -543,14 +545,12 @@ export default function DeliveryClient() {
               </>
             )
           })()}
-        </div>
-      </div>
+      </Modal>
 
-      <div className={`modal-backdrop${driversOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 520 }}>
+      <Modal open={driversOpen} onClose={() => setDriversOpen(false)} title="Repartidores" maxWidth={520}>
           <div className="modal-header">
             <h3>Repartidores</h3>
-            <button className="modal-close" onClick={() => setDriversOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setDriversOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="flex-col gap-8">
@@ -586,14 +586,12 @@ export default function DeliveryClient() {
               <button type="submit" className="btn btn-primary btn-sm">+ Agregar</button>
             </form>
           </div>
-        </div>
-      </div>
+      </Modal>
 
-      <div className={`modal-backdrop${zonesOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 480 }}>
+      <Modal open={zonesOpen} onClose={() => setZonesOpen(false)} title="Zonas de Entrega" maxWidth={480}>
           <div className="modal-header">
             <h3>Zonas de Entrega</h3>
-            <button className="modal-close" onClick={() => setZonesOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setZonesOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="flex-col gap-8">
@@ -625,8 +623,7 @@ export default function DeliveryClient() {
               <button type="submit" className="btn btn-primary btn-sm">+ Agregar</button>
             </form>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { useAdmin, useRequireRole } from '../../AdminContext'
+import Modal from '@/app/components/Modal'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 
@@ -290,11 +291,10 @@ export default function CustomersClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${selected ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 580 }}>
+      <Modal open={!!selected} onClose={() => setSelected(null)} title={selected?.full_name || 'Cliente'} maxWidth={580}>
           <div className="modal-header">
             <h3>{selected?.full_name || 'Cliente'}</h3>
-            <button className="modal-close" onClick={() => setSelected(null)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setSelected(null)}>✕</button>
           </div>
           <div className="modal-body">
             {detailLoading ? (
@@ -397,8 +397,7 @@ export default function CustomersClient() {
               </div>
             )}
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

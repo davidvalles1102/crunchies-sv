@@ -45,6 +45,9 @@ function chartOpts() {
   }
 }
 
+const SV_OFFSET_MS = 6 * 60 * 60 * 1000
+const svDate = (iso: string) => new Date(new Date(iso).getTime() - SV_OFFSET_MS).toISOString().split('T')[0]
+
 export default function FinanceClient() {
   useRequireRole(['admin', 'waiter'])
   const supabase = createClient()
@@ -65,7 +68,7 @@ export default function FinanceClient() {
     const revByDay: Record<string, number> = {}
     const expByDay: Record<string, number> = {}
     const cogsByDay: Record<string, number> = {}
-    ordersData.forEach((o) => { const d = o.created_at.slice(0, 10); revByDay[d] = (revByDay[d] || 0) + Number(o.total) })
+    ordersData.forEach((o) => { const d = svDate(o.created_at); revByDay[d] = (revByDay[d] || 0) + Number(o.total) })
     expensesData.forEach((e) => { const d = e.expense_date; expByDay[d] = (expByDay[d] || 0) + Number(e.amount) })
     itemsData.forEach((i) => {
       const d = i.created_at.slice(0, 10)
@@ -183,7 +186,7 @@ export default function FinanceClient() {
   const edcRevByDay: Record<string, number> = {}
   const edcExpByDay: Record<string, number> = {}
   const edcCogsByDay: Record<string, number> = {}
-  orders.forEach((o) => { const d = o.created_at.slice(0, 10); edcRevByDay[d] = (edcRevByDay[d] || 0) + Number(o.total) })
+  orders.forEach((o) => { const d = svDate(o.created_at); edcRevByDay[d] = (edcRevByDay[d] || 0) + Number(o.total) })
   expenses.forEach((e) => { const d = e.expense_date; edcExpByDay[d] = (edcExpByDay[d] || 0) + Number(e.amount) })
   items.forEach((i) => { const d = i.created_at.slice(0, 10); edcCogsByDay[d] = (edcCogsByDay[d] || 0) + itemCost(i) })
   const edcDays = [...new Set([...Object.keys(edcRevByDay), ...Object.keys(edcExpByDay), ...Object.keys(edcCogsByDay)])].sort()

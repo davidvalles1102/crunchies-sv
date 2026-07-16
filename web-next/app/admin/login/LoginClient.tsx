@@ -104,13 +104,13 @@ export default function LoginClient() {
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label className="form-label">Correo</label>
-          <input type="email" className="form-control" placeholder="correo@crunchies.com" required
+          <label className="form-label" htmlFor="staff-email">Correo</label>
+          <input id="staff-email" type="email" className="form-control" placeholder="correo@crunchies.com" required
             value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="form-group mt-16">
-          <label className="form-label">Contraseña</label>
-          <input type="password" className="form-control" placeholder="••••••••" required
+          <label className="form-label" htmlFor="staff-password">Contraseña</label>
+          <input id="staff-password" type="password" className="form-control" placeholder="••••••••" required
             value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         {error && <div className="alert alert-error mt-16">{error}</div>}

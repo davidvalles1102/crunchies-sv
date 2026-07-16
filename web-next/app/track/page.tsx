@@ -11,11 +11,11 @@ export default function TrackPage() {
     <>
       <NavBar />
 
-      <div className={styles['track-layout']}>
+      <main id="main-content" className={styles['track-layout']}>
         <Suspense fallback={null}>
           <TrackClient />
         </Suspense>
-      </div>
+      </main>
 
       <footer className="cust-footer">
         <div className="footer-brand">CRUNCHIES</div>

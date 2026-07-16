@@ -262,7 +262,7 @@ export default function OrderClient({
       {ORDERING_ENABLED && <div className="order-cart-panel">
         <div className="cart-header">
           <h3>Tu Orden</h3>
-          <span className="badge badge-green">{cart.reduce((s, i) => s + i.qty, 0)} items</span>
+          <span className="badge badge-primary">{cart.reduce((s, i) => s + i.qty, 0)} items</span>
         </div>
 
         <div className="cart-items">
@@ -301,18 +301,18 @@ export default function OrderClient({
           <h4>{orderType === 'delivery' ? 'Datos de entrega' : 'Datos para recoger'}</h4>
           <div className="flex-col gap-12 mt-12">
             <div className="form-group">
-              <label className="form-label">Nombre completo *</label>
-              <input type="text" className="form-control" placeholder="Tu nombre" value={custName} onChange={(e) => setCustName(e.target.value)} />
+              <label className="form-label" htmlFor="order-cust-name">Nombre completo *</label>
+              <input id="order-cust-name" type="text" className="form-control" placeholder="Tu nombre" value={custName} onChange={(e) => setCustName(e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Teléfono *</label>
-              <input type="tel" className="form-control" placeholder="+503 0000-0000" value={custPhone} onChange={(e) => setCustPhone(e.target.value)} />
+              <label className="form-label" htmlFor="order-cust-phone">Teléfono *</label>
+              <input id="order-cust-phone" type="tel" className="form-control" placeholder="+503 0000-0000" value={custPhone} onChange={(e) => setCustPhone(e.target.value)} />
             </div>
 
             {orderType === 'takeout' && (
               <div className="form-group">
-                <label className="form-label">Hora de recogida</label>
-                <select className="form-control" value={pickupTime} onChange={(e) => setPickupTime(e.target.value)}>
+                <label className="form-label" htmlFor="order-pickup-time">Hora de recogida</label>
+                <select id="order-pickup-time" className="form-control" value={pickupTime} onChange={(e) => setPickupTime(e.target.value)}>
                   <option value="20">En ~20 min</option>
                   <option value="30">En ~30 min</option>
                   <option value="45">En ~45 min</option>
@@ -324,8 +324,8 @@ export default function OrderClient({
             {orderType === 'delivery' && (
               <>
                 <div className="form-group">
-                  <label className="form-label">Zona de entrega *</label>
-                  <select className="form-control" value={selectedZoneId} onChange={(e) => setSelectedZoneId(e.target.value)}>
+                  <label className="form-label" htmlFor="order-zone">Zona de entrega *</label>
+                  <select id="order-zone" className="form-control" value={selectedZoneId} onChange={(e) => setSelectedZoneId(e.target.value)}>
                     <option value="">Selecciona tu zona...</option>
                     {zones.map((z) => (
                       <option key={z.id} value={z.id}>{z.name} — {fmt.currency(z.fee)}</option>
@@ -333,15 +333,15 @@ export default function OrderClient({
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Dirección de entrega *</label>
-                  <textarea className="form-control" rows={2} placeholder="Calle, número, colonia, referencias..." value={custAddress} onChange={(e) => setCustAddress(e.target.value)} />
+                  <label className="form-label" htmlFor="order-address">Dirección de entrega *</label>
+                  <textarea id="order-address" className="form-control" rows={2} placeholder="Calle, número, colonia, referencias..." value={custAddress} onChange={(e) => setCustAddress(e.target.value)} />
                 </div>
               </>
             )}
 
             <div className="form-group">
-              <label className="form-label">Notas especiales</label>
-              <input type="text" className="form-control" placeholder="Sin cebolla, extra picante..." value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} />
+              <label className="form-label" htmlFor="order-notes">Notas especiales</label>
+              <input id="order-notes" type="text" className="form-control" placeholder="Sin cebolla, extra picante..." value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} />
             </div>
           </div>
         </div>

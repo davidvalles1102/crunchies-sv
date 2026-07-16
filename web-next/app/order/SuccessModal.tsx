@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { fmt } from '@/lib/format'
+import Modal from '@/app/components/Modal'
 
 type OrderInfo = {
   id: string
@@ -27,9 +28,8 @@ export default function SuccessModal({
   const isCard = order.payment_method === 'card'
 
   return (
-    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="modal" style={{ maxWidth: 440, textAlign: 'center' }}>
-        <div className="modal-body" style={{ padding: '40px 32px' }}>
+    <Modal onClose={onClose} title={isDelivery ? '¡Pedido enviado!' : '¡Pedido registrado!'} maxWidth={440} style={{ textAlign: 'center' }}>
+      <div className="modal-body" style={{ padding: '40px 32px' }}>
           <div style={{ fontSize: '3.5rem' }}>🎉</div>
           <h2 className="neon-green mt-16">{isDelivery ? '¡Pedido enviado!' : '¡Pedido registrado!'}</h2>
           <p className="text-secondary mt-8">
@@ -58,7 +58,6 @@ export default function SuccessModal({
           <Link href={`/track?id=${order.id}`} className="btn btn-outline btn-full mt-16">📍 Seguir mi Pedido en tiempo real</Link>
           <Link href="/" className="btn btn-primary btn-full btn-lg mt-8" onClick={onClose}>Volver al Menú</Link>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

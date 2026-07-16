@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
+import Modal from '@/app/components/Modal'
 import { useToast } from '../../../components/ToastProvider'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 import type { Category, ModifierGroup } from '@/lib/types'
 
 type MgmtMenuItem = {
@@ -38,6 +40,7 @@ export default function MenuManagementClient() {
   const { tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [categories, setCategories] = useState<Category[]>([])
   const [items, setItems] = useState<MgmtMenuItem[]>([])
@@ -173,7 +176,7 @@ export default function MenuManagementClient() {
   }
 
   const deleteItem = async (id: string) => {
-    if (!confirm('¿Eliminar este platillo permanentemente?')) return
+    if (!await confirm('¿Eliminar este platillo permanentemente?', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('menu_items').delete().eq('id', id)
     if (error) { toast('Error al eliminar', 'error'); return }
     toast('Platillo eliminado')
@@ -194,7 +197,7 @@ export default function MenuManagementClient() {
   }
 
   const deleteCat = async (id: string) => {
-    if (!confirm('¿Eliminar categoría? Los platillos quedarán sin categoría.')) return
+    if (!await confirm('¿Eliminar categoría? Los platillos quedarán sin categoría.', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('categories').delete().eq('id', id)
     if (error) { toast('Error', 'error'); return }
     toast('Categoría eliminada')
@@ -240,7 +243,7 @@ export default function MenuManagementClient() {
   }
 
   const deleteModGroup = async (id: string) => {
-    if (!confirm('¿Eliminar este grupo y todas sus opciones? Se quitará de los platillos asignados.')) return
+    if (!await confirm('¿Eliminar este grupo y todas sus opciones? Se quitará de los platillos asignados.', { confirmLabel: 'Eliminar' })) return
     const { error } = await supabase.from('modifier_groups').delete().eq('id', id)
     if (error) { toast('Error al eliminar', 'error'); return }
     toast('Grupo eliminado')
@@ -311,22 +314,21 @@ export default function MenuManagementClient() {
       </div>
 
       {/* Add/Edit item modal */}
-      <div className={`modal-backdrop${itemModalOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 600 }}>
+      <Modal open={itemModalOpen} onClose={() => setItemModalOpen(false)} title={editingId ? 'Editar Platillo' : 'Nuevo Platillo'} maxWidth={600}>
           <div className="modal-header">
             <h3>{editingId ? 'Editar Platillo' : 'Nuevo Platillo'}</h3>
-            <button className="modal-close" onClick={() => setItemModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setItemModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <form className="flex-col gap-16" onSubmit={(e) => { e.preventDefault(); saveItem() }}>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Nombre *</label>
-                  <input type="text" className="form-control" required value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} />
+                  <label className="form-label" htmlFor="mm-item-name">Nombre *</label>
+                  <input id="mm-item-name" type="text" className="form-control" required value={itemForm.name} onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Categoría *</label>
-                  <select className="form-control" required value={itemForm.category_id} onChange={(e) => setItemForm({ ...itemForm, category_id: e.target.value })}>
+                  <label className="form-label" htmlFor="mm-item-cat">Categoría *</label>
+                  <select id="mm-item-cat" className="form-control" required value={itemForm.category_id} onChange={(e) => setItemForm({ ...itemForm, category_id: e.target.value })}>
                     <option value="">Seleccionar...</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
@@ -335,24 +337,24 @@ export default function MenuManagementClient() {
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label">Descripción</label>
-                <textarea className="form-control" rows={2} value={itemForm.description} onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })} />
+                <label className="form-label" htmlFor="mm-item-desc">Descripción</label>
+                <textarea id="mm-item-desc" className="form-control" rows={2} value={itemForm.description} onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })} />
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Precio *</label>
-                  <input type="number" className="form-control" step="0.01" min="0" required value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} />
+                  <label className="form-label" htmlFor="mm-item-price">Precio *</label>
+                  <input id="mm-item-price" type="number" className="form-control" step="0.01" min="0" required value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Costo (insumos)</label>
-                  <input type="number" className="form-control" step="0.01" min="0" placeholder="0.00" value={itemForm.cost} onChange={(e) => setItemForm({ ...itemForm, cost: e.target.value })} />
+                  <label className="form-label" htmlFor="mm-item-cost">Costo (insumos)</label>
+                  <input id="mm-item-cost" type="number" className="form-control" step="0.01" min="0" placeholder="0.00" value={itemForm.cost} onChange={(e) => setItemForm({ ...itemForm, cost: e.target.value })} />
                   <div className="text-xs text-muted mt-4">Usado en Finanzas para calcular la ganancia real por platillo.</div>
                 </div>
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">URL de Imagen</label>
-                  <input type="url" className="form-control" placeholder="https://..." value={itemForm.image_url} onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })} />
+                  <label className="form-label" htmlFor="mm-item-img">URL de Imagen</label>
+                  <input id="mm-item-img" type="url" className="form-control" placeholder="https://..." value={itemForm.image_url} onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })} />
                 </div>
               </div>
               <div className="flex gap-16">
@@ -366,7 +368,7 @@ export default function MenuManagementClient() {
                 </label>
               </div>
               <div className="form-group">
-                <label className="form-label">Variaciones (tamaño, extras, etc.)</label>
+                <p className="form-label" style={{ marginBottom: 8 }}>Variaciones (tamaño, extras, etc.)</p>
                 <div className="flex-col gap-8" style={{ maxHeight: 140, overflowY: 'auto', padding: 8, border: '1px solid var(--border)', borderRadius: 'var(--r-md)' }}>
                   {modGroups.length === 0 ? (
                     <p className="text-muted text-sm">Sin grupos de modificadores creados. Usa &quot;Modificadores&quot; en la barra superior.</p>
@@ -387,15 +389,13 @@ export default function MenuManagementClient() {
             <button className="btn btn-outline" onClick={() => setItemModalOpen(false)}>Cancelar</button>
             <button className="btn btn-primary" onClick={saveItem}>Guardar</button>
           </div>
-        </div>
-      </div>
+      </Modal>
 
       {/* Categories modal */}
-      <div className={`modal-backdrop${catsModalOpen ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={catsModalOpen} onClose={() => setCatsModalOpen(false)} title="Categorías">
           <div className="modal-header">
             <h3>Categorías</h3>
-            <button className="modal-close" onClick={() => setCatsModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setCatsModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="flex-col gap-8">
@@ -412,15 +412,13 @@ export default function MenuManagementClient() {
               <button type="submit" className="btn btn-primary">+ Agregar</button>
             </form>
           </div>
-        </div>
-      </div>
+      </Modal>
 
       {/* Modifier groups modal */}
-      <div className={`modal-backdrop${modsModalOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 560 }}>
+      <Modal open={modsModalOpen} onClose={() => setModsModalOpen(false)} title="Grupos de Modificadores" maxWidth={560}>
           <div className="modal-header">
             <h3>Grupos de Modificadores</h3>
-            <button className="modal-close" onClick={() => setModsModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setModsModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="flex-col gap-16">
@@ -467,12 +465,12 @@ export default function MenuManagementClient() {
             <form className="flex-col gap-12" onSubmit={addModGroup}>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Nombre</label>
-                  <input type="text" className="form-control" placeholder="Ej: Tamaño de pan" required value={newModGroupName} onChange={(e) => setNewModGroupName(e.target.value)} />
+                  <label className="form-label" htmlFor="mm-mod-name">Nombre</label>
+                  <input id="mm-mod-name" type="text" className="form-control" placeholder="Ej: Tamaño de pan" required value={newModGroupName} onChange={(e) => setNewModGroupName(e.target.value)} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Tipo</label>
-                  <select className="form-control" value={newModGroupType} onChange={(e) => setNewModGroupType(e.target.value as 'single' | 'multiple')}>
+                  <label className="form-label" htmlFor="mm-mod-type">Tipo</label>
+                  <select id="mm-mod-type" className="form-control" value={newModGroupType} onChange={(e) => setNewModGroupType(e.target.value as 'single' | 'multiple')}>
                     <option value="single">Selección única</option>
                     <option value="multiple">Selección múltiple</option>
                   </select>
@@ -490,8 +488,7 @@ export default function MenuManagementClient() {
               <button type="submit" className="btn btn-primary">+ Crear Grupo</button>
             </form>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

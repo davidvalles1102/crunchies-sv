@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
+import Modal from '@/app/components/Modal'
 import { useRequireRole } from '../../AdminContext'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import Topbar from '../../components/Topbar'
@@ -12,7 +13,7 @@ import { svToday } from '@/lib/svDate'
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: string }> = {
   pending:   { label: 'Pendiente',  cls: 'badge-amber',  icon: '🕐' },
-  confirmed: { label: 'Confirmada', cls: 'badge-green',  icon: '✅' },
+  confirmed: { label: 'Confirmada', cls: 'badge-primary',  icon: '✅' },
   seated:    { label: 'En Mesa',    cls: 'badge-info',   icon: '🪑' },
   cancelled: { label: 'Cancelada',  cls: 'badge-danger', icon: '❌' },
   no_show:   { label: 'No Show',    cls: 'badge-muted',  icon: '👻' },
@@ -258,11 +259,10 @@ export default function ReservationsClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${detailReservation ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 580 }}>
+      <Modal open={!!detailReservation} onClose={() => setDetailReservation(null)} title="Detalle de Reservación" maxWidth={580}>
           <div className="modal-header">
             <h3>Detalle de Reservación</h3>
-            <button className="modal-close" onClick={() => setDetailReservation(null)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setDetailReservation(null)}>✕</button>
           </div>
           {detailReservation && (() => {
             const r = detailReservation
@@ -344,19 +344,17 @@ export default function ReservationsClient() {
               </>
             )
           })()}
-        </div>
-      </div>
+      </Modal>
 
-      <div className={`modal-backdrop${assignOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 400 }}>
+      <Modal open={assignOpen} onClose={() => setAssignOpen(false)} title="Asignar Mesa" maxWidth={400}>
           <div className="modal-header">
             <h3>Asignar Mesa</h3>
-            <button className="modal-close" onClick={() => setAssignOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setAssignOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="form-group">
-              <label className="form-label">Mesa</label>
-              <select className="form-control" value={assignTableId} onChange={(e) => setAssignTableId(e.target.value)}>
+              <label className="form-label" htmlFor="admin-reserv-table">Mesa</label>
+              <select id="admin-reserv-table" className="form-control" value={assignTableId} onChange={(e) => setAssignTableId(e.target.value)}>
                 <option value="">Sin asignar</option>
                 {availableTables.map((t) => (
                   <option key={t.id} value={t.id}>Mesa {t.number} — {t.location} (cap. {t.capacity})</option>
@@ -368,8 +366,7 @@ export default function ReservationsClient() {
             <button className="btn btn-outline" onClick={() => setAssignOpen(false)}>Cancelar</button>
             <button className="btn btn-primary" onClick={confirmAssignTable}>Confirmar y Asignar</button>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

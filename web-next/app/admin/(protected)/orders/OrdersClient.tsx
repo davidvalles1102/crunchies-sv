@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt, calcTotals } from '@/lib/format'
+import Modal from '@/app/components/Modal'
 import { getItemModifierGroups, modifiersExtraPrice, modifiersSummary, buildLineKey } from '@/lib/modifiers'
 import type { Selection } from '@/lib/modifiers'
 import type { Category, OrderMenuItem, ModifierGroup, RestaurantTable } from '@/lib/types'
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import ModifierModal from '../../../order/ModifierModal'
 import { buildReceiptPDF } from './receipt-pdf'
@@ -57,6 +59,7 @@ export default function OrdersClient() {
   const { profile, tenant } = useAdmin()
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [categories, setCategories] = useState<Category[]>([])
   const [menuItems, setMenuItems] = useState<OrderMenuItem[]>([])
@@ -353,7 +356,7 @@ export default function OrdersClient() {
   }
 
   const clearTicket = async () => {
-    if (!confirm('¿Limpiar la orden actual?')) return
+    if (!await confirm('¿Limpiar la orden actual?', { title: 'Limpiar orden', confirmLabel: 'Limpiar' })) return
 
     const tableToCheck = (orderType === 'dine_in' && selectedTable) ? selectedTable : null
 
@@ -735,11 +738,10 @@ export default function OrdersClient() {
       )}
 
       {/* Pay modal */}
-      <div className={`modal-backdrop${payModalOpen ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={payModalOpen} onClose={() => setPayModalOpen(false)} title="Procesar Pago">
           <div className="modal-header">
             <h3>Procesar Pago</h3>
-            <button className="modal-close" onClick={() => setPayModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setPayModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <div className="pay-summary">
@@ -747,8 +749,8 @@ export default function OrdersClient() {
               <div className="pay-total-amount neon-green">{fmt.currency(chargeTotal)}</div>
             </div>
             <div className="form-group mt-16">
-              <label className="form-label">Método de pago</label>
-              <div className="pay-methods">
+              <p className="form-label" style={{ marginBottom: 8 }}>Método de pago</p>
+              <div className="pay-methods" role="group" aria-label="Método de pago">
                 <button className={`pay-method${selectedPayMethod === 'cash' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('cash')}>💵 Efectivo</button>
                 <button className={`pay-method${selectedPayMethod === 'card' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('card')}>💳 Tarjeta</button>
                 <button className={`pay-method${selectedPayMethod === 'transfer' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('transfer')}>📲 Transferencia</button>
@@ -765,16 +767,16 @@ export default function OrdersClient() {
             {selectedPayMethod === 'cash' && (
               <div>
                 <div className="form-group mt-16">
-                  <label className="form-label">Efectivo recibido</label>
-                  <input type="number" className="form-control" placeholder="0.00" step="0.01" min="0" value={cashReceived} onChange={(e) => setCashReceived(e.target.value)} />
+                  <label className="form-label" htmlFor="orders-cash-received">Efectivo recibido</label>
+                  <input id="orders-cash-received" type="number" className="form-control" placeholder="0.00" step="0.01" min="0" value={cashReceived} onChange={(e) => setCashReceived(e.target.value)} />
                 </div>
                 <div className="change-display mt-8">Cambio: <span className="neon-amber">{fmt.currency(changeAmount)}</span></div>
               </div>
             )}
             {(loyaltyEnabled || creditEnabled) && (
               <div className="form-group mt-16" style={{ position: 'relative' }}>
-                <label className="form-label">Cliente (opcional)</label>
-                <input type="text" className="form-control" placeholder={loyaltyEnabled ? 'Nombre o correo para puntos de lealtad...' : 'Nombre o correo del cliente...'} value={payCustomerSearch} onChange={(e) => searchCustomers(e.target.value)} />
+                <label className="form-label" htmlFor="orders-customer-search">Cliente (opcional)</label>
+                <input id="orders-customer-search" type="text" className="form-control" placeholder={loyaltyEnabled ? 'Nombre o correo para puntos de lealtad...' : 'Nombre o correo del cliente...'} value={payCustomerSearch} onChange={(e) => searchCustomers(e.target.value)} />
                 {customerSuggestions.length > 0 && (
                   <div className="suggestions-list" style={{ display: 'block' }}>
                     {customerSuggestions.map((c) => (
@@ -804,15 +806,13 @@ export default function OrdersClient() {
             <button className="btn btn-outline" onClick={() => setPayModalOpen(false)}>Cancelar</button>
             <button className="btn btn-primary" disabled={paying || (selectedPayMethod === 'credit' && !linkedCustomer)} onClick={processPayment}>✓ Confirmar Pago</button>
           </div>
-        </div>
-      </div>
+      </Modal>
 
       {/* Receipt modal */}
-      <div className={`modal-backdrop${receiptModalOpen ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={receiptModalOpen} onClose={() => setReceiptModalOpen(false)} title="Recibo">
           <div className="modal-header">
             <h3>Recibo</h3>
-            <button className="modal-close" onClick={() => setReceiptModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setReceiptModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             {lastReceiptData && (
@@ -860,22 +860,20 @@ export default function OrdersClient() {
             <button className="btn btn-whatsapp" onClick={openWhatsAppModal}>📱 WhatsApp</button>
             <button className="btn btn-primary" onClick={downloadPDF}>🖨️ Imprimir</button>
           </div>
-        </div>
-      </div>
+      </Modal>
 
       {/* WhatsApp modal */}
-      <div className={`modal-backdrop${waModalOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 380 }}>
+      <Modal open={waModalOpen} onClose={() => setWaModalOpen(false)} title="📱 Enviar por WhatsApp" maxWidth={380}>
           <div className="modal-header">
             <h3>📱 Enviar por WhatsApp</h3>
-            <button className="modal-close" onClick={() => setWaModalOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setWaModalOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <p className="text-sm text-muted" style={{ marginBottom: 14 }}>WhatsApp se abrirá con la factura lista para enviar. Solo presiona ▶ en WhatsApp.</p>
             <div className="form-group">
-              <label className="form-label">Número del cliente</label>
+              <label className="form-label" htmlFor="orders-wa-phone">Número del cliente</label>
               <input
-                type="tel" className="form-control" placeholder="Ej: 573001234567"
+                id="orders-wa-phone" type="tel" className="form-control" placeholder="Ej: 573001234567"
                 value={waPhone} onChange={(e) => setWaPhone(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') confirmWhatsApp() }}
               />
@@ -886,8 +884,7 @@ export default function OrdersClient() {
             <button className="btn btn-outline" onClick={() => setWaModalOpen(false)}>Cancelar</button>
             <button className="btn btn-whatsapp" onClick={confirmWhatsApp}>Abrir WhatsApp ▶</button>
           </div>
-        </div>
-      </div>
+      </Modal>
 
       <div className={`mob-backdrop${mobSheetOpen ? ' visible' : ''}`} onClick={() => setMobSheetOpen(false)} />
       <button className="mob-cart-fab" onClick={() => setMobSheetOpen(true)}>

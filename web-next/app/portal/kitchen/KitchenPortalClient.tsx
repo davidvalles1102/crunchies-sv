@@ -57,7 +57,7 @@ export default function KitchenPortalClient() {
     } catch { /* red inestable — el proximo poll/evento reintenta, no romper la pantalla */ }
   }, [supabase])
 
-  useLiveRefetch(() => { if (session) loadOrders() }, { pollMs: 15000 })
+  useLiveRefetch(() => { if (session) loadOrders() }, { pollMs: 5000 })
   useWakeLock(!!session)
 
   const markReady = useCallback(async (order: KitchenOrder) => {
@@ -127,7 +127,7 @@ export default function KitchenPortalClient() {
 
         <div className="kitchen-col">
           <div className="kitchen-col__header">
-            <span className="badge badge-green" style={{ fontSize: '.88rem', padding: '5px 14px' }}>✅ LISTO — ESPERANDO MESERO</span>
+            <span className="badge badge-primary" style={{ fontSize: '.88rem', padding: '5px 14px' }}>✅ LISTO — ESPERANDO MESERO</span>
             <span className="badge badge-muted">{readyOrders.length}</span>
           </div>
           <div className="kitchen-orders">

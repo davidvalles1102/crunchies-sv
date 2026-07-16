@@ -60,7 +60,6 @@ export default function Sidebar() {
         <div className="sidebar__tenant" style={{ padding: '0 20px 12px', color: 'var(--text-muted)', fontSize: '.76rem', lineHeight: 1.4 }}>
           <div style={{ textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 700 }}>Negocio activo</div>
           <div style={{ color: 'var(--text)', fontWeight: 600 }}>{tenant.name}</div>
-          <div style={{ marginTop: 2 }}>{tenant.slug}</div>
         </div>
         <nav className="sidebar__nav">
           {links.map((l) => (

@@ -26,39 +26,41 @@ export default async function HomePage() {
     <>
       <NavBar />
 
-      <header className="hero">
-        <div className="hero__bg-grid"></div>
-        <div className="hero__content">
-          <p className="hero__eyebrow neon-amber">Ave La Reyna, Entre PJE 7 Y 1de Mayo, San Salvador · Lun–Vie: 11AM–2:30PM &amp; 6–10:30PM · Sáb–Dom: 11AM–10:30PM</p>
-          <h1 className="hero__title">
-            <span className="neon-green">CRUNCHIES</span>
-          </h1>
-          <p className="hero__sub">
-            Pollo, alas y sabores de rancho que no olvidarás.<br />
-            Ordena en línea, reserva tu mesa o pide a domicilio.
-          </p>
-          <div className="hero__actions">
-            <a href="#menu" className="btn btn-primary btn-lg">Ver Menú</a>
-            {/* <Link href="/reservations" className="btn btn-outline btn-lg">Reservar Mesa</Link> */}
+      <main id="main-content">
+        <header className="hero">
+          <div className="hero__bg-grid"></div>
+          <div className="hero__content">
+            <p className="hero__eyebrow neon-amber">Ave La Reyna, Entre PJE 7 Y 1de Mayo, San Salvador · Lun–Vie: 11AM–2:30PM &amp; 6–10:30PM · Sáb–Dom: 11AM–10:30PM</p>
+            <h1 className="hero__title">
+              <span className="neon-green">CRUNCHIES</span>
+            </h1>
+            <p className="hero__sub">
+              Pollo, alas y sabores de rancho que no olvidarás.<br />
+              Ordena en línea, reserva tu mesa o pide a domicilio.
+            </p>
+            <div className="hero__actions">
+              <a href="#menu" className="btn btn-primary btn-lg">Ver Menú</a>
+              {/* <Link href="/reservations" className="btn btn-outline btn-lg">Reservar Mesa</Link> */}
+            </div>
           </div>
-        </div>
-        <div className="hero__neon-lines" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </div>
-      </header>
+          <div className="hero__neon-lines" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+        </header>
 
-      <MenuSection
-        categories={(categories ?? []) as Category[]}
-        items={(items ?? []) as MenuItem[]}
-      />
+        <MenuSection
+          categories={(categories ?? []) as Category[]}
+          items={(items ?? []) as MenuItem[]}
+        />
 
-      <section className="promo-band">
-        <div className="promo-band__inner">
-          <p className="promo-title neon-amber">¡Gana puntos con cada visita!</p>
-          <p className="text-secondary">Regístrate y acumula puntos de lealtad en cada orden. Canjéalos por platillos gratis.</p>
-          <Link href="/auth?mode=register" className="btn btn-amber mt-16">Crear Cuenta</Link>
-        </div>
-      </section>
+        <section className="promo-band">
+          <div className="promo-band__inner">
+            <p className="promo-title neon-amber">¡Gana puntos con cada visita!</p>
+            <p className="text-secondary">Regístrate y acumula puntos de lealtad en cada orden. Canjéalos por platillos gratis.</p>
+            <Link href="/auth?mode=register" className="btn btn-amber mt-16">Crear Cuenta</Link>
+          </div>
+        </section>
+      </main>
 
       <footer className="cust-footer">
         <div className="footer-brand">CRUNCHIES</div>

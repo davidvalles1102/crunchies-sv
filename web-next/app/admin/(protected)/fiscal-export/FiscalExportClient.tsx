@@ -88,12 +88,12 @@ export default function FiscalExportClient() {
           <h4 style={{ marginBottom: 16 }}>📤 Generar reporte de ventas</h4>
           <form className="flex-col gap-12" onSubmit={generate}>
             <div className="form-group">
-              <label className="form-label">Desde</label>
-              <input type="date" className="form-control" required value={from} onChange={(e) => setFrom(e.target.value)} />
+              <label className="form-label" htmlFor="fiscal-from">Desde</label>
+              <input id="fiscal-from" type="date" className="form-control" required value={from} onChange={(e) => setFrom(e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">Hasta</label>
-              <input type="date" className="form-control" required value={to} onChange={(e) => setTo(e.target.value)} />
+              <label className="form-label" htmlFor="fiscal-to">Hasta</label>
+              <input id="fiscal-to" type="date" className="form-control" required value={to} onChange={(e) => setTo(e.target.value)} />
             </div>
             <button type="submit" className="btn btn-primary" disabled={generating}>
               {generating ? 'Generando...' : 'Generar'}

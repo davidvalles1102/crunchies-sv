@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCustomerSession } from '@/lib/supabase/auth'
 import { resolveRootTenantId } from '@/lib/tenant'
 import { useToast } from '../components/ToastProvider'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 import { fmt } from '@/lib/format'
 import { svToday } from '@/lib/svDate'
 import type { User } from '@supabase/supabase-js'
@@ -22,7 +23,7 @@ type Reservation = {
 
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   pending:   { label: 'Pendiente',  cls: 'badge-amber' },
-  confirmed: { label: 'Confirmada', cls: 'badge-green' },
+  confirmed: { label: 'Confirmada', cls: 'badge-primary' },
   seated:    { label: 'En Mesa',    cls: 'badge-info' },
   cancelled: { label: 'Cancelada',  cls: 'badge-danger' },
   no_show:   { label: 'No Show',    cls: 'badge-muted' },
@@ -41,6 +42,7 @@ const TIMES = ['12:00', '13:00', '14:00', '15:00', '18:00', '19:00', '20:00', '2
 export default function ReservationsClient() {
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [loadingAuth, setLoadingAuth] = useState(true)
   const [user, setUser] = useState<User | null>(null)
@@ -146,7 +148,7 @@ export default function ReservationsClient() {
 
   const cancelReserv = async (id: string) => {
     if (!user) return
-    if (!confirm('¿Cancelar esta reservación?')) return
+    if (!await confirm('¿Cancelar esta reservación?', { title: 'Cancelar Reservación', confirmLabel: 'Cancelar' })) return
     const { error } = await supabase
       .from('reservations')
       .update({ status: 'cancelled' })
@@ -174,15 +176,15 @@ export default function ReservationsClient() {
           <form className="flex-col gap-16" onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Fecha</label>
+                <label className="form-label" htmlFor="reserv-date">Fecha</label>
                 <input
-                  type="date" className="form-control" required
+                  id="reserv-date" type="date" className="form-control" required
                   min={todayStr} value={date} onChange={(e) => setDate(e.target.value)}
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Hora</label>
-                <select className="form-control" required value={time} onChange={(e) => setTime(e.target.value)}>
+                <label className="form-label" htmlFor="reserv-time">Hora</label>
+                <select id="reserv-time" className="form-control" required value={time} onChange={(e) => setTime(e.target.value)}>
                   <option value="">Seleccionar...</option>
                   {TIMES.map((t) => (
                     <option key={t} value={t}>
@@ -195,8 +197,8 @@ export default function ReservationsClient() {
 
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">N.º de personas</label>
-                <select className="form-control" required value={party} onChange={(e) => setParty(e.target.value)}>
+                <label className="form-label" htmlFor="reserv-party">N.º de personas</label>
+                <select id="reserv-party" className="form-control" required value={party} onChange={(e) => setParty(e.target.value)}>
                   <option value="">Seleccionar...</option>
                   {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
                     <option key={n} value={n}>{n === 9 ? '9 o más' : `${n} persona${n > 1 ? 's' : ''}`}</option>
@@ -204,17 +206,17 @@ export default function ReservationsClient() {
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Zona preferida</label>
-                <select className="form-control" value={zone} onChange={(e) => setZone(e.target.value)}>
+                <label className="form-label" htmlFor="reserv-zone">Zona preferida</label>
+                <select id="reserv-zone" className="form-control" value={zone} onChange={(e) => setZone(e.target.value)}>
                   {ZONES.map((z) => <option key={z.value} value={z.value}>{z.label}</option>)}
                 </select>
               </div>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Notas especiales (alergias, celebraciones, etc.)</label>
+              <label className="form-label" htmlFor="reserv-notes">Notas especiales (alergias, celebraciones, etc.)</label>
               <textarea
-                className="form-control" rows={3} placeholder="Ej: Cumpleaños, alergia a mariscos..."
+                id="reserv-notes" className="form-control" rows={3} placeholder="Ej: Cumpleaños, alergia a mariscos..."
                 value={notes} onChange={(e) => setNotes(e.target.value)}
               />
             </div>

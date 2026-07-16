@@ -28,7 +28,7 @@
   padding: 0 16px;
   position: sticky;
   top: 0;
-  z-index: 200;
+  z-index: var(--z-sticky);
   flex-shrink: 0;
 }
 
@@ -104,7 +104,7 @@
 .pin-key--del   { font-size: 1.2rem; color: var(--text-secondary); }
 .pin-key--empty { visibility: hidden; pointer-events: none; }
 
-.pin-error   { height: 20px; color: #ef4444; font-size: .85rem; text-align: center; }
+.pin-error   { height: 20px; color: var(--danger); font-size: .85rem; text-align: center; }
 .pin-loading { color: var(--text-muted); font-size: .85rem; }
 
 /* ─── Table legend ────────────────────────────────────────────────── */
@@ -176,10 +176,10 @@
 .waiter-table-card--ready .waiter-table-num { color: var(--amber); }
 
 .waiter-table-card--reserved {
-  background: rgba(99, 102, 241, .08);
-  border-color: rgba(99, 102, 241, .35);
+  background: var(--indigo-alpha);
+  border-color: var(--indigo-dim);
 }
-.waiter-table-card--reserved .waiter-table-num { color: #818cf8; }
+.waiter-table-card--reserved .waiter-table-num { color: var(--indigo); }
 
 .waiter-table-card--maintenance {
   background: var(--bg-1);
@@ -451,6 +451,9 @@
 }
 .portal-qty-btn:hover  { border-color: var(--orange); color: var(--orange); background: var(--orange-alpha); }
 .portal-qty-btn.minus:hover { border-color: var(--danger); color: var(--danger); }
+@media (pointer: coarse) {
+  .portal-qty-btn { width: 44px; height: 44px; }
+}
 .portal-qty-num { font-weight: 700; min-width: 20px; text-align: center; font-size: .88rem; }
 
 .waiter-ticket-item__name  { flex: 1; min-width: 0; }
@@ -500,8 +503,6 @@
 .portal-order-status.status--kitchen  { background: rgba(255, 153, 0, .12); color: var(--amber); border: 1px solid var(--amber-dim); }
 .portal-order-status.status--ready    { background: var(--orange-alpha); color: var(--orange); border: 1px solid var(--orange-dim); animation: pulse-banner 2s ease-in-out infinite; }
 .portal-order-status.status--delivered{ background: var(--bg-2); color: var(--text-muted); border: 1px solid var(--border); }
-@keyframes pulse-banner { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
-
 /* ─── Pay view ───────────────────────────────────────────────────── */
 .portal-pay-wrap {
   max-width: 480px;
@@ -645,7 +646,7 @@
 /* ─── Role badges ────────────────────────────────────────────────── */
 .role-badge-kitchen  { background: rgba(255,153,0,.15);   color: var(--amber); border: 1px solid rgba(255,153,0,.3); }
 .role-badge-delivery { background: rgba(255,102,0,.12);   color: var(--orange); border: 1px solid rgba(255,102,0,.3); }
-.role-badge-waiter   { background: rgba(99,102,241,.12);  color: #818cf8;      border: 1px solid rgba(99,102,241,.3); }
+.role-badge-waiter   { background: var(--indigo-alpha);    color: var(--indigo); border: 1px solid var(--indigo-dim); }
 
 /* ─── Portal section title ───────────────────────────────────────── */
 .portal-section-title {
@@ -751,15 +752,15 @@
 }
 .kitchen-card--ready {
   border-color: var(--orange);
-  background: rgba(102, 255, 102, .03);
+  background: rgba(255, 102, 0, .03);
 }
 .kitchen-card--urgent {
-  border-color: #ef4444;
+  border-color: var(--danger);
   animation: pulse-urgent 2s ease-in-out infinite;
 }
 @keyframes pulse-urgent {
-  0%, 100% { border-color: #ef4444; }
-  50%       { border-color: rgba(239, 68, 68, .35); }
+  0%, 100% { border-color: var(--danger); }
+  50%       { border-color: rgba(255, 68, 85, .35); }
 }
 
 /* Cabecera de la tarjeta: número de mesa + timer */
@@ -803,9 +804,9 @@
   border-radius: 20px;
   white-space: nowrap;
 }
-.timer--ok     { background: rgba(102,255,102,.12); color: var(--orange); }
+.timer--ok     { background: rgba(255,102,0,.12); color: var(--orange); }
 .timer--warn   { background: rgba(255,153,0,.15);  color: var(--amber); }
-.timer--urgent { background: rgba(239,68,68,.15);  color: #ef4444; }
+.timer--urgent { background: var(--danger-dim);     color: var(--danger); }
 
 .kitchen-card__order-type {
   font-size: .7rem;
@@ -921,7 +922,7 @@
 }
 .waiter-comanda-banner--ready {
   border-color: var(--orange-dim);
-  background: rgba(102,255,102,.06);
+  background: rgba(255,102,0,.06);
 }
 .waiter-comanda-banner--delivered {
   opacity: .65;

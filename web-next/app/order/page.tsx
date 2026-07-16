@@ -33,17 +33,19 @@ export default async function OrderPage() {
   return (
     <>
       {/* <NavBar /> */}
-      <header style={{ padding: '14px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'var(--clr-bg, #0a0a0a)' }}>
-        <span style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '0.04em', color: 'var(--clr-amber, #f59e0b)', fontFamily: 'inherit' }}>CRUNCHIES</span>
+      <header style={{ padding: '14px 24px', borderBottom: '1px solid var(--border)', background: 'var(--bg-0)' }}>
+        <span style={{ fontWeight: 800, fontSize: '1.2rem', letterSpacing: '0.04em', color: 'var(--amber)', fontFamily: 'inherit' }}>CRUNCHIES</span>
       </header>
 
-      <OrderClient
-        categories={(categories ?? []) as Category[]}
-        items={(items ?? []) as OrderMenuItem[]}
-        zones={(zones ?? []) as DeliveryZone[]}
-        taxRate={taxRate}
-        tenantId={tenantId}
-      />
+      <main id="main-content">
+        <OrderClient
+          categories={(categories ?? []) as Category[]}
+          items={(items ?? []) as OrderMenuItem[]}
+          zones={(zones ?? []) as DeliveryZone[]}
+          taxRate={taxRate}
+          tenantId={tenantId}
+        />
+      </main>
 
       <footer className="cust-footer">
         <div className="footer-brand">CRUNCHIES</div>

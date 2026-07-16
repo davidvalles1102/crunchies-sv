@@ -131,7 +131,7 @@
 
 .track-step.done .track-step__circle {
   border-color: var(--orange);
-  background: rgba(0,220,130,.15);
+  background: rgba(255,102,0,.15);
   box-shadow: 0 0 14px var(--orange-alpha);
 }
 
@@ -139,11 +139,6 @@
   border-color: var(--amber);
   background: var(--amber-alpha);
   animation: pulse-active .9s ease-in-out infinite alternate;
-}
-
-@keyframes pulse-active {
-  from { box-shadow: 0 0 6px var(--amber-alpha); }
-  to   { box-shadow: 0 0 18px var(--amber); }
 }
 
 .track-step__label {

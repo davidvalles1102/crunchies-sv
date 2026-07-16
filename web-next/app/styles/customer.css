@@ -7,7 +7,7 @@
 .cust-nav {
   position: fixed;
   top: 0; left: 0; right: 0;
-  z-index: 1000;
+  z-index: var(--z-nav);
   background: rgba(14, 9, 8, 0.90);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
@@ -451,6 +451,8 @@
   border-radius: 50%;
   filter: blur(80px);
   opacity: .12;
+  will-change: filter;
+  transform: translateZ(0);
 }
 .auth-bg__glow--orange { top: -100px; left: -100px; background: var(--orange); }
 .auth-bg__glow--amber { bottom: -100px; right: -100px; background: var(--amber); }
@@ -463,7 +465,7 @@
   padding: 36px 32px;
   width: 100%;
   max-width: 440px;
-  z-index: 10;
+  z-index: var(--z-dropdown);
   box-shadow: 0 24px 60px rgba(0,0,0,.6);
 }
 

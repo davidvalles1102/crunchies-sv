@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getSession, getProfile } from '@/lib/supabase/auth'
 import { resolveRootTenantId } from '@/lib/tenant'
 import { useToast } from '../components/ToastProvider'
+import Modal from '@/app/components/Modal'
 import { fmt } from '@/lib/format'
 import type { Profile } from '@/lib/types'
 
@@ -27,7 +28,7 @@ type LoyaltyTx = {
 }
 
 const STATUS_CLS: Record<string, string> = {
-  pending: 'badge-amber', confirmed: 'badge-green', seated: 'badge-info', cancelled: 'badge-danger',
+  pending: 'badge-amber', confirmed: 'badge-primary', seated: 'badge-info', cancelled: 'badge-danger',
 }
 
 export default function ProfileClient() {
@@ -240,28 +241,26 @@ export default function ProfileClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${editOpen ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Editar Perfil">
           <div className="modal-header">
             <h3>Editar Perfil</h3>
-            <button className="modal-close" onClick={() => setEditOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setEditOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <form className="flex-col gap-16" onSubmit={handleEditSubmit}>
               <div className="form-group">
-                <label className="form-label">Nombre completo</label>
-                <input type="text" className="form-control" required value={editName} onChange={(e) => setEditName(e.target.value)} />
+                <label className="form-label" htmlFor="profile-name">Nombre completo</label>
+                <input id="profile-name" type="text" className="form-control" required value={editName} onChange={(e) => setEditName(e.target.value)} />
               </div>
               <div className="form-group">
-                <label className="form-label">Teléfono</label>
-                <input type="tel" className="form-control" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
+                <label className="form-label" htmlFor="profile-phone">Teléfono</label>
+                <input id="profile-phone" type="tel" className="form-control" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} />
               </div>
               {editMsg && <div className="alert alert-error">{editMsg.text}</div>}
               <button type="submit" className="btn btn-primary btn-full">Guardar Cambios</button>
             </form>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

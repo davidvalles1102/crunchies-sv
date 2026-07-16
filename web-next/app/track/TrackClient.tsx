@@ -131,7 +131,7 @@ export default function TrackClient() {
   const isCard = order.payment_method === 'card'
 
   const bannerBorder = status === 'delivered' ? 'var(--orange)' : status === 'on_the_way' ? 'var(--amber)' : 'var(--border-lit)'
-  const bannerBg = status === 'delivered' ? 'rgba(0,220,130,.08)' : status === 'on_the_way' ? 'var(--amber-alpha)' : 'var(--bg-2)'
+  const bannerBg = status === 'delivered' ? 'rgba(255,102,0,.08)' : status === 'on_the_way' ? 'var(--amber-alpha)' : 'var(--bg-2)'
 
   return (
     <div>

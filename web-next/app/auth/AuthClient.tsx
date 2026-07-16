@@ -152,13 +152,13 @@ export default function AuthClient() {
       {tab === 'login' && (
         <form className="auth-form" autoComplete="off" onSubmit={handleLogin}>
           <div className="form-group">
-            <label className="form-label">Correo electrónico</label>
-            <input type="email" className="form-control" placeholder="tucorreo@email.com" required
+            <label className="form-label" htmlFor="login-email">Correo electrónico</label>
+            <input id="login-email" type="email" className="form-control" placeholder="tucorreo@email.com" required
               value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Contraseña</label>
-            <input type="password" className="form-control" placeholder="••••••••" required
+            <label className="form-label" htmlFor="login-password">Contraseña</label>
+            <input id="login-password" type="password" className="form-control" placeholder="••••••••" required
               value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
           </div>
           {loginError && <div className="alert alert-error">{loginError}</div>}
@@ -175,28 +175,28 @@ export default function AuthClient() {
       {tab === 'register' && (
         <form className="auth-form" autoComplete="off" onSubmit={handleRegister}>
           <div className="form-group">
-            <label className="form-label">Nombre completo</label>
-            <input type="text" className="form-control" placeholder="Tu nombre" required
+            <label className="form-label" htmlFor="reg-name">Nombre completo</label>
+            <input id="reg-name" type="text" className="form-control" placeholder="Tu nombre" required
               value={regName} onChange={(e) => setRegName(e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Correo electrónico</label>
-            <input type="email" className="form-control" placeholder="tucorreo@email.com" required
+            <label className="form-label" htmlFor="reg-email">Correo electrónico</label>
+            <input id="reg-email" type="email" className="form-control" placeholder="tucorreo@email.com" required
               value={regEmail} onChange={(e) => setRegEmail(e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Teléfono</label>
-            <input type="tel" className="form-control" placeholder="+503 0000-0000"
+            <label className="form-label" htmlFor="reg-phone">Teléfono</label>
+            <input id="reg-phone" type="tel" className="form-control" placeholder="+503 0000-0000"
               value={regPhone} onChange={(e) => setRegPhone(e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Contraseña</label>
-            <input type="password" className="form-control" placeholder="Mínimo 6 caracteres" required minLength={6}
+            <label className="form-label" htmlFor="reg-password">Contraseña</label>
+            <input id="reg-password" type="password" className="form-control" placeholder="Mínimo 6 caracteres" required minLength={6}
               value={regPassword} onChange={(e) => setRegPassword(e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Confirmar contraseña</label>
-            <input type="password" className="form-control" placeholder="Repite tu contraseña" required
+            <label className="form-label" htmlFor="reg-password-confirm">Confirmar contraseña</label>
+            <input id="reg-password-confirm" type="password" className="form-control" placeholder="Repite tu contraseña" required
               value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} />
           </div>
           {registerError && <div className="alert alert-error">{registerError}</div>}
@@ -211,8 +211,8 @@ export default function AuthClient() {
         <form className="auth-form" onSubmit={handleForgot}>
           <p className="text-secondary text-sm mb-16">Te enviaremos un enlace para restablecer tu contraseña.</p>
           <div className="form-group">
-            <label className="form-label">Correo electrónico</label>
-            <input type="email" className="form-control" placeholder="tucorreo@email.com" required
+            <label className="form-label" htmlFor="forgot-email">Correo electrónico</label>
+            <input id="forgot-email" type="email" className="form-control" placeholder="tucorreo@email.com" required
               value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
           </div>
           {forgotMsg && <div className={`alert alert-${forgotMsg.type}`}>{forgotMsg.text}</div>}
@@ -225,13 +225,13 @@ export default function AuthClient() {
         <form className="auth-form" onSubmit={handleReset}>
           <p className="text-secondary text-sm mb-16">Crea tu nueva contraseña.</p>
           <div className="form-group">
-            <label className="form-label">Nueva contraseña</label>
-            <input type="password" className="form-control" placeholder="Mínimo 6 caracteres" required minLength={6}
+            <label className="form-label" htmlFor="reset-password">Nueva contraseña</label>
+            <input id="reset-password" type="password" className="form-control" placeholder="Mínimo 6 caracteres" required minLength={6}
               value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Confirmar contraseña</label>
-            <input type="password" className="form-control" placeholder="Repite tu contraseña" required
+            <label className="form-label" htmlFor="reset-password-confirm">Confirmar contraseña</label>
+            <input id="reset-password-confirm" type="password" className="form-control" placeholder="Repite tu contraseña" required
               value={resetPasswordConfirm} onChange={(e) => setResetPasswordConfirm(e.target.value)} />
           </div>
           {resetMsg && <div className={`alert alert-${resetMsg.type}`}>{resetMsg.text}</div>}

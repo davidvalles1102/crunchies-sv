@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format'
 import { useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import Modal from '@/app/components/Modal'
 import type { Payment } from '@/lib/types'
 import { buildPaymentPDF } from './receipt-pdf'
 import { svToday, svDayStartUTC, svNextDayStartUTC } from '@/lib/svDate'
@@ -154,11 +155,10 @@ export default function PaymentsClient() {
         </div>
       </div>
 
-      <div className={`modal-backdrop${receiptPayment ? '' : ' hidden'}`}>
-        <div className="modal">
+      <Modal open={!!receiptPayment} onClose={() => setReceiptPayment(null)} title="Recibo">
           <div className="modal-header">
             <h3>Recibo</h3>
-            <button className="modal-close" onClick={() => setReceiptPayment(null)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setReceiptPayment(null)}>✕</button>
           </div>
           {receiptPayment && (
             <div className="modal-body">
@@ -198,23 +198,21 @@ export default function PaymentsClient() {
             }}>📱 WhatsApp</button>
             <button className="btn btn-primary" onClick={() => receiptPayment && downloadPDF(receiptPayment)}>🖨️ Reimprimir</button>
           </div>
-        </div>
-      </div>
+      </Modal>
 
-      <div className={`modal-backdrop${waOpen ? '' : ' hidden'}`}>
-        <div className="modal" style={{ maxWidth: 380 }}>
+      <Modal open={waOpen} onClose={() => setWaOpen(false)} title="📱 Enviar por WhatsApp" maxWidth={380}>
           <div className="modal-header">
             <h3>📱 Enviar por WhatsApp</h3>
-            <button className="modal-close" onClick={() => setWaOpen(false)}>✕</button>
+            <button className="modal-close" aria-label="Cerrar" onClick={() => setWaOpen(false)}>✕</button>
           </div>
           <div className="modal-body">
             <p className="text-sm text-muted" style={{ marginBottom: 14 }}>
               WhatsApp se abrirá con el recibo listo para enviar. Solo presiona ▶ en WhatsApp.
             </p>
             <div className="form-group">
-              <label className="form-label">Número del cliente</label>
+              <label className="form-label" htmlFor="payments-wa-phone">Número del cliente</label>
               <input
-                type="tel" className="form-control" placeholder="Ej: 573001234567"
+                id="payments-wa-phone" type="tel" className="form-control" placeholder="Ej: 573001234567"
                 value={waPhone} onChange={(e) => setWaPhone(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') confirmWhatsApp() }}
               />
@@ -225,8 +223,7 @@ export default function PaymentsClient() {
             <button className="btn btn-outline" onClick={() => setWaOpen(false)}>Cancelar</button>
             <button className="btn btn-whatsapp" onClick={confirmWhatsApp}>Abrir WhatsApp ▶</button>
           </div>
-        </div>
-      </div>
+      </Modal>
     </>
   )
 }

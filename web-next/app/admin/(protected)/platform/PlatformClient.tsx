@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format'
 import { useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { useConfirm } from '@/app/components/ConfirmProvider'
 
 type Tenant = {
   id: string
@@ -19,7 +20,7 @@ type Tenant = {
 }
 
 const STATUS_CFG: Record<Tenant['status'], { label: string; cls: string }> = {
-  active:    { label: 'Activo',     cls: 'badge-green' },
+  active:    { label: 'Activo',     cls: 'badge-primary' },
   trial:     { label: 'Prueba',     cls: 'badge-amber' },
   suspended: { label: 'Suspendido', cls: 'badge-danger' },
   archived:  { label: 'Archivado',  cls: 'badge-muted' },
@@ -37,6 +38,7 @@ export default function PlatformClient() {
   useRequireRole(['admin'])
   const supabase = createClient()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [loading, setLoading] = useState(true)
@@ -99,7 +101,7 @@ export default function PlatformClient() {
   async function toggleSuspend(t: Tenant) {
     const nextStatus = t.status === 'suspended' ? 'active' : 'suspended'
     const label = nextStatus === 'suspended' ? 'suspender' : 'reactivar'
-    if (!confirm(`¿Seguro que quieres ${label} "${t.name}"?`)) return
+    if (!await confirm(`¿Seguro que quieres ${label} "${t.name}"?`, { confirmLabel: nextStatus === 'suspended' ? 'Suspender' : 'Reactivar' })) return
 
     const { error } = await supabase.rpc('set_tenant_status', { p_tenant_id: t.id, p_status: nextStatus })
     if (error) {
@@ -153,9 +155,9 @@ export default function PlatformClient() {
           <h4 style={{ marginBottom: 16 }}>➕ Nuevo negocio</h4>
           <form className="flex-col gap-12" onSubmit={createTenant}>
             <div className="form-group">
-              <label className="form-label">Nombre del negocio</label>
+              <label className="form-label" htmlFor="platform-name">Nombre del negocio</label>
               <input
-                type="text" className="form-control" required placeholder="Ej: Pupusería Doña Ana"
+                id="platform-name" type="text" className="form-control" required placeholder="Ej: Pupusería Doña Ana"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value)
@@ -164,24 +166,24 @@ export default function PlatformClient() {
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Slug (identificador único)</label>
+              <label className="form-label" htmlFor="platform-slug">Slug (identificador único)</label>
               <input
-                type="text" className="form-control" required placeholder="pupuseria-dona-ana"
+                id="platform-slug" type="text" className="form-control" required placeholder="pupuseria-dona-ana"
                 value={slug}
                 onChange={(e) => { setSlug(slugify(e.target.value)); setSlugTouched(true) }}
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Email del dueño</label>
+              <label className="form-label" htmlFor="platform-owner-email">Email del dueño</label>
               <input
-                type="email" className="form-control" required placeholder="dueno@negocio.com"
+                id="platform-owner-email" type="email" className="form-control" required placeholder="dueno@negocio.com"
                 value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)}
               />
               <div className="text-xs text-muted mt-4">El dueño debe registrarse antes en /auth con este email.</div>
             </div>
             <div className="form-group">
-              <label className="form-label">Plan</label>
-              <select className="form-control" value={plan} onChange={(e) => setPlan(e.target.value)}>
+              <label className="form-label" htmlFor="platform-plan">Plan</label>
+              <select id="platform-plan" className="form-control" value={plan} onChange={(e) => setPlan(e.target.value)}>
                 <option value="starter">Starter</option>
                 <option value="pro">Pro</option>
                 <option value="multi-sucursal">Multi-sucursal</option>

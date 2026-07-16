@@ -13,9 +13,11 @@ export default function AuthPage() {
         <div className="auth-bg__glow auth-bg__glow--amber"></div>
       </div>
 
-      <Suspense fallback={null}>
-        <AuthClient />
-      </Suspense>
+      <main id="main-content">
+        <Suspense fallback={null}>
+          <AuthClient />
+        </Suspense>
+      </main>
     </div>
   )
 }

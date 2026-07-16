@@ -3,6 +3,7 @@ import { Bangers, Poppins } from "next/font/google";
 import "./styles/design-system.css";
 import "./styles/customer.css";
 import ToastProvider from "./components/ToastProvider";
+import { ConfirmProvider } from "./components/ConfirmProvider";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -34,7 +35,10 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${poppins.variable} ${bangers.variable}`}>
       <body>
-        <ToastProvider>{children}</ToastProvider>
+        <a href="#main-content" className="skip-to-content">Saltar al contenido</a>
+        <ToastProvider>
+          <ConfirmProvider>{children}</ConfirmProvider>
+        </ToastProvider>
       </body>
     </html>
   );
