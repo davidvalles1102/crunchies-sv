@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fmt, calcTotals } from '@/lib/format'
 import { getItemModifierGroups, modifiersExtraPrice, modifiersSummary, buildLineKey } from '@/lib/modifiers'
 import type { Selection } from '@/lib/modifiers'
 import { logoutPin, logEvent } from '@/lib/pin-auth'
+import { playReadyChime } from '@/lib/notifySound'
 import { usePinSession } from '@/lib/usePinSession'
 import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import { useWakeLock } from '@/lib/useWakeLock'
@@ -78,6 +79,19 @@ export default function WaiterPortalClient() {
   const [cashIn, setCashIn] = useState('')
   const [paying, setPaying] = useState(false)
   const [readyAlert, setReadyAlert] = useState<Set<string>>(new Set())
+  const knownReadyTables = useRef<Set<string> | null>(null)
+
+  // Suena cuando cocina marca una comanda como lista. knownReadyTables arranca
+  // en null para no sonar con las mesas que ya estaban listas al cargar.
+  useEffect(() => {
+    if (knownReadyTables.current === null) {
+      knownReadyTables.current = new Set(readyAlert)
+      return
+    }
+    const hasNew = [...readyAlert].some((id) => !knownReadyTables.current!.has(id))
+    if (hasNew) playReadyChime()
+    knownReadyTables.current = new Set(readyAlert)
+  }, [readyAlert])
 
   useEffect(() => {
     if (!session) return undefined
