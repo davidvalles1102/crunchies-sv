@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format'
 import { useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { svToday, svDayStartUTC, svNextDayStartUTC } from '@/lib/svDate'
 
 type ExportRow = {
   id: string
@@ -15,10 +16,6 @@ type ExportRow = {
   change_amount: number
   created_at: string
   orders: { subtotal: number; tax: number; total: number; order_type: string } | null
-}
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10)
 }
 
 function csvEscape(v: string | number) {
@@ -31,8 +28,8 @@ export default function FiscalExportClient() {
   const supabase = createClient()
   const toast = useToast()
 
-  const [from, setFrom] = useState(todayISO())
-  const [to, setTo] = useState(todayISO())
+  const [from, setFrom] = useState(svToday())
+  const [to, setTo] = useState(svToday())
   const [rows, setRows] = useState<ExportRow[] | null>(null)
   const [generating, setGenerating] = useState(false)
 
@@ -42,8 +39,8 @@ export default function FiscalExportClient() {
     const { data, error } = await supabase
       .from('payments')
       .select('id, receipt_number, method, amount, change_amount, created_at, orders(subtotal, tax, total, order_type)')
-      .gte('created_at', `${from}T00:00:00`)
-      .lte('created_at', `${to}T23:59:59`)
+      .gte('created_at', svDayStartUTC(from))
+      .lt('created_at', svNextDayStartUTC(to))
       .order('created_at')
 
     if (error) {

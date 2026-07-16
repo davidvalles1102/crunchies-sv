@@ -7,6 +7,7 @@ import { fmt } from '@/lib/format'
 import { useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { svDaysAgo, svDayStartUTC } from '@/lib/svDate'
 
 const CAT_LABELS: Record<string, string> = {
   insumos: '🥩 Insumos',
@@ -22,8 +23,11 @@ const CAT_LABELS: Record<string, string> = {
 
 type FinanceOrder = { total: number; created_at: string }
 type FinanceExpense = { category: string; amount: number; expense_date: string }
-type FinanceItem = { item_name: string; item_price: number; quantity: number; menu_item_id: string | null; created_at: string }
-type MenuItemCost = { id: string; cost: number }
+// cost es el snapshot guardado en order_items al momento de la venta (ver
+// order_item_cost_snapshot.sql) — no se recalcula contra menu_items.cost
+// actual, para que cambiar el costo de un insumo hoy no reescriba
+// retroactivamente el margen de ventas ya cerradas.
+type FinanceItem = { item_name: string; item_price: number; cost: number; quantity: number; menu_item_id: string | null; created_at: string }
 
 
 function chartOpts() {
@@ -53,7 +57,6 @@ export default function FinanceClient() {
   const [orders, setOrders] = useState<FinanceOrder[]>([])
   const [expenses, setExpenses] = useState<FinanceExpense[]>([])
   const [items, setItems] = useState<FinanceItem[]>([])
-  const [menuCosts, setMenuCosts] = useState<Record<string, number>>({})
   const [expensesMissing, setExpensesMissing] = useState(false)
 
   const plCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -61,7 +64,7 @@ export default function FinanceClient() {
   const plChartRef = useRef<Chart | null>(null)
   const pieChartRef = useRef<Chart | null>(null)
 
-  const renderPLChart = (ordersData: FinanceOrder[], expensesData: FinanceExpense[], itemsData: FinanceItem[], costMap: Record<string, number>) => {
+  const renderPLChart = (ordersData: FinanceOrder[], expensesData: FinanceExpense[], itemsData: FinanceItem[]) => {
     const revByDay: Record<string, number> = {}
     const expByDay: Record<string, number> = {}
     const cogsByDay: Record<string, number> = {}
@@ -69,8 +72,7 @@ export default function FinanceClient() {
     expensesData.forEach((e) => { const d = e.expense_date; expByDay[d] = (expByDay[d] || 0) + Number(e.amount) })
     itemsData.forEach((i) => {
       const d = i.created_at.slice(0, 10)
-      const cost = (i.menu_item_id ? (costMap[i.menu_item_id] ?? 0) : 0) * i.quantity
-      cogsByDay[d] = (cogsByDay[d] || 0) + cost
+      cogsByDay[d] = (cogsByDay[d] || 0) + Number(i.cost) * i.quantity
     })
     const allDays = [...new Set([...Object.keys(revByDay), ...Object.keys(expByDay), ...Object.keys(cogsByDay)])].sort()
 
@@ -113,19 +115,17 @@ export default function FinanceClient() {
   }
 
   const loadAll = async () => {
-    const svNow = new Date(Date.now() - SV_OFFSET_MS)
-    const since = new Date(svNow.getTime() - days * 86400_000).toISOString().split('T')[0]
+    const since = svDaysAgo(days)
+    const sinceUTC = svDayStartUTC(since)
 
     const [
       { data: ordersData, error: errO },
       { data: expensesData, error: errE },
       { data: itemsData },
-      { data: menuItemsData },
     ] = await Promise.all([
-      supabase.from('orders').select('total, created_at').in('status', ['paid', 'delivered']).gte('created_at', since + 'T06:00:00'),
+      supabase.from('orders').select('total, created_at').in('status', ['paid', 'delivered']).gte('created_at', sinceUTC),
       supabase.from('expenses').select('*').gte('expense_date', since).order('expense_date'),
-      supabase.from('order_items').select('item_name, item_price, quantity, menu_item_id, created_at').gte('created_at', since + 'T06:00:00'),
-      supabase.from('menu_items').select('id, cost'),
+      supabase.from('order_items').select('item_name, item_price, cost, quantity, menu_item_id, created_at').gte('created_at', sinceUTC),
     ])
 
     const expMissing = errE != null && errE.code === '42P01'
@@ -135,13 +135,11 @@ export default function FinanceClient() {
     const finalOrders = (ordersData as FinanceOrder[]) || []
     const finalExpenses = expMissing ? [] : ((expensesData as FinanceExpense[]) || [])
     const finalItems = (itemsData as FinanceItem[]) || []
-    const costMap = Object.fromEntries(((menuItemsData as MenuItemCost[]) || []).map((m) => [m.id, Number(m.cost)]))
 
     setOrders(finalOrders)
     setExpenses(finalExpenses)
     setItems(finalItems)
-    setMenuCosts(costMap)
-    renderPLChart(finalOrders, finalExpenses, finalItems, costMap)
+    renderPLChart(finalOrders, finalExpenses, finalItems)
     renderExpensePie(finalExpenses)
   }
 
@@ -166,7 +164,7 @@ export default function FinanceClient() {
     a.click()
   }
 
-  const itemCost = (i: FinanceItem) => (i.menu_item_id ? (menuCosts[i.menu_item_id] ?? 0) : 0) * i.quantity
+  const itemCost = (i: FinanceItem) => Number(i.cost) * i.quantity
 
   const revenue = orders.reduce((s, o) => s + Number(o.total), 0)
   const expensesTotal = expenses.reduce((s, e) => s + Number(e.amount), 0)

@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format'
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
+import { withTimeout, TimeoutError } from '@/lib/withTimeout'
 import { useConfirm } from '@/app/components/ConfirmProvider'
 
 type CashSession = {
@@ -97,17 +98,21 @@ export default function CashClient() {
     const amount = parseFloat(openingAmount)
     if (isNaN(amount) || amount < 0) { toast('Monto de apertura inválido', 'warning'); return }
     setOpening(true)
-    const { error } = await supabase.from('cash_sessions').insert({
-      tenant_id: tenant.tenant_id,
-      opening_amount: amount,
-      opened_by: profile.id,
-    })
-    if (error) {
-      toast(error.message.includes('one_open') ? 'Ya hay una caja abierta' : 'Error al abrir caja', 'error')
-    } else {
-      toast('Caja abierta ✓')
-      setOpeningAmount('')
-      await load()
+    try {
+      const { error } = await withTimeout(supabase.from('cash_sessions').insert({
+        tenant_id: tenant.tenant_id,
+        opening_amount: amount,
+        opened_by: profile.id,
+      }))
+      if (error) {
+        toast(error.message.includes('one_open') ? 'Ya hay una caja abierta' : 'Error al abrir caja', 'error')
+      } else {
+        toast('Caja abierta ✓')
+        setOpeningAmount('')
+        await load()
+      }
+    } catch (ex) {
+      toast(ex instanceof TimeoutError ? 'El servidor no respondió a tiempo. Intenta de nuevo.' : 'Error al abrir caja', 'error')
     }
     setOpening(false)
   }
@@ -119,21 +124,25 @@ export default function CashClient() {
     const reason = movReason.trim()
     if (isNaN(amount) || amount <= 0 || !reason) { toast('Monto y motivo requeridos', 'warning'); return }
     setAddingMovement(true)
-    const { error } = await supabase.from('cash_session_movements').insert({
-      tenant_id: tenant.tenant_id,
-      cash_session_id: session.id,
-      movement_type: movType,
-      amount,
-      reason,
-      created_by: profile.id,
-    })
-    if (error) {
-      toast('Error al registrar movimiento', 'error')
-    } else {
-      toast('Movimiento registrado ✓')
-      setMovAmount('')
-      setMovReason('')
-      await load()
+    try {
+      const { error } = await withTimeout(supabase.from('cash_session_movements').insert({
+        tenant_id: tenant.tenant_id,
+        cash_session_id: session.id,
+        movement_type: movType,
+        amount,
+        reason,
+        created_by: profile.id,
+      }))
+      if (error) {
+        toast('Error al registrar movimiento', 'error')
+      } else {
+        toast('Movimiento registrado ✓')
+        setMovAmount('')
+        setMovReason('')
+        await load()
+      }
+    } catch (ex) {
+      toast(ex instanceof TimeoutError ? 'El servidor no respondió a tiempo. Intenta de nuevo.' : 'Error al registrar movimiento', 'error')
     }
     setAddingMovement(false)
   }
@@ -145,20 +154,24 @@ export default function CashClient() {
     if (isNaN(counted) || counted < 0) { toast('Monto contado inválido', 'warning'); return }
     if (!await confirm('¿Cerrar caja? Esta acción no se puede deshacer.', { title: 'Cerrar Caja', confirmLabel: 'Cerrar Caja' })) return
     setClosing(true)
-    const { data, error } = await supabase.rpc('close_cash_session', {
-      p_session_id: session.id,
-      p_counted_amount: counted,
-      p_notes: closeNotes.trim() || null,
-    })
-    if (error) {
-      toast('Error al cerrar caja', 'error')
-    } else {
-      const closed = Array.isArray(data) ? data[0] : data
-      const diff = closed?.difference ?? 0
-      toast(diff === 0 ? 'Caja cuadrada ✓' : `Caja cerrada — diferencia: ${fmt.currency(diff)}`, diff === 0 ? 'success' : 'warning')
-      setCountedAmount('')
-      setCloseNotes('')
-      await load()
+    try {
+      const { data, error } = await withTimeout(supabase.rpc('close_cash_session', {
+        p_session_id: session.id,
+        p_counted_amount: counted,
+        p_notes: closeNotes.trim() || null,
+      }))
+      if (error) {
+        toast('Error al cerrar caja', 'error')
+      } else {
+        const closed = Array.isArray(data) ? data[0] : data
+        const diff = closed?.difference ?? 0
+        toast(diff === 0 ? 'Caja cuadrada ✓' : `Caja cerrada — diferencia: ${fmt.currency(diff)}`, diff === 0 ? 'success' : 'warning')
+        setCountedAmount('')
+        setCloseNotes('')
+        await load()
+      }
+    } catch (ex) {
+      toast(ex instanceof TimeoutError ? 'El servidor no respondió a tiempo. Intenta de nuevo.' : 'Error al cerrar caja', 'error')
     }
     setClosing(false)
   }

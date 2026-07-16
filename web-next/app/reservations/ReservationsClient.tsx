@@ -8,6 +8,7 @@ import { resolveRootTenantId } from '@/lib/tenant'
 import { useToast } from '../components/ToastProvider'
 import { useConfirm } from '@/app/components/ConfirmProvider'
 import { fmt } from '@/lib/format'
+import { svToday } from '@/lib/svDate'
 import type { User } from '@supabase/supabase-js'
 
 type Reservation = {
@@ -56,25 +57,34 @@ export default function ReservationsClient() {
   const [zone, setZone] = useState('')
   const [notes, setNotes] = useState('')
 
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = svToday()
 
-  const loadMyReservations = useCallback(async (userId: string) => {
-    const { data } = await supabase
+  const loadMyReservations = useCallback(async (userId: string, tid: string | null) => {
+    // Sin el filtro de tenant_id, un cliente con reservas en mas de un
+    // negocio de la plataforma veria TODAS mezcladas aqui, aunque este
+    // navegando el sitio de un solo restaurante — reservations.customer_id
+    // apunta a profiles, que es global, no por-tenant (mismo motivo que
+    // customer_credit_accounts vive separado de profiles).
+    let query = supabase
       .from('reservations')
       .select('*, restaurant_tables(number, location)')
       .eq('customer_id', userId)
       .order('reservation_date', { ascending: false })
       .limit(10)
+    if (tid) query = query.eq('tenant_id', tid)
+    const { data } = await query
     setReservations((data as Reservation[]) ?? [])
   }, [supabase])
 
   useEffect(() => {
-    resolveRootTenantId(supabase).then(setTenantId)
-    getCustomerSession().then(async (session) => {
+    ;(async () => {
+      const tid = await resolveRootTenantId(supabase)
+      setTenantId(tid)
+      const session = await getCustomerSession()
       setUser(session?.user ?? null)
       setLoadingAuth(false)
-      if (session?.user) await loadMyReservations(session.user.id)
-    })
+      if (session?.user) await loadMyReservations(session.user.id, tid)
+    })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadMyReservations])
 
@@ -84,18 +94,34 @@ export default function ReservationsClient() {
     setMsg(null)
     setSubmitting(true)
 
+    // restaurant_tables.status es ocupacion EN VIVO (para el POS de hoy), no
+    // dice nada sobre si la mesa esta libre en la fecha/hora futura que se
+    // esta reservando — una mesa "ocupada" ahorita puede estar libre el
+    // viernes a las 7pm, y una "disponible" ahorita puede ya tener 3
+    // reservas para ese mismo horario. Se calcula disponibilidad real
+    // contra reservations en vez de contra el status en vivo.
+    let reservedQuery = supabase
+      .from('reservations')
+      .select('table_id')
+      .eq('reservation_date', date)
+      .eq('reservation_time', time)
+      .in('status', ['pending', 'confirmed', 'seated'])
+      .not('table_id', 'is', null)
+    if (tenantId) reservedQuery = reservedQuery.eq('tenant_id', tenantId)
+    const { data: reservedRows } = await reservedQuery
+    const reservedIds = new Set((reservedRows ?? []).map((r) => r.table_id as string))
+
     let query = supabase
       .from('restaurant_tables')
       .select('id')
-      .eq('status', 'available')
+      .neq('status', 'maintenance')
       .gte('capacity', parseInt(party))
       .order('capacity')
-      .limit(1)
     if (tenantId) query = query.eq('tenant_id', tenantId)
     if (zone) query = query.eq('location', zone)
 
-    const { data: tables } = await query
-    const tableId = tables?.[0]?.id ?? null
+    const { data: candidateTables } = await query
+    const tableId = (candidateTables ?? []).find((t) => !reservedIds.has(t.id))?.id ?? null
 
     const { error } = await supabase.from('reservations').insert({
       customer_id: user.id,
@@ -117,7 +143,7 @@ export default function ReservationsClient() {
 
     setMsg({ text: '¡Reservación enviada! Te confirmaremos pronto.', type: 'success' })
     setDate(''); setTime(''); setParty(''); setZone(''); setNotes('')
-    await loadMyReservations(user.id)
+    await loadMyReservations(user.id, tenantId)
   }
 
   const cancelReserv = async (id: string) => {
@@ -131,7 +157,7 @@ export default function ReservationsClient() {
 
     if (error) { toast('Error al cancelar', 'error'); return }
     toast('Reservación cancelada')
-    await loadMyReservations(user.id)
+    await loadMyReservations(user.id, tenantId)
   }
 
   return (

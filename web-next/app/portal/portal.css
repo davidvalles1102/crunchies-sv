@@ -749,6 +749,11 @@
   overflow: hidden;
   transition: border-color .2s;
   min-width: 0; /* es item flex de .kitchen-orders — mismo motivo que arriba */
+  /* sin esto, con muchas ordenes en cola el flex-shrink:1 por defecto
+     comprime cada tarjeta para que quepan todas en el alto fijo de
+     .kitchen-orders, y overflow:hidden recorta el boton "Marcar Listo"
+     (ultimo hijo) en vez de dejar que .kitchen-orders haga scroll. */
+  flex-shrink: 0;
 }
 .kitchen-card--ready {
   border-color: var(--orange);

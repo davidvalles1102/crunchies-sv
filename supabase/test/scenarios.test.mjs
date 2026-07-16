@@ -218,6 +218,68 @@ test('inventario: la receta descuenta stock automaticamente al vender', async ()
   assert.equal(lowStock.rows.length, 0) // 94 > reorder_point 10, no deberia alertar todavia
 })
 
+test('inventario: reducir cantidad o quitar un item ANTES de cobrar revierte el stock', async () => {
+  // Parte de 94 (dejado por el test anterior). Vende 2 unidades mas -> 90.
+  const order = await asUser(db, ids.users.waiterA, async () =>
+    db.query(`insert into public.orders (order_type, status, tenant_id) values ('dine_in', 'open', $1) returning id`, [ids.tenantA])
+  )
+  const orderItem = await asUser(db, ids.users.waiterA, async () =>
+    db.query(
+      `insert into public.order_items (order_id, menu_item_id, item_name, item_price, quantity, tenant_id) values ($1, $2, 'Platillo A', 5.5, 2, $3) returning id`,
+      [order.rows[0].id, ids.menuItemA, ids.tenantA]
+    )
+  )
+  let stock = await db.query(`select stock_on_hand from public.inventory_items where id = $1`, [ids.inventoryItemA])
+  assert.equal(Number(stock.rows[0].stock_on_hand), 90) // 94 - (2 por unidad * 2 vendidas)
+
+  // El mesero se equivoca, baja la cantidad de 2 a 1 -> se devuelve 1 unidad de receta (2 de stock)
+  await asUser(db, ids.users.waiterA, async () =>
+    db.query(`update public.order_items set quantity = 1 where id = $1`, [orderItem.rows[0].id])
+  )
+  stock = await db.query(`select stock_on_hand from public.inventory_items where id = $1`, [ids.inventoryItemA])
+  assert.equal(Number(stock.rows[0].stock_on_hand), 92)
+
+  // El cliente cambia de pedido, se quita el item por completo antes de cobrar
+  // -> debe devolver el resto del stock y quedar exactamente donde estaba antes de este test (94)
+  await asUser(db, ids.users.waiterA, async () =>
+    db.query(`delete from public.order_items where id = $1`, [orderItem.rows[0].id])
+  )
+  stock = await db.query(`select stock_on_hand from public.inventory_items where id = $1`, [ids.inventoryItemA])
+  assert.equal(Number(stock.rows[0].stock_on_hand), 94)
+})
+
+test('finanzas: order_items.cost es un snapshot — cambiar menu_items.cost despues NO reescribe ventas viejas', async () => {
+  await asUser(db, ids.users.ownerA, async () =>
+    db.query(`update public.menu_items set cost = 2.00 where id = $1`, [ids.menuItemA])
+  )
+
+  // La app lee menu_items.cost en el momento de agregar al carrito y lo
+  // manda con el insert (ver OrdersClient.tsx addItemToTicket) — se simula
+  // aca igual, no se recalcula del lado de la base.
+  const order = await asUser(db, ids.users.waiterA, async () =>
+    db.query(`insert into public.orders (order_type, status, tenant_id) values ('dine_in', 'open', $1) returning id`, [ids.tenantA])
+  )
+  const menuCostAtSale = await db.query(`select cost from public.menu_items where id = $1`, [ids.menuItemA])
+  const orderItem = await asUser(db, ids.users.waiterA, async () =>
+    db.query(
+      `insert into public.order_items (order_id, menu_item_id, item_name, item_price, cost, quantity, tenant_id) values ($1, $2, 'Platillo A', 5.5, $3, 1, $4) returning id, cost`,
+      [order.rows[0].id, ids.menuItemA, menuCostAtSale.rows[0].cost, ids.tenantA]
+    )
+  )
+  assert.equal(Number(orderItem.rows[0].cost), 2.00)
+
+  // El insumo sube de precio DESPUES de la venta.
+  await asUser(db, ids.users.ownerA, async () =>
+    db.query(`update public.menu_items set cost = 9.99 where id = $1`, [ids.menuItemA])
+  )
+
+  // La fila de order_items ya vendida no debe moverse — ese es el punto
+  // entero del fix (antes, Finanzas hacia join contra menu_items.cost
+  // actual y el reporte de esta venta vieja habria cambiado a 9.99).
+  const after = await db.query(`select cost from public.order_items where id = $1`, [orderItem.rows[0].id])
+  assert.equal(Number(after.rows[0].cost), 2.00)
+})
+
 test('fiado: cargo respeta el limite de credito y el abono reduce el balance', async () => {
   await asUser(db, ids.users.ownerA, async () =>
     db.query(
@@ -250,6 +312,77 @@ test('fiado: cargo respeta el limite de credito y el abono reduce el balance', a
     db.query(`select * from record_credit_payment($1, $2, $3)`, [ids.tenantA, ids.users.customerA, 15])
   )
   assert.equal(Number(payment.rows[0].balance), 0)
+})
+
+test('fiado: charge_customer_credit acepta el order_id real de una orden (orders.id es text, no uuid, en produccion)', async () => {
+  // OrdersClient.tsx llama charge_customer_credit con p_order_id: currentOrder.id
+  // — currentOrder.id sale de orders.id, que en produccion es TEXT (ver
+  // migration-harness.mjs), no uuid nativo, aunque la RPC declara el
+  // parametro como uuid. Esto prueba que ese mismatch de tipos declarados
+  // NO rompe en la practica, porque el valor real (gen_random_uuid()::text)
+  // sigue siendo un string con formato UUID valido y Postgres lo castea sin
+  // problema al recibirlo.
+  const order = await asUser(db, ids.users.waiterA, async () =>
+    db.query(`insert into public.orders (order_type, status, tenant_id) values ('dine_in', 'delivered', $1) returning id`, [ids.tenantA])
+  )
+  const orderId = order.rows[0].id
+  assert.match(orderId, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/) // confirma que SI es texto con forma de uuid
+
+  const charged = await asUser(db, ids.users.waiterA, async () =>
+    db.query(
+      `select * from charge_customer_credit(p_tenant_id => $1, p_customer_id => $2, p_amount => $3, p_order_id => $4)`,
+      [ids.tenantA, ids.users.customerA, 5, orderId]
+    )
+  )
+  assert.equal(Number(charged.rows[0].balance), 5)
+
+  const tx = await db.query(
+    `select order_id from public.customer_credit_transactions where tenant_id = $1 and customer_id = $2 and movement_type = 'charge' order by created_at desc limit 1`,
+    [ids.tenantA, ids.users.customerA]
+  )
+  assert.equal(tx.rows[0].order_id, orderId) // el link a la orden se guardo bien, sin perder precision ni truncar
+})
+
+test('lealtad: adjust_loyalty_points es atomico bajo pagos concurrentes al mismo cliente', async () => {
+  const start = await db.query(`select loyalty_points from public.profiles where id = $1`, [ids.users.customerB])
+  const startPts = Number(start.rows[0].loyalty_points) || 0
+
+  // Ganar puntos (ej. pago en el POS) y luego canjear (ej. otro pago que
+  // usa puntos como descuento) — secuencial, caso normal.
+  const earned = await asUser(db, ids.users.waiterA, async () =>
+    db.query(`select adjust_loyalty_points($1, $2, $3) as balance`, [ids.users.customerB, 20, ids.tenantA])
+  )
+  assert.equal(Number(earned.rows[0].balance), startPts + 20)
+
+  const redeemed = await asUser(db, ids.users.waiterA, async () =>
+    db.query(`select adjust_loyalty_points($1, $2, $3) as balance`, [ids.users.customerB, -5, ids.tenantA])
+  )
+  assert.equal(Number(redeemed.rows[0].balance), startPts + 15)
+
+  // El punto real del fix: dos ajustes CONCURRENTES al mismo cliente (dos
+  // cajas cobrando casi al mismo tiempo) no se deben pisar. Antes del fix
+  // esto se resolvia con "balance_leido_al_abrir_el_modal + delta" en el
+  // cliente y un UPDATE ciego — la segunda escritura ganaba y la primera
+  // se perdia. Con el UPDATE atomico de una sola sentencia, las dos suman.
+  await Promise.all([
+    asUser(db, ids.users.waiterA, async () => db.query(`select adjust_loyalty_points($1, $2, $3)`, [ids.users.customerB, 10, ids.tenantA])),
+    asUser(db, ids.users.waiterA, async () => db.query(`select adjust_loyalty_points($1, $2, $3)`, [ids.users.customerB, 7, ids.tenantA])),
+  ])
+  const final = await db.query(`select loyalty_points from public.profiles where id = $1`, [ids.users.customerB])
+  assert.equal(Number(final.rows[0].loyalty_points), startPts + 15 + 10 + 7) // las dos escrituras concurrentes se reflejan, ninguna se perdio
+
+  // No deja el balance negativo aunque se intente canjear de mas.
+  const overRedeem = await asUser(db, ids.users.waiterA, async () =>
+    db.query(`select adjust_loyalty_points($1, $2, $3) as balance`, [ids.users.customerB, -999999, ids.tenantA])
+  )
+  assert.equal(Number(overRedeem.rows[0].balance), 0)
+
+  // El ledger quedo con el tipo correcto derivado del signo, no un string libre.
+  const types = await db.query(
+    `select distinct type from public.loyalty_transactions where customer_id = $1`,
+    [ids.users.customerB]
+  )
+  assert.ok(types.rows.every((r) => ['earned', 'redeemed'].includes(r.type)))
 })
 
 test('anon (QR sin cuenta) puede insertar una orden pero no ver ordenes de clientes', async () => {

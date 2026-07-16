@@ -39,9 +39,14 @@ const MIGRATION_FILES = [
   'migrations/tenant_onboarding.sql',
   'migrations/cash_sessions.sql',
   'migrations/inventory.sql',
+  'migrations/fix_inventory_reversal.sql',
   'migrations/billing.sql',
   'migrations/fiscal.sql',
   'migrations/customer_credit.sql',
+  'migrations/menu_item_cost.sql',
+  'migrations/order_item_cost_snapshot.sql',
+  'migrations/loyalty_points_atomic.sql',
+  'migrations/tenant_feature_toggles.sql',
 ]
 
 // PGlite no trae uuid-ossp; gen_random_uuid() ya es nativo desde PG13.

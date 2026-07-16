@@ -3,7 +3,7 @@ import { fmt } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
 import type { Payment } from '@/lib/types'
 
-const METHOD_LABEL: Record<string, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', points: 'Puntos' }
+const METHOD_LABEL: Record<string, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', points: 'Puntos', credit: 'Fiado' }
 
 export function buildPaymentPDF(p: Payment): jsPDF {
   const orderItems = p.orders?.order_items ?? []

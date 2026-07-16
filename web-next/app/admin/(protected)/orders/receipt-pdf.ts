@@ -3,7 +3,7 @@ import { fmt } from '@/lib/format'
 import { modifiersSummary } from '@/lib/modifiers'
 import type { ReceiptData } from './types'
 
-const METHOD_LABEL: Record<string, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', points: 'Puntos' }
+const METHOD_LABEL: Record<string, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', points: 'Puntos', credit: 'Fiado' }
 
 export function buildReceiptPDF(data: ReceiptData): jsPDF {
   const itemsH = data.items.reduce((h, i) => h + Math.ceil(i.name.length / 26) * 5.2, 0)

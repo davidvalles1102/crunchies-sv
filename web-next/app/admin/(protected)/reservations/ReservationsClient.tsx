@@ -9,6 +9,7 @@ import { useLiveRefetch } from '@/lib/useLiveRefetch'
 import Topbar from '../../components/Topbar'
 import { useToast } from '../../../components/ToastProvider'
 import type { Reservation, RestaurantTable } from '@/lib/types'
+import { svToday } from '@/lib/svDate'
 
 const STATUS_CONFIG: Record<string, { label: string; cls: string; icon: string }> = {
   pending:   { label: 'Pendiente',  cls: 'badge-amber',  icon: '🕐' },
@@ -25,16 +26,12 @@ const STATUS_LABELS: Record<string, string> = {
   no_show: 'Marcada como No Show',
 }
 
-function todayStr() {
-  return new Date().toISOString().split('T')[0]
-}
-
 export default function ReservationsClient() {
   useRequireRole(['admin', 'waiter'])
   const supabase = createClient()
   const toast = useToast()
 
-  const [filterDate, setFilterDate] = useState(todayStr)
+  const [filterDate, setFilterDate] = useState(svToday)
   const [filterStatus, setFilterStatus] = useState('')
   const [allReservations, setAllReservations] = useState<Reservation[]>([])
   const [availableTables, setAvailableTables] = useState<RestaurantTable[]>([])
@@ -64,13 +61,29 @@ export default function ReservationsClient() {
     setAllReservations((data as Reservation[]) || [])
   }
 
-  async function loadTables() {
+  // restaurant_tables.status es ocupacion EN VIVO — no dice nada sobre si
+  // la mesa esta libre en la fecha/hora de la reservacion que se esta
+  // asignando (podria estar ocupada hoy y libre el dia de la reserva, o al
+  // reves, ya tomada por otra reservacion en ese mismo horario). Se calcula
+  // contra reservations, igual que en el formulario del cliente.
+  async function loadTablesFor(reservation: Reservation | undefined) {
+    if (!reservation) { setAvailableTables([]); return }
+    const { data: reservedRows } = await supabase
+      .from('reservations')
+      .select('table_id')
+      .eq('reservation_date', reservation.reservation_date)
+      .eq('reservation_time', reservation.reservation_time)
+      .in('status', ['pending', 'confirmed', 'seated'])
+      .neq('id', reservation.id)
+      .not('table_id', 'is', null)
+    const reservedIds = new Set((reservedRows ?? []).map((r) => r.table_id as string))
+
     const { data } = await supabase
       .from('restaurant_tables')
       .select('*')
-      .eq('status', 'available')
+      .neq('status', 'maintenance')
       .order('number')
-    setAvailableTables((data as RestaurantTable[]) || [])
+    setAvailableTables(((data as RestaurantTable[]) || []).filter((t) => !reservedIds.has(t.id)))
   }
 
   async function updateStatus(id: string, newStatus: string) {
@@ -85,6 +98,7 @@ export default function ReservationsClient() {
     setAssignTableId('')
     setDetailReservation(null)
     setAssignOpen(true)
+    void loadTablesFor(allReservations.find((r) => r.id === id))
   }
 
   async function confirmAssignTable() {
@@ -109,8 +123,6 @@ export default function ReservationsClient() {
   }, [filterDate])
 
   useEffect(() => {
-    ;(async () => { await loadTables() })()
-
     const channel = supabase
       .channel('admin-reservations')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, async (payload) => {

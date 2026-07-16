@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getSession, getProfile } from '@/lib/supabase/auth'
+import { resolveRootTenantId } from '@/lib/tenant'
 import { useToast } from '../components/ToastProvider'
 import Modal from '@/app/components/Modal'
 import { fmt } from '@/lib/format'
@@ -44,6 +45,7 @@ export default function ProfileClient() {
   const [totalRedeemed, setTotalRedeemed] = useState(0)
   const [reservations, setReservations] = useState<Reservation[] | null>(null)
   const [loyaltyTx, setLoyaltyTx] = useState<LoyaltyTx[] | null>(null)
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(false)
 
   const [editOpen, setEditOpen] = useState(false)
   const [editName, setEditName] = useState('')
@@ -107,6 +109,13 @@ export default function ProfileClient() {
       setLoading(false)
 
       await Promise.all([loadStats(p.id), loadReservations(p.id), loadLoyalty(p.id)])
+
+      const tenantId = await resolveRootTenantId(supabase)
+      if (tenantId) {
+        const { data: settings } = await supabase.from('tenant_settings').select('loyalty_enabled')
+          .eq('tenant_id', tenantId).maybeSingle<{ loyalty_enabled: boolean }>()
+        setLoyaltyEnabled(!!settings?.loyalty_enabled)
+      }
     })()
   }, [supabase, loadStats, loadReservations, loadLoyalty])
 
@@ -157,11 +166,13 @@ export default function ProfileClient() {
           <h2 className="text-center mt-8">{profile.full_name || 'Sin nombre'}</h2>
           <p className="text-muted text-sm text-center">{email}</p>
 
-          <div className="points-card mt-24">
-            <div className="points-label">Puntos de Lealtad</div>
-            <div className="points-value neon-green">{profile.loyalty_points ?? 0}</div>
-            <div className="points-sub">≈ ${((profile.loyalty_points ?? 0) * 0.01).toFixed(2)} en consumo</div>
-          </div>
+          {loyaltyEnabled && (
+            <div className="points-card mt-24">
+              <div className="points-label">Puntos de Lealtad</div>
+              <div className="points-value neon-green">{profile.loyalty_points ?? 0}</div>
+              <div className="points-sub">≈ ${((profile.loyalty_points ?? 0) * 0.01).toFixed(2)} en consumo</div>
+            </div>
+          )}
 
           <button className="btn btn-outline btn-full mt-16" onClick={() => setEditOpen(true)}>Editar Perfil</button>
           <button className="btn btn-ghost btn-full mt-8" onClick={logout}>Cerrar Sesión</button>
@@ -177,10 +188,12 @@ export default function ProfileClient() {
               <div className="stat-label">Total Gastado</div>
               <div className="stat-value">{fmt.currency(totalSpent)}</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-label">Puntos Canjeados</div>
-              <div className="stat-value">{totalRedeemed}</div>
-            </div>
+            {loyaltyEnabled && (
+              <div className="stat-card">
+                <div className="stat-label">Puntos Canjeados</div>
+                <div className="stat-value">{totalRedeemed}</div>
+              </div>
+            )}
           </div>
 
           <div className="card mt-24">
@@ -206,23 +219,25 @@ export default function ProfileClient() {
             </div>
           </div>
 
-          <div className="card mt-24">
-            <h3 className="mb-16">Historial de Puntos</h3>
-            <div>
-              {loyaltyTx === null ? (
-                <p className="text-muted text-sm">Cargando...</p>
-              ) : loyaltyTx.length === 0 ? (
-                <p className="text-muted text-sm">Sin movimientos.</p>
-              ) : (
-                loyaltyTx.map((d) => (
-                  <div key={d.id} className={`loyalty-item ${d.type}`}>
-                    <span>{fmt.date(d.created_at)}</span>
-                    <span className="loyalty-item__points">{d.type === 'earned' ? '+' : '-'}{d.points} pts</span>
-                  </div>
-                ))
-              )}
+          {loyaltyEnabled && (
+            <div className="card mt-24">
+              <h3 className="mb-16">Historial de Puntos</h3>
+              <div>
+                {loyaltyTx === null ? (
+                  <p className="text-muted text-sm">Cargando...</p>
+                ) : loyaltyTx.length === 0 ? (
+                  <p className="text-muted text-sm">Sin movimientos.</p>
+                ) : (
+                  loyaltyTx.map((d) => (
+                    <div key={d.id} className={`loyalty-item ${d.type}`}>
+                      <span>{fmt.date(d.created_at)}</span>
+                      <span className="loyalty-item__points">{d.type === 'earned' ? '+' : '-'}{d.points} pts</span>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

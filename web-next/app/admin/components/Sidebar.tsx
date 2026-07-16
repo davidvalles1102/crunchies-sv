@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -25,13 +26,21 @@ const LINKS = [
   { href: '/admin/staff',            label: '🔐 Staff & Portales' },
 ]
 
-const PLATFORM_LINK = { href: '/admin/platform', label: '🏢 Plataforma' }
-
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
   const { session, profile, tenant } = useAdmin()
+  const [creditEnabled, setCreditEnabled] = useState(false)
+
+  useEffect(() => {
+    ;(async () => {
+      const { data } = await supabase.from('tenant_settings').select('credit_enabled')
+        .eq('tenant_id', tenant.tenant_id).maybeSingle<{ credit_enabled: boolean }>()
+      setCreditEnabled(!!data?.credit_enabled)
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenant.tenant_id])
 
   const logout = async () => {
     await supabase.auth.signOut()
@@ -39,6 +48,8 @@ export default function Sidebar() {
   }
 
   const closeSidebar = () => document.getElementById('sidebar')?.classList.remove('open')
+
+  const links = LINKS.filter((l) => l.href !== '/admin/credit' || creditEnabled)
 
   return (
     <>
@@ -49,7 +60,7 @@ export default function Sidebar() {
           <div style={{ color: 'var(--text)', fontWeight: 600 }}>{tenant.name}</div>
         </div>
         <nav className="sidebar__nav">
-          {LINKS.map((l) => (
+          {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}
@@ -59,15 +70,6 @@ export default function Sidebar() {
               {l.label}
             </Link>
           ))}
-          {profile.role === 'admin' && (
-            <Link
-              href={PLATFORM_LINK.href}
-              className={`slink${pathname === PLATFORM_LINK.href ? ' active' : ''}`}
-              onClick={closeSidebar}
-            >
-              {PLATFORM_LINK.label}
-            </Link>
-          )}
         </nav>
         <div className="sidebar__footer">
           <div className="sidebar__user">{profile.full_name || session.user.email} · {profile.role}</div>

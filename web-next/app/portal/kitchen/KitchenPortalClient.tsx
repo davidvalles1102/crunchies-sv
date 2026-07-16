@@ -22,47 +22,51 @@ export default function KitchenPortalClient() {
   const knownOrderIds = useRef<Set<string> | null>(null)
 
   const loadOrders = useCallback(async () => {
-    const { data } = await supabase
-      .from('orders')
-      .select('*, restaurant_tables(number), order_items(*, order_item_modifiers(*))')
-      .in('status', ['in_kitchen', 'ready'])
-      .or('order_type.neq.delivery,delivery_status.in.(pending,preparing,ready)')
-      .order('created_at', { ascending: true })
+    try {
+      const { data } = await supabase
+        .from('orders')
+        .select('*, restaurant_tables(number), order_items(*, order_item_modifiers(*))')
+        .in('status', ['in_kitchen', 'ready'])
+        .or('order_type.neq.delivery,delivery_status.in.(pending,preparing,ready)')
+        .order('created_at', { ascending: true })
 
-    const all = (data || []) as KitchenOrder[]
-    setStartTimes((prev) => {
-      const next = { ...prev }
-      let changed = false
-      all.forEach((o) => {
-        if (!(o.id in next)) {
-          next[o.id] = new Date(o.updated_at || o.created_at).getTime()
-          changed = true
-        }
+      const all = (data || []) as KitchenOrder[]
+      setStartTimes((prev) => {
+        const next = { ...prev }
+        let changed = false
+        all.forEach((o) => {
+          if (!(o.id in next)) {
+            next[o.id] = new Date(o.updated_at || o.created_at).getTime()
+            changed = true
+          }
+        })
+        return changed ? next : prev
       })
-      return changed ? next : prev
-    })
 
-    // Suena una alerta si aparece una orden en_kitchen que no estaba antes.
-    // knownOrderIds arranca en null para no sonar con la carga inicial.
-    const currentIds = new Set(all.filter((o) => o.status === 'in_kitchen').map((o) => o.id))
-    if (knownOrderIds.current) {
-      const isNew = [...currentIds].some((id) => !knownOrderIds.current!.has(id))
-      if (isNew) playNewOrderBeep()
-    }
-    knownOrderIds.current = currentIds
+      // Suena una alerta si aparece una orden en_kitchen que no estaba antes.
+      // knownOrderIds arranca en null para no sonar con la carga inicial.
+      const currentIds = new Set(all.filter((o) => o.status === 'in_kitchen').map((o) => o.id))
+      if (knownOrderIds.current) {
+        const isNew = [...currentIds].some((id) => !knownOrderIds.current!.has(id))
+        if (isNew) playNewOrderBeep()
+      }
+      knownOrderIds.current = currentIds
 
-    setInKitchen(all.filter((o) => o.status === 'in_kitchen'))
-    setReadyOrders(all.filter((o) => o.status === 'ready'))
+      setInKitchen(all.filter((o) => o.status === 'in_kitchen'))
+      setReadyOrders(all.filter((o) => o.status === 'ready'))
+    } catch { /* red inestable — el proximo poll/evento reintenta, no romper la pantalla */ }
   }, [supabase])
 
   useLiveRefetch(() => { if (session) loadOrders() }, { pollMs: 5000 })
   useWakeLock(!!session)
 
   const markReady = useCallback(async (order: KitchenOrder) => {
-    const updates: Record<string, unknown> = { status: 'ready', updated_at: new Date().toISOString() }
-    if (['delivery', 'takeout'].includes(order.order_type)) updates.delivery_status = 'ready'
-    await supabase.from('orders').update(updates).eq('id', order.id)
-    await loadOrders()
+    try {
+      const updates: Record<string, unknown> = { status: 'ready', updated_at: new Date().toISOString() }
+      if (['delivery', 'takeout'].includes(order.order_type)) updates.delivery_status = 'ready'
+      await supabase.from('orders').update(updates).eq('id', order.id)
+      await loadOrders()
+    } catch { /* red inestable — el mesero puede reintentar tocando el boton de nuevo */ }
   }, [loadOrders, supabase])
 
   useEffect(() => {
@@ -70,10 +74,12 @@ export default function KitchenPortalClient() {
 
     let alive = true
     ;(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase.from('profiles').upsert({ id: user.id, role: 'kitchen' }, { onConflict: 'id' })
-      }
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('profiles').upsert({ id: user.id, role: 'kitchen' }, { onConflict: 'id' })
+        }
+      } catch { /* red inestable — loadOrders de abajo igual reintenta via el poll */ }
       if (alive) await loadOrders()
     })()
 

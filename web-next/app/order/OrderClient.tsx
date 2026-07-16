@@ -18,6 +18,7 @@ type CartLine = {
   id: string
   name: string
   price: number
+  cost?: number
   modifiers: Selection[]
   lineKey: string
   qty: number
@@ -53,7 +54,7 @@ export default function OrderClient({
   const [orderNotes, setOrderNotes] = useState('')
   const [pickupTime, setPickupTime] = useState('30')
 
-  const [modalState, setModalState] = useState<{ item: { id: string; name: string; price: number }; groups: ModifierGroup[] } | null>(null)
+  const [modalState, setModalState] = useState<{ item: { id: string; name: string; price: number; cost?: number }; groups: ModifierGroup[] } | null>(null)
   const [successOrder, setSuccessOrder] = useState<{ id: string; delivery_name: string; delivery_phone: string; delivery_address: string | null; order_type: string; payment_method: string } | null>(null)
   const [successTotal, setSuccessTotal] = useState(0)
 
@@ -85,12 +86,12 @@ export default function OrderClient({
   const { tax, total } = calcTotals(subtotal, taxRate)
   const grandTotal = total + deliveryFee
 
-  const addToCart = (item: { id: string; name: string; price: number }, modifiers: Selection[] = []) => {
+  const addToCart = (item: { id: string; name: string; price: number; cost?: number }, modifiers: Selection[] = []) => {
     const lineKey = buildLineKey(item.id, modifiers)
     setCart((prev) => {
       const ex = prev.find((i) => i.lineKey === lineKey)
       if (ex) return prev.map((i) => i.lineKey === lineKey ? { ...i, qty: i.qty + 1 } : i)
-      return [...prev, { id: item.id, name: item.name, price: item.price + modifiersExtraPrice(modifiers), modifiers, lineKey, qty: 1 }]
+      return [...prev, { id: item.id, name: item.name, price: item.price + modifiersExtraPrice(modifiers), cost: item.cost, modifiers, lineKey, qty: 1 }]
     })
     toast(`${item.name} agregado`, 'success')
   }
@@ -103,7 +104,7 @@ export default function OrderClient({
   }
 
   const handleItemClick = async (item: OrderMenuItem) => {
-    const cartItem = { id: item.id, name: item.name, price: Number(item.price) }
+    const cartItem = { id: item.id, name: item.name, price: Number(item.price), cost: Number(item.cost ?? 0) }
     const groups = await getItemModifierGroups(item.id)
     if (groups.length) {
       setModalState({ item: cartItem, groups })
@@ -163,10 +164,19 @@ export default function OrderClient({
       menu_item_id: i.id,
       item_name: i.name,
       item_price: i.price,
+      cost: i.cost ?? 0, // snapshot al momento de la venta, ver OrdersClient.tsx
       quantity: i.qty,
       tenant_id: tenantId,
     }))
-    const { data: insertedItems } = await supabase.from('order_items').insert(itemsPayload).select()
+    const { data: insertedItems, error: itemsErr } = await supabase.from('order_items').insert(itemsPayload).select()
+    if (itemsErr) {
+      // Igual que en table-order: sin este chequeo la orden quedaba creada
+      // vacia y al cliente se le mostraba exito de todos modos.
+      await supabase.from('orders').delete().eq('id', order.id)
+      setOrderMsg({ text: 'Error al enviar el pedido. Intenta de nuevo.', type: 'error' })
+      setPlacing(false)
+      return
+    }
 
     const modifierRows: { order_item_id: string; option_name: string; price_delta: number; tenant_id: string | null }[] = []
     ;(insertedItems || []).forEach((row, idx) => {

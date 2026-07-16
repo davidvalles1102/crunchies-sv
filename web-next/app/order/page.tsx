@@ -5,7 +5,7 @@ import { resolveRootTenantId } from '@/lib/tenant'
 import OrderClient from './OrderClient'
 import type { Category, OrderMenuItem, DeliveryZone } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Menú — Crunchies' }
+export const metadata: Metadata = { title: 'Menú' }
 export const revalidate = 0
 
 export default async function OrderPage() {

@@ -9,19 +9,17 @@ import { useToast } from '../../../components/ToastProvider'
 import Modal from '@/app/components/Modal'
 import type { Payment } from '@/lib/types'
 import { buildPaymentPDF } from './receipt-pdf'
+import { svToday, svDayStartUTC, svNextDayStartUTC } from '@/lib/svDate'
 
-const METHOD_ICON: Record<string, string> = { cash: '💵', card: '💳', transfer: '📲', points: '⭐' }
-
-function todayStr() {
-  return new Date().toISOString().split('T')[0]
-}
+const METHOD_ICON: Record<string, string> = { cash: '💵', card: '💳', transfer: '📲', points: '⭐', credit: '🧾' }
+const METHOD_LABEL: Record<string, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', points: 'Puntos', credit: 'Fiado' }
 
 export default function PaymentsClient() {
   useRequireRole(['admin', 'waiter'])
   const supabase = createClient()
   const toast = useToast()
 
-  const [filterDate, setFilterDate] = useState(todayStr)
+  const [filterDate, setFilterDate] = useState(svToday)
   const [payments, setPayments] = useState<Payment[]>([])
 
   const [receiptPayment, setReceiptPayment] = useState<Payment | null>(null)
@@ -33,8 +31,8 @@ export default function PaymentsClient() {
       const { data, error } = await supabase
         .from('payments')
         .select('*, orders(*, restaurant_tables(number), order_items(*, order_item_modifiers(*))), profiles!payments_processed_by_fkey(full_name)')
-        .gte('created_at', `${filterDate}T00:00:00`)
-        .lte('created_at', `${filterDate}T23:59:59`)
+        .gte('created_at', svDayStartUTC(filterDate))
+        .lt('created_at', svNextDayStartUTC(filterDate))
         .order('created_at', { ascending: false })
 
       if (error) { toast('Error al cargar pagos', 'error'); return }
@@ -47,6 +45,7 @@ export default function PaymentsClient() {
   const byCash = payments.filter((p) => p.method === 'cash').reduce((s, p) => s + Number(p.amount), 0)
   const byCard = payments.filter((p) => p.method === 'card').reduce((s, p) => s + Number(p.amount), 0)
   const byTransfer = payments.filter((p) => p.method === 'transfer').reduce((s, p) => s + Number(p.amount), 0)
+  const byCredit = payments.filter((p) => p.method === 'credit').reduce((s, p) => s + Number(p.amount), 0)
 
   const downloadPDF = (p: Payment) => {
     const doc = buildPaymentPDF(p)
@@ -110,6 +109,10 @@ export default function PaymentsClient() {
             <div className="stat-label">Transferencia</div>
             <div className="stat-value">{fmt.currency(byTransfer)}</div>
           </div>
+          <div className="stat-card">
+            <div className="stat-label">Fiado</div>
+            <div className="stat-value">{fmt.currency(byCredit)}</div>
+          </div>
         </div>
 
         <div className="card mt-24">
@@ -135,7 +138,7 @@ export default function PaymentsClient() {
                     <tr key={p.id}>
                       <td><span className="text-xs" style={{ fontFamily: 'monospace' }}>{p.receipt_number}</span></td>
                       <td>Mesa {p.orders?.restaurant_tables?.number ?? '—'}</td>
-                      <td>{METHOD_ICON[p.method] ?? ''} {p.method}</td>
+                      <td>{METHOD_ICON[p.method] ?? ''} {METHOD_LABEL[p.method] ?? p.method}</td>
                       <td className="neon-green" style={{ fontWeight: 700 }}>{fmt.currency(p.amount)}</td>
                       <td>{p.change_amount > 0 ? fmt.currency(p.change_amount) : '—'}</td>
                       <td>{p.profiles?.full_name ?? '—'}</td>

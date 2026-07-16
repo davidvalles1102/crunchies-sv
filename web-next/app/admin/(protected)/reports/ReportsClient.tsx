@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { fmt } from '@/lib/format'
 import { useAdmin, useRequireRole } from '../../AdminContext'
 import Topbar from '../../components/Topbar'
+import { svDaysAgo } from '@/lib/svDate'
 
 const EXPENSE_CAT_LABELS: Record<string, string> = {
   insumos: '🥩 Insumos',
@@ -186,7 +187,7 @@ export default function ReportsClient() {
           .in('status', ['paid', 'delivered']).gte('created_at', since).order('created_at'),
         supabase.from('payments').select('*').gte('created_at', since),
         supabase.from('order_items').select('*, menu_items(name, category_id, categories(name))').gte('created_at', since),
-        supabase.from('expenses').select('*').gte('expense_date', since.split('T')[0]),
+        supabase.from('expenses').select('*').gte('expense_date', svDaysAgo(days)),
       ])
 
       const finalOrders = (ordersData as ReportOrder[]) || []

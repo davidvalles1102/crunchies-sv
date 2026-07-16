@@ -60,6 +60,7 @@ export default function CustomersClient() {
   const [newNote, setNewNote] = useState('')
   const [pointsAdjust, setPointsAdjust] = useState('')
   const [pointsNote, setPointsNote] = useState('')
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(false)
 
   const loadCustomers = async () => {
     const { data: profiles } = await supabase
@@ -109,7 +110,12 @@ export default function CustomersClient() {
   }
 
   useEffect(() => {
-    ;(async () => { await loadCustomers() })()
+    ;(async () => {
+      await loadCustomers()
+      const { data: settings } = await supabase.from('tenant_settings').select('loyalty_enabled')
+        .eq('tenant_id', tenant.tenant_id).maybeSingle<{ loyalty_enabled: boolean }>()
+      setLoyaltyEnabled(!!settings?.loyalty_enabled)
+    })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -176,28 +182,30 @@ export default function CustomersClient() {
     const pts = parseInt(pointsAdjust)
     if (!pts || isNaN(pts)) { toast('Ingresa un valor válido', 'warning'); return }
 
-    const newPts = Math.max(0, (selected.loyalty_points || 0) + pts)
-
-    const { error } = await supabase.from('profiles').update({ loyalty_points: newPts }).eq('id', selected.id)
-    if (error) { toast('Error', 'error'); return }
-
-    await supabase.from('loyalty_transactions').insert({
-      customer_id: selected.id,
-      points: Math.abs(pts),
-      type: pts > 0 ? 'earned' : 'redeemed',
-      tenant_id: tenant.tenant_id,
+    // UPDATE atomico (ver adjust_loyalty_points) en vez de calcular el
+    // balance aca con selected.loyalty_points, que puede estar desfasado
+    // si el cliente ya gasto/gano puntos en otra caja mientras este panel
+    // estaba abierto.
+    const { data: newBalance, error } = await supabase.rpc('adjust_loyalty_points', {
+      p_customer_id: selected.id, p_delta: pts, p_tenant_id: tenant.tenant_id,
     })
+    if (error) { toast('Error', 'error'); return }
 
     toast(`Puntos ${pts > 0 ? 'agregados' : 'descontados'} correctamente`)
     await loadCustomers()
-    await openCustomer({ ...selected, loyalty_points: newPts })
+    await openCustomer({ ...selected, loyalty_points: newBalance as number })
   }
 
   const exportCSV = () => {
-    const rows: (string | number)[][] = [['Nombre', 'Teléfono', 'Puntos', 'Visitas', 'Total Gastado', 'Última Visita', 'Estado', 'Registro']]
+    const header = ['Nombre', 'Teléfono', ...(loyaltyEnabled ? ['Puntos'] : []), 'Visitas', 'Total Gastado', 'Última Visita', 'Estado', 'Registro']
+    const rows: (string | number)[][] = [header]
     customers.forEach((c) => {
-      const estado = c.is_vip ? 'VIP' : c.is_inactive ? 'Inactivo' : c.is_new ? 'Nuevo' : ''
-      rows.push([c.full_name || '', c.phone || '', c.loyalty_points || 0, c.visits, c.total_spent.toFixed(2), c.last_visit ? fmt.date(c.last_visit) : '', estado, fmt.date(c.created_at)])
+      const estado = (loyaltyEnabled && c.is_vip) ? 'VIP' : c.is_inactive ? 'Inactivo' : c.is_new ? 'Nuevo' : ''
+      rows.push([
+        c.full_name || '', c.phone || '',
+        ...(loyaltyEnabled ? [c.loyalty_points || 0] : []),
+        c.visits, c.total_spent.toFixed(2), c.last_visit ? fmt.date(c.last_visit) : '', estado, fmt.date(c.created_at),
+      ])
     })
     const csv = rows.map((r) => r.map((v) => `"${v}"`).join(',')).join('\n')
     const link = document.createElement('a')
@@ -214,19 +222,23 @@ export default function CustomersClient() {
       </Topbar>
 
       <div className="admin-content">
-        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
+        <div className="stats-grid" style={{ gridTemplateColumns: loyaltyEnabled ? 'repeat(4,1fr)' : 'repeat(2,1fr)' }}>
           <div className="stat-card stat-green">
             <div className="stat-label">Total Clientes</div>
             <div className="stat-value">{customers.length}</div>
           </div>
-          <div className="stat-card stat-amber">
-            <div className="stat-label">Puntos en Circulación</div>
-            <div className="stat-value">{totalPoints.toLocaleString()}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Clientes VIP (+500 pts)</div>
-            <div className="stat-value">{vipCount}</div>
-          </div>
+          {loyaltyEnabled && (
+            <>
+              <div className="stat-card stat-amber">
+                <div className="stat-label">Puntos en Circulación</div>
+                <div className="stat-value">{totalPoints.toLocaleString()}</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">Clientes VIP (+500 pts)</div>
+                <div className="stat-value">{vipCount}</div>
+              </div>
+            </>
+          )}
           <div className="stat-card stat-danger">
             <div className="stat-label">Inactivos (30+ días)</div>
             <div className="stat-value">{inactiveCount}</div>
@@ -235,7 +247,9 @@ export default function CustomersClient() {
 
         <div className="category-tabs mt-24">
           <button className={`cat-tab${filter === 'all' ? ' active' : ''}`} onClick={() => setFilter('all')}>Todos</button>
-          <button className={`cat-tab${filter === 'vip' ? ' active' : ''}`} onClick={() => setFilter('vip')}>⭐ VIP</button>
+          {loyaltyEnabled && (
+            <button className={`cat-tab${filter === 'vip' ? ' active' : ''}`} onClick={() => setFilter('vip')}>⭐ VIP</button>
+          )}
           <button className={`cat-tab${filter === 'inactive' ? ' active' : ''}`} onClick={() => setFilter('inactive')}>🔴 Inactivos</button>
           <button className={`cat-tab${filter === 'new' ? ' active' : ''}`} onClick={() => setFilter('new')}>🆕 Nuevos</button>
         </div>
@@ -245,25 +259,25 @@ export default function CustomersClient() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Cliente</th><th>Teléfono</th><th>Puntos</th><th>Visitas</th><th>Gasto Total</th><th>Última visita</th><th>Acciones</th>
+                  <th>Cliente</th><th>Teléfono</th>{loyaltyEnabled && <th>Puntos</th>}<th>Visitas</th><th>Gasto Total</th><th>Última visita</th><th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={7} className="text-muted text-center" style={{ padding: 32 }}>Sin clientes encontrados.</td></tr>
+                  <tr><td colSpan={loyaltyEnabled ? 7 : 6} className="text-muted text-center" style={{ padding: 32 }}>Sin clientes encontrados.</td></tr>
                 ) : (
                   filtered.map((c) => (
                     <tr key={c.id}>
                       <td>
                         <div style={{ fontWeight: 600 }}>{c.full_name || '(Sin nombre)'}</div>
                         <div className="flex gap-4 mt-4">
-                          {c.is_vip && <span className="badge badge-amber text-xs">VIP</span>}
+                          {loyaltyEnabled && c.is_vip && <span className="badge badge-amber text-xs">VIP</span>}
                           {c.is_inactive && <span className="badge badge-danger text-xs">Inactivo</span>}
                           {c.is_new && <span className="badge badge-info text-xs">Nuevo</span>}
                         </div>
                       </td>
                       <td>{c.phone || '—'}</td>
-                      <td><span className="neon-green" style={{ fontWeight: 700 }}>{c.loyalty_points || 0}</span> <span className="text-muted text-xs">pts</span></td>
+                      {loyaltyEnabled && <td><span className="neon-green" style={{ fontWeight: 700 }}>{c.loyalty_points || 0}</span> <span className="text-muted text-xs">pts</span></td>}
                       <td>{c.visits}</td>
                       <td>{fmt.currency(c.total_spent)}</td>
                       <td>{c.last_visit ? fmt.date(c.last_visit) : '—'}</td>
@@ -287,8 +301,10 @@ export default function CustomersClient() {
               <p className="text-muted text-sm">Cargando...</p>
             ) : (
               <div>
-                <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 16 }}>
-                  <div className="stat-card" style={{ padding: 12 }}><div className="stat-label">Puntos</div><div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--orange)' }}>{selected?.loyalty_points ?? 0}</div></div>
+                <div className="stats-grid" style={{ gridTemplateColumns: loyaltyEnabled ? 'repeat(4,1fr)' : 'repeat(3,1fr)', gap: 10, marginBottom: 16 }}>
+                  {loyaltyEnabled && (
+                    <div className="stat-card" style={{ padding: 12 }}><div className="stat-label">Puntos</div><div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--orange)' }}>{selected?.loyalty_points ?? 0}</div></div>
+                  )}
                   <div className="stat-card" style={{ padding: 12 }}><div className="stat-label">Visitas</div><div className="stat-value" style={{ fontSize: '1.4rem' }}>{selected?.visits ?? 0}</div></div>
                   <div className="stat-card" style={{ padding: 12 }}><div className="stat-label">Gastado</div><div className="stat-value" style={{ fontSize: '1.4rem', color: 'var(--amber)' }}>{fmt.currency(selected?.total_spent ?? 0)}</div></div>
                   <div className="stat-card" style={{ padding: 12 }}><div className="stat-label">Última visita</div><div className="stat-value" style={{ fontSize: '1.4rem' }}>{daysSinceLast === null ? '—' : `${daysSinceLast}d`}</div></div>
@@ -318,16 +334,20 @@ export default function CustomersClient() {
                   )}
                 </div>
 
-                <h4 style={{ margin: '16px 0 8px' }}>Historial de Puntos</h4>
-                {loyalty.length === 0 ? (
-                  <p className="text-muted text-sm">Sin movimientos.</p>
-                ) : (
-                  loyalty.map((l) => (
-                    <div key={l.id} className={`loyalty-item ${l.type}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '.85rem' }}>
-                      <span>{fmt.date(l.created_at)}</span>
-                      <span style={{ fontWeight: 700, color: l.type === 'earned' ? 'var(--orange)' : 'var(--amber)' }}>{l.type === 'earned' ? '+' : '-'}{l.points} pts</span>
-                    </div>
-                  ))
+                {loyaltyEnabled && (
+                  <>
+                    <h4 style={{ margin: '16px 0 8px' }}>Historial de Puntos</h4>
+                    {loyalty.length === 0 ? (
+                      <p className="text-muted text-sm">Sin movimientos.</p>
+                    ) : (
+                      loyalty.map((l) => (
+                        <div key={l.id} className={`loyalty-item ${l.type}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '.85rem' }}>
+                          <span>{fmt.date(l.created_at)}</span>
+                          <span style={{ fontWeight: 700, color: l.type === 'earned' ? 'var(--orange)' : 'var(--amber)' }}>{l.type === 'earned' ? '+' : '-'}{l.points} pts</span>
+                        </div>
+                      ))
+                    )}
+                  </>
                 )}
 
                 <h4 style={{ margin: '16px 0 8px' }}>Reservaciones</h4>
@@ -366,14 +386,16 @@ export default function CustomersClient() {
               </div>
             </div>
 
-            <div className="card mt-16" style={{ borderColor: 'var(--amber-dim)' }}>
-              <h4 className="mb-12">Ajuste Manual de Puntos</h4>
-              <div className="flex gap-8">
-                <input type="number" className="form-control" placeholder="ej: 50 o -50" style={{ flex: 1 }} value={pointsAdjust} onChange={(e) => setPointsAdjust(e.target.value)} />
-                <input type="text" className="form-control" placeholder="Motivo..." style={{ flex: 1 }} value={pointsNote} onChange={(e) => setPointsNote(e.target.value)} />
-                <button className="btn btn-amber btn-sm" onClick={applyPointsAdjust}>Aplicar</button>
+            {loyaltyEnabled && (
+              <div className="card mt-16" style={{ borderColor: 'var(--amber-dim)' }}>
+                <h4 className="mb-12">Ajuste Manual de Puntos</h4>
+                <div className="flex gap-8">
+                  <input type="number" className="form-control" placeholder="ej: 50 o -50" style={{ flex: 1 }} value={pointsAdjust} onChange={(e) => setPointsAdjust(e.target.value)} />
+                  <input type="text" className="form-control" placeholder="Motivo..." style={{ flex: 1 }} value={pointsNote} onChange={(e) => setPointsNote(e.target.value)} />
+                  <button className="btn btn-amber btn-sm" onClick={applyPointsAdjust}>Aplicar</button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
       </Modal>
     </>

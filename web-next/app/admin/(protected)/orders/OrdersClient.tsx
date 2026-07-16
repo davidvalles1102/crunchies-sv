@@ -75,7 +75,7 @@ export default function OrdersClient() {
   const [custAddress, setCustAddress] = useState('')
   const [orderNotes, setOrderNotes] = useState('')
 
-  const [modalState, setModalState] = useState<{ item: { id: string; name: string; price: number }; groups: ModifierGroup[] } | null>(null)
+  const [modalState, setModalState] = useState<{ item: { id: string; name: string; price: number; cost?: number }; groups: ModifierGroup[] } | null>(null)
   const [mobSheetOpen, setMobSheetOpen] = useState(false)
 
   const [payModalOpen, setPayModalOpen] = useState(false)
@@ -93,6 +93,8 @@ export default function OrdersClient() {
   const [waPhone, setWaPhone] = useState('')
   const [deliveryFee, setDeliveryFee] = useState(0)
   const [taxRate, setTaxRate] = useState(0)
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(false)
+  const [creditEnabled, setCreditEnabled] = useState(false)
 
   const selectedTable = tables.find((t) => t.id === selectedTableId) ?? null
 
@@ -109,13 +111,15 @@ export default function OrdersClient() {
           supabase.from('categories').select('*').eq('active', true).order('display_order'),
           supabase.from('menu_items').select('*').eq('available', true),
         ]),
-        supabase.from('tenant_settings').select('tax_enabled, tax_rate').eq('tenant_id', tenant.tenant_id)
-          .maybeSingle<{ tax_enabled: boolean; tax_rate: number }>(),
+        supabase.from('tenant_settings').select('tax_enabled, tax_rate, loyalty_enabled, credit_enabled').eq('tenant_id', tenant.tenant_id)
+          .maybeSingle<{ tax_enabled: boolean; tax_rate: number; loyalty_enabled: boolean; credit_enabled: boolean }>(),
       ])
       setTables((tablesData as RestaurantTable[]) || [])
       setCategories((cats as Category[]) || [])
       setMenuItems((items as OrderMenuItem[]) || [])
       setTaxRate(settings?.tax_enabled ? Number(settings.tax_rate) : 0)
+      setLoyaltyEnabled(!!settings?.loyalty_enabled)
+      setCreditEnabled(!!settings?.credit_enabled)
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -223,7 +227,7 @@ export default function OrdersClient() {
     toast(toastMsg)
   }
 
-  const addItemToTicket = async (item: { id: string; name: string; price: number }, modifiers: Selection[] = []) => {
+  const addItemToTicket = async (item: { id: string; name: string; price: number; cost?: number }, modifiers: Selection[] = []) => {
     if (!currentOrder) return
     if (orderType === 'delivery' && (currentOrder.delivery_status === 'on_the_way' || currentOrder.delivery_status === 'delivered')) {
       toast('Esta entrega ya fue tomada por el driver. Crea una nueva orden para ítems adicionales.', 'warning')
@@ -244,6 +248,10 @@ export default function OrdersClient() {
         menu_item_id: item.id,
         item_name: item.name,
         item_price: unitPrice,
+        // Snapshot del costo al momento de la venta — Finanzas lee esto en
+        // vez de menu_items.cost actual, para que cambiar el costo de un
+        // insumo hoy no reescriba retroactivamente el margen de ventas viejas.
+        cost: item.cost ?? 0,
         quantity: 1,
         tenant_id: tenant.tenant_id,
       }).select().single()
@@ -304,7 +312,7 @@ export default function OrdersClient() {
 
   const handleItemClick = async (item: OrderMenuItem) => {
     if (!currentOrder) { toast(orderType === 'dine_in' ? 'Selecciona una mesa primero' : 'Crea una orden primero', 'warning'); return }
-    const cartItem = { id: item.id, name: item.name, price: Number(item.price) }
+    const cartItem = { id: item.id, name: item.name, price: Number(item.price), cost: Number(item.cost ?? 0) }
     const groups = await getItemModifierGroups(item.id)
     if (groups.length) {
       setModalState({ item: cartItem, groups })
@@ -333,6 +341,18 @@ export default function OrdersClient() {
       setCurrentOrder({ ...currentOrder, status: 'in_kitchen' })
       toast('Orden enviada a cocina 👨‍🍳', 'success')
     }
+  }
+
+  // Dine-in: cocina marca 'ready', pero nada en este POS pasaba a 'delivered'
+  // — sin esto, canPay nunca se habilita para ordenes tomadas aqui (a
+  // diferencia del portal de mesero, que si tiene este boton). Delivery/
+  // takeout no lo necesitan: ese salto lo hace /admin/delivery.
+  const confirmDelivery = async () => {
+    if (!currentOrder) return
+    const { error } = await supabase.from('orders').update({ status: 'delivered' }).eq('id', currentOrder.id)
+    if (error) { toast('Error al confirmar entrega', 'error'); return }
+    setCurrentOrder({ ...currentOrder, status: 'delivered' })
+    toast('✓ Entrega confirmada')
   }
 
   const clearTicket = async () => {
@@ -382,6 +402,11 @@ export default function OrdersClient() {
 
   const openPayModal = () => {
     if (!currentOrder?.items.length) return
+    if (currentOrder.status !== 'delivered') {
+      toast('No puedes cobrar todavía — la orden no está marcada como entregada', 'warning')
+      return
+    }
+    setSelectedPayMethod('cash')
     setPointsToRedeemRaw(0)
     setCashReceived('')
     setPayCustomerSearch('')
@@ -472,19 +497,23 @@ export default function OrdersClient() {
       setTables((prev) => prev.map((t) => (t.id === selectedTable.id ? { ...t, status: 'available' } : t)))
     }
 
+    // adjust_loyalty_points hace el UPDATE de balance de forma atomica (una
+    // sola sentencia, Postgres bloquea la fila) — un calculo de balance
+    // hecho aca y despues un UPDATE ciego se puede pisar con otro pago
+    // concurrente al mismo cliente (dos cajas, o admin + portal).
     let earnedPts = 0
-    if (linkedCustomer) {
-      let newBalance = linkedCustomer.points
+    if (loyaltyEnabled && linkedCustomer) {
       if (redeemedPts > 0) {
-        await supabase.from('loyalty_transactions').insert({ customer_id: linkedCustomer.id, order_id: currentOrder.id, points: redeemedPts, type: 'redeemed', tenant_id: tenant.tenant_id })
-        newBalance -= redeemedPts
+        await supabase.rpc('adjust_loyalty_points', {
+          p_customer_id: linkedCustomer.id, p_delta: -redeemedPts, p_order_id: currentOrder.id, p_tenant_id: tenant.tenant_id,
+        })
       }
       earnedPts = Math.floor(chargeTotal)
       if (earnedPts > 0) {
-        await supabase.from('loyalty_transactions').insert({ customer_id: linkedCustomer.id, order_id: currentOrder.id, points: earnedPts, type: 'earned', tenant_id: tenant.tenant_id })
-        newBalance += earnedPts
+        await supabase.rpc('adjust_loyalty_points', {
+          p_customer_id: linkedCustomer.id, p_delta: earnedPts, p_order_id: currentOrder.id, p_tenant_id: tenant.tenant_id,
+        })
       }
-      await supabase.from('profiles').update({ loyalty_points: Math.max(0, newBalance) }).eq('id', linkedCustomer.id)
     }
 
     setPayModalOpen(false)
@@ -548,6 +577,10 @@ export default function OrdersClient() {
   )
 
   const hasItems = !!currentOrder?.items.length
+  // Cobrar marca la orden 'paid' y libera la mesa — bloqueado hasta que
+  // cocina la entrego de verdad, para no cerrar la cuenta con comida sin
+  // servir (mismo criterio que el portal de mesero).
+  const canPay = currentOrder?.status === 'delivered'
   const mobCartCount = currentOrder?.items.reduce((s, i) => s + i.qty, 0) ?? 0
   const chargeTotal = effectiveTotal()
   const changeAmount = Math.max(0, (parseFloat(cashReceived) || 0) - chargeTotal)
@@ -621,6 +654,12 @@ export default function OrdersClient() {
             </div>
           )}
 
+          {currentOrder?.status === 'ready' && orderType === 'dine_in' && (
+            <button className="btn btn-outline btn-full btn-sm" style={{ marginTop: 8 }} onClick={confirmDelivery}>
+              🍽️ Confirmar entrega en mesa
+            </button>
+          )}
+
           {orderType !== 'dine_in' && (
             <div className="pos-customer-fields">
               <label htmlFor="pos-cust-name" className="sr-only">Nombre del cliente</label>
@@ -681,7 +720,12 @@ export default function OrdersClient() {
 
           <div className="ticket-actions">
             <button className="btn btn-amber btn-full" disabled={!hasItems} onClick={sendToKitchen}>👨‍🍳 Enviar a Cocina</button>
-            <button className="btn btn-primary btn-full" disabled={!hasItems} onClick={openPayModal}>💳 Procesar Pago</button>
+            <button className="btn btn-primary btn-full" disabled={!hasItems || !canPay} onClick={openPayModal}>💳 Procesar Pago</button>
+            {hasItems && !canPay && (
+              <p className="text-xs" style={{ textAlign: 'center', color: 'var(--amber)' }}>
+                🕐 No se puede cobrar: la orden todavía no está marcada como entregada.
+              </p>
+            )}
             <button className="btn btn-outline btn-full btn-sm" onClick={clearTicket}>🗑️ Limpiar Orden</button>
           </div>
         </div>
@@ -713,7 +757,9 @@ export default function OrdersClient() {
                 <button className={`pay-method${selectedPayMethod === 'cash' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('cash')}>💵 Efectivo</button>
                 <button className={`pay-method${selectedPayMethod === 'card' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('card')}>💳 Tarjeta</button>
                 <button className={`pay-method${selectedPayMethod === 'transfer' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('transfer')}>📲 Transferencia</button>
-                <button className={`pay-method${selectedPayMethod === 'credit' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('credit')}>🧾 Fiado</button>
+                {creditEnabled && (
+                  <button className={`pay-method${selectedPayMethod === 'credit' ? ' active' : ''}`} onClick={() => setSelectedPayMethod('credit')}>🧾 Fiado</button>
+                )}
               </div>
             </div>
             {selectedPayMethod === 'credit' && !linkedCustomer && (
@@ -730,19 +776,21 @@ export default function OrdersClient() {
                 <div className="change-display mt-8">Cambio: <span className="neon-amber">{fmt.currency(changeAmount)}</span></div>
               </div>
             )}
-            <div className="form-group mt-16" style={{ position: 'relative' }}>
-              <label className="form-label" htmlFor="orders-customer-search">Cliente (opcional)</label>
-              <input id="orders-customer-search" type="text" className="form-control" placeholder="Nombre o correo para puntos de lealtad..." value={payCustomerSearch} onChange={(e) => searchCustomers(e.target.value)} />
-              {customerSuggestions.length > 0 && (
-                <div className="suggestions-list" style={{ display: 'block' }}>
-                  {customerSuggestions.map((c) => (
-                    <div key={c.id} className="suggestion-item" onClick={() => selectCustomer(c)}>{c.full_name} — {c.loyalty_points} pts</div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {(loyaltyEnabled || creditEnabled) && (
+              <div className="form-group mt-16" style={{ position: 'relative' }}>
+                <label className="form-label" htmlFor="orders-customer-search">Cliente (opcional)</label>
+                <input id="orders-customer-search" type="text" className="form-control" placeholder={loyaltyEnabled ? 'Nombre o correo para puntos de lealtad...' : 'Nombre o correo del cliente...'} value={payCustomerSearch} onChange={(e) => searchCustomers(e.target.value)} />
+                {customerSuggestions.length > 0 && (
+                  <div className="suggestions-list" style={{ display: 'block' }}>
+                    {customerSuggestions.map((c) => (
+                      <div key={c.id} className="suggestion-item" onClick={() => selectCustomer(c)}>{c.full_name}{loyaltyEnabled ? ` — ${c.loyalty_points} pts` : ''}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-            {linkedCustomer && (
+            {loyaltyEnabled && linkedCustomer && (
               <div className="form-group mt-16" style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: 12 }}>
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Saldo: <strong>{linkedCustomer.points}</strong> pts ({fmt.currency(linkedCustomer.points * POINT_VALUE)})</span>

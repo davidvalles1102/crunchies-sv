@@ -11,7 +11,7 @@ export type ActiveTenant = {
 export const ROOT_TENANT: ActiveTenant = {
   tenant_id: 'crunchies-root',
   slug: 'crunchies-root',
-  name: 'Crunchies Mi Rancho',
+  name: 'CrunchiesSV',
 }
 
 export function getActiveTenant(): ActiveTenant {
