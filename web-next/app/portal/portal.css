@@ -201,7 +201,7 @@
 }
 .waiter-table-label.label-ready {
   background: var(--amber);
-  color: #000;
+  color: var(--text-invert);
 }
 
 /* ─── Order view shell ────────────────────────────────────────────── */
@@ -246,7 +246,7 @@
 }
 .waiter-mob-badge {
   background: var(--orange);
-  color: #fff;
+  color: var(--text-primary);
   border-radius: 20px;
   font-size: .7rem;
   font-weight: 700;
@@ -842,7 +842,7 @@
   height: 38px;
   border-radius: 50%;
   background: var(--amber);
-  color: #000;
+  color: var(--text-invert);
   font-size: 1.2rem;
   font-weight: 800;
   display: flex;
