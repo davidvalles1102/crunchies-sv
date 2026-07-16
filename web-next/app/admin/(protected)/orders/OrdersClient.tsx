@@ -623,14 +623,17 @@ export default function OrdersClient() {
 
           {orderType !== 'dine_in' && (
             <div className="pos-customer-fields">
-              <input type="text" className="form-control" placeholder="Nombre del cliente *" value={custName} onChange={(e) => setCustName(e.target.value)} />
-              <input type="tel" className="form-control" placeholder="Teléfono *" value={custPhone} onChange={(e) => setCustPhone(e.target.value)} />
+              <label htmlFor="pos-cust-name" className="sr-only">Nombre del cliente</label>
+              <input id="pos-cust-name" type="text" className="form-control" placeholder="Nombre del cliente *" value={custName} onChange={(e) => setCustName(e.target.value)} />
+              <label htmlFor="pos-cust-phone" className="sr-only">Teléfono</label>
+              <input id="pos-cust-phone" type="tel" className="form-control" placeholder="Teléfono *" value={custPhone} onChange={(e) => setCustPhone(e.target.value)} />
               {orderType === 'delivery' && (
                 <>
-                  <input type="text" className="form-control" placeholder="Dirección de entrega *" value={custAddress} onChange={(e) => setCustAddress(e.target.value)} />
+                  <label htmlFor="pos-cust-address" className="sr-only">Dirección de entrega</label>
+                  <input id="pos-cust-address" type="text" className="form-control" placeholder="Dirección de entrega *" value={custAddress} onChange={(e) => setCustAddress(e.target.value)} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <label className="form-label" style={{ marginBottom: 0, whiteSpace: 'nowrap', fontSize: '.8rem' }}>Costo delivery:</label>
-                    <input type="number" className="form-control" min="0" step="0.5" placeholder="0.00" style={{ maxWidth: 100 }} value={deliveryFee || ''} onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)} />
+                    <label htmlFor="pos-delivery-fee" className="form-label" style={{ marginBottom: 0, whiteSpace: 'nowrap', fontSize: '.8rem' }}>Costo delivery:</label>
+                    <input id="pos-delivery-fee" type="number" className="form-control" min="0" step="0.5" placeholder="0.00" style={{ maxWidth: 100 }} value={deliveryFee || ''} onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)} />
                   </div>
                 </>
               )}
