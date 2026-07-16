@@ -26,7 +26,7 @@ const ROLE_CREDENTIALS: Record<string, { email: string; password: string }> = {
 }
 
 const ROOT_TENANT_SLUG = 'crunchies-root'
-const ROOT_TENANT_NAME = 'Crunchies Mi Rancho'
+const ROOT_TENANT_NAME = 'CrunchiesSV'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'

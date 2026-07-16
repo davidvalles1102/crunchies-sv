@@ -26,8 +26,6 @@ const LINKS = [
   { href: '/admin/staff',            label: '🔐 Staff & Portales' },
 ]
 
-const PLATFORM_LINK = { href: '/admin/platform', label: '🏢 Plataforma' }
-
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
@@ -72,15 +70,6 @@ export default function Sidebar() {
               {l.label}
             </Link>
           ))}
-          {profile.role === 'admin' && (
-            <Link
-              href={PLATFORM_LINK.href}
-              className={`slink${pathname === PLATFORM_LINK.href ? ' active' : ''}`}
-              onClick={closeSidebar}
-            >
-              {PLATFORM_LINK.label}
-            </Link>
-          )}
         </nav>
         <div className="sidebar__footer">
           <div className="sidebar__user">{profile.full_name || session.user.email} · {profile.role}</div>

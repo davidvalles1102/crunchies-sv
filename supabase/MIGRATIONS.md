@@ -69,6 +69,7 @@ solo el nombre.
 | 28 | **`migrations/loyalty_points_atomic.sql`** | ✅ | Bug de auditoría: `profiles.loyalty_points` se actualizaba con un balance calculado en el cliente + `UPDATE` ciego (no atómico) en 3 lugares (ganar/canjear puntos en el POS, ajuste manual en Clientes) — dos pagos concurrentes al mismo cliente podían pisarse. RPC `adjust_loyalty_points()` hace el ajuste en una sola sentencia atómica |
 | 29 | **`migrations/tenant_feature_toggles.sql`** | ✅ | `tenant_settings.loyalty_enabled` / `credit_enabled` (default `false`) — apagan la UI de lealtad y fiado sin borrar el código/lógica. Crunchies SV no usa ninguno de los dos por ahora |
 | 30 | **`migrations/order_item_cost_snapshot.sql`** | ✅ | Bug de auditoría (prioridad del negocio): `order_items.cost` guarda el costo unitario al momento de la venta — Finanzas ya no recalcula COGS histórico con el costo *actual* del insumo. Incluye backfill best-effort para filas viejas usando el costo de hoy como aproximación |
+| 31 | **`migrations/rename_root_tenant_crunchiessv.sql`** | ⬜ | Renombra el tenant `crunchies-root` de `Crunchies Mi Rancho` (branding viejo) a `CrunchiesSV` — así se ve en el sidebar del admin. Pendiente de correr |
 
 > ⚠️ Correr 15 y 16 solo después de que las migrations 1-14 ya estén aplicadas
 > (dependen de que todas las tablas operativas existan). Verificar con la
