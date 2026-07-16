@@ -169,7 +169,7 @@
 .waiter-table-card--occupied .waiter-table-num { color: var(--text-primary); }
 
 .waiter-table-card--ready {
-  background: rgba(255, 153, 0, .10);
+  background: var(--amber-alpha);
   border-color: var(--amber);
   animation: pulse-table 2s infinite;
 }
@@ -908,7 +908,7 @@
   line-height: 1.4;
 }
 .waiter-status-info--kitchen {
-  background: rgba(255,153,0,.10);
+  background: var(--amber-alpha);
   color: var(--amber);
   border: 1px solid var(--amber-dim);
 }

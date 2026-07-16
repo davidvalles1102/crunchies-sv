@@ -212,7 +212,7 @@ export default function FinanceClient() {
 
       <div className="admin-content">
         {expensesMissing && (
-          <div style={{ background: 'rgba(255,153,0,.1)', border: '1px solid var(--amber)', borderRadius: 10, padding: '16px 20px', marginBottom: 20 }}>
+          <div style={{ background: 'var(--amber-alpha)', border: '1px solid var(--amber)', borderRadius: 10, padding: '16px 20px', marginBottom: 20 }}>
             <strong style={{ color: 'var(--amber)' }}>⚠️ Tabla de gastos no creada</strong>
             <p style={{ fontSize: '.85rem', color: 'var(--muted)', margin: '6px 0 0' }}>Ejecuta <code>supabase/expenses_create.sql</code> en Supabase SQL Editor y recarga la página.</p>
           </div>
