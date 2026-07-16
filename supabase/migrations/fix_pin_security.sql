@@ -96,7 +96,11 @@ CREATE POLICY "order_events_staff_select"
     )
   );
 
--- ─── 5. Verificación ────────────────────────────────────────────────
+-- ─── 5. Restaurar GRANT (DROP+CREATE lo borra) ──────────────────────
+
+GRANT EXECUTE ON FUNCTION public.verify_staff_pin(text) TO anon, authenticated;
+
+-- ─── 6. Verificación ────────────────────────────────────────────────
 
 SELECT column_name FROM information_schema.columns
 WHERE table_name = 'staff_members'
